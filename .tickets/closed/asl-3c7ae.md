@@ -2,9 +2,10 @@
 title: Deliver the first useful offline-verified API workflow corpus
 type: chore
 priority: 3
-state: in_progress
+resolution: completed
+close_reason: 233d6be six new provider workflows, 27 unit tests, 59 offline scenarios and independent candidate review PASS; four bounded live smokes, zero Socket quota
 created_at: 2026-10-26T18:34:07Z
-last_changed: 2026-10-26T18:52:37Z
+last_changed: 2026-10-26T18:57:30Z
 plan: plans/current/useful-corpus.md
 files:
     AGENTS.md: c
@@ -36,6 +37,13 @@ files:
     specs/socket/package-risk-triage.arazzo.yaml: m
     tests/**: c
     views/*.jq: m
+changes:
+    - at: 2026-10-26T18:56:48.094418Z
+      action: close
+      from: in_progress
+      to: closed
+      resolution: completed
+      reason: 233d6be six new provider workflows, 27 unit tests, 59 offline scenarios and independent candidate review PASS; four bounded live smokes, zero Socket quota
 assignee: codex
 ---
 # Deliver the first useful offline-verified API workflow corpus
@@ -64,8 +72,19 @@ Manifest version 1 gains optional tests and documentation/provenance metadata. T
 - Inspect documented copy-paste commands and jq projections; bounded public-provider live smoke attempts must be reported with date/outcome separately from fixture proof.
 - Obtain read-only fresh candidate review covering specs, request expectations and default no-external-network behavior; correct blocking findings.
 
+
+### Evidence
+Candidate: 233d6bebee2c9c65a40748d01d5a27d9741e631c. Independent fresh-context ticket-code-review returned PASS (agent 01a1798f-6ed3-7631-8a6b-47ec298965d2), bound to the retained contract and notes-only revision 8471a1af8f1aa68b30aba5aae92f84601ab587ae6044407b1fe4381828e6f000.
+
+The reviewer independently reran 27 unit tests and 59 complete fixture scenarios on candidate-matching source with CLI 0.8.2. actionlint and the staged whitespace check passed. All four Acceptance Criteria and all Testing Obligations passed. Four bounded public-provider live observations are recorded in the provider READMEs and plans/assessments/corpus-first-wave-2026-10-26.md; they were not repeated for review. Socket received zero live calls.
+
+The repository had no prior commit: pre-candidate tkt scope failed because HEAD was absent. The initial file inventory, ready local files check and explicit path staging supplied the baseline; adjacent changes are documented in notes. The unchanged VS Code launch configuration and empty placeholders were excluded. No sibling CLI writes, remote push or GitHub CI run occurred. Open Library identity and crates.io pacing prerequisites remain explicitly gated; no all-provider live-completion claim is made.
+
 ## Note (2026-10-26 18:49 UTC)
 Decided by recommendation: allow a valid empty final Open Library edition page while preserving work metadata; retain failure for no search match/unresolved work. New discovery fact: installed catalog is provider-local, not recursive; docs corrected. Adjacent forecast expansions: NWS point syntax migration, all-alert projection, strict geocode and alert-presence guards; requirements-dev and offline CI config added. Baseline had no Git commits; tkt scope cannot operate until initial candidate exists. Unchanged .vscode/ and invalid/ remain outside candidate.
 
 ## Note (2026-10-26 18:52 UTC)
 Current official provider contracts checked; four new providers live-proved within budgets. Open Library and crates.io remain explicitly dry-run because contact/pacing gates are outside this slice. Discovered CLI0.8.2 ignores numeric JSON Schema bounds: added standard simple input-bound criteria after small identity requests, before any collection query, with four negative scenarios. No custom parser or artificial retries. Separate CLI gap captured as paused asl-fab23.
+
+## Note (2026-10-26 18:56 UTC) — Closed
+233d6be six new provider workflows, 27 unit tests, 59 offline scenarios and independent candidate review PASS; four bounded live smokes, zero Socket quota
