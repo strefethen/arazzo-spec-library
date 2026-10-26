@@ -1,0 +1,101 @@
+openapi: 3.0.3
+info:
+  title: crates.io Registry Metadata Subset
+  version: 1.0.0
+  description: >
+    Local GET-only companion for the website API. Policy:
+    https://crates.io/data-access. API contract:
+    https://crates.io/api/openapi.json. Upstream implementation:
+    https://github.com/rust-lang/crates.io. No download operations are modeled.
+servers:
+  - url: https://crates.io/api/v1
+security: []
+paths:
+  /crates/{crate}:
+    get:
+      operationId: getCrate
+      parameters:
+        - {name: crate, in: path, required: true, schema: {type: string}}
+        - {name: include, in: query, schema: {type: string, enum: [default_version]}}
+      responses:
+        '200':
+          description: Crate identity and registry-selected default version.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [crate]
+                properties:
+                  crate:
+                    type: object
+                    required: [id, name, default_version]
+                    properties:
+                      id: {type: string}
+                      name: {type: string}
+                      default_version: {type: string, nullable: true}
+                      max_stable_version: {type: string, nullable: true}
+                      newest_version: {type: string}
+                      description: {type: string, nullable: true}
+                      repository: {type: string, nullable: true}
+        '404': {description: Crate not found.}
+        default: {description: Provider error, including rate limiting.}
+  /crates/{crate}/{version}:
+    get:
+      operationId: getVersion
+      parameters:
+        - {name: crate, in: path, required: true, schema: {type: string}}
+        - {name: version, in: path, required: true, schema: {type: string}}
+      responses:
+        '200':
+          description: Exact version metadata, including feature definitions.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [version]
+                properties:
+                  version:
+                    type: object
+                    required: [id, crate, num, yanked, features]
+                    properties:
+                      id: {type: integer}
+                      crate: {type: string}
+                      num: {type: string}
+                      yanked: {type: boolean}
+                      license: {type: string, nullable: true}
+                      rust_version: {type: string, nullable: true}
+                      features:
+                        type: object
+                        additionalProperties: {type: array, items: {type: string}}
+        default: {description: Provider error.}
+  /crates/{crate}/{version}/dependencies:
+    get:
+      operationId: getDependencies
+      description: Full direct-dependency list for one release, without pagination.
+      parameters:
+        - {name: crate, in: path, required: true, schema: {type: string}}
+        - {name: version, in: path, required: true, schema: {type: string}}
+      responses:
+        '200':
+          description: Direct requirements, not a resolved transitive dependency graph.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [dependencies]
+                properties:
+                  dependencies:
+                    type: array
+                    items:
+                      type: object
+                      required: [crate_id, req, kind, optional, default_features, features, version_id]
+                      properties:
+                        crate_id: {type: string}
+                        req: {type: string}
+                        kind: {type: string}
+                        optional: {type: boolean}
+                        default_features: {type: boolean}
+                        features: {type: array, items: {type: string}}
+                        target: {type: string, nullable: true}
+                        version_id: {type: integer}
+        default: {description: Provider error.}

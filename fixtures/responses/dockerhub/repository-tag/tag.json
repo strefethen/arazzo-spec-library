@@ -1,0 +1,11 @@
+{
+  "id": 401,
+  "name": "1.2.3",
+  "repository": 501,
+  "last_updated": "2026-01-01T00:00:00Z",
+  "full_size": 3456,
+  "images": [
+    {"os": "linux", "architecture": "amd64", "variant": null, "digest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "size": 1234},
+    {"os": "linux", "architecture": "arm64", "variant": "v8", "digest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb", "size": 2222}
+  ]
+}

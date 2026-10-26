@@ -1,0 +1,185 @@
+arazzo: 1.0.0
+info:
+  title: Address to NWS Forecast
+  summary: Geocode a street address, resolve its NWS gridpoint, and fetch the forecast.
+  version: 1.0.0
+  description: >
+    Canonical reference workflow for this corpus. It starts from a normal street
+    address, geocodes it with Nominatim, resolves the resulting
+    latitude/longitude through the National Weather Service points endpoint, and
+    then fetches forecast and active-alert data for the resolved point.
+sourceDescriptions:
+  - name: nominatim
+    url: ../../fixtures/openapi/nominatim/search.yaml
+    type: openapi
+  - name: nws
+    url: ../../fixtures/openapi/nws/weather-api.yaml
+    type: openapi
+components:
+  parameters:
+    descriptiveUserAgent:
+      name: User-Agent
+      in: header
+      value: "{$inputs.user_agent}"
+    geoJsonAccept:
+      name: Accept
+      in: header
+      value: application/geo+json
+  failureActions:
+    failFast:
+      name: fail-fast
+      type: end
+workflows:
+  - workflowId: address-forecast
+    summary: Address to geocode, NWS gridpoint, forecast, and active alerts.
+    description: >
+      Turns an address into coordinates, turns coordinates into an NWS gridpoint,
+      and uses that gridpoint to retrieve the public forecast.
+    inputs:
+      type: object
+      properties:
+        address:
+          type: string
+          description: One-line US address to geocode.
+          default: One Apple Park Way, Cupertino, CA 95014
+        user_agent:
+          type: string
+          description: Descriptive User-Agent sent to Nominatim and NWS. Override with NWS_USER_AGENT for live runs.
+          default: arazzo-spec-library-example
+      required:
+        - address
+    steps:
+      - stepId: geocode-address
+        description: Geocode the one-line address to latitude and longitude.
+        operationId: $sourceDescriptions.nominatim.searchPlaces
+        parameters:
+          - reference: "$components.parameters.descriptiveUserAgent"
+          - name: q
+            in: query
+            value: $inputs.address
+          - name: format
+            in: query
+            value: geojson
+          - name: limit
+            in: query
+            value: 1
+          - name: addressdetails
+            in: query
+            value: 1
+          - name: countrycodes
+            in: query
+            value: us
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/features/0/properties/display_name != null
+          - condition: $response.body#/features/0/geometry/type == 'Point'
+          - condition: $response.body#/features/0/geometry/coordinates/1 != null
+          - condition: $response.body#/features/0/geometry/coordinates/0 != null
+        onFailure:
+          - reference: "$components.failureActions.failFast"
+        outputs:
+          matched_address: $response.body#/features/0/properties/display_name
+          latitude: $response.body#/features/0/geometry/coordinates/1
+          longitude: $response.body#/features/0/geometry/coordinates/0
+          city: $response.body#/features/0/properties/address/city
+          state: $response.body#/features/0/properties/address/state
+          zip: $response.body#/features/0/properties/address/postcode
+
+      - stepId: resolve-point
+        description: Resolve latitude/longitude to NWS office, gridpoint, and zone metadata.
+        operationId: $sourceDescriptions.nws.getPointMetadata
+        parameters:
+          - reference: "$components.parameters.descriptiveUserAgent"
+          - reference: "$components.parameters.geoJsonAccept"
+          - name: latitude
+            in: path
+            value: $steps.geocode-address.outputs.latitude
+          - name: longitude
+            in: path
+            value: $steps.geocode-address.outputs.longitude
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/properties/gridId != null
+          - condition: $response.body#/properties/gridX != null
+          - condition: $response.body#/properties/gridY != null
+        onFailure:
+          - reference: "$components.failureActions.failFast"
+        outputs:
+          grid_id: $response.body#/properties/gridId
+          grid_x: $response.body#/properties/gridX
+          grid_y: $response.body#/properties/gridY
+          forecast_zone: $response.body#/properties/forecastZone
+          relative_city: $response.body#/properties/relativeLocation/properties/city
+          relative_state: $response.body#/properties/relativeLocation/properties/state
+
+      - stepId: get-forecast
+        description: Fetch the 12-hour textual forecast for the resolved gridpoint.
+        operationId: $sourceDescriptions.nws.getGridpointForecast
+        parameters:
+          - reference: "$components.parameters.descriptiveUserAgent"
+          - reference: "$components.parameters.geoJsonAccept"
+          - name: wfo
+            in: path
+            value: $steps.resolve-point.outputs.grid_id
+          - name: x
+            in: path
+            value: $steps.resolve-point.outputs.grid_x
+          - name: y
+            in: path
+            value: $steps.resolve-point.outputs.grid_y
+          - name: units
+            in: query
+            value: us
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/properties/periods/0/name != null
+        onFailure:
+          - reference: "$components.failureActions.failFast"
+        outputs:
+          first_period_name: $response.body#/properties/periods/0/name
+          first_temperature: $response.body#/properties/periods/0/temperature
+          first_temperature_unit: $response.body#/properties/periods/0/temperatureUnit
+          first_short_forecast: $response.body#/properties/periods/0/shortForecast
+          first_detailed_forecast: $response.body#/properties/periods/0/detailedForecast
+
+      - stepId: check-active-alerts
+        description: Check active NWS alerts affecting the geocoded point.
+        operationId: $sourceDescriptions.nws.getActiveAlerts
+        parameters:
+          - reference: "$components.parameters.descriptiveUserAgent"
+          - reference: "$components.parameters.geoJsonAccept"
+          - name: point
+            in: query
+            value: "{$steps.geocode-address.outputs.latitude},{$steps.geocode-address.outputs.longitude}"
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/features != null
+        onFailure:
+          - reference: "$components.failureActions.failFast"
+        outputs:
+          alerts: $response.body#/features
+          first_alert_event: $response.body#/features/0/properties/event
+          first_alert_severity: $response.body#/features/0/properties/severity
+          first_alert_headline: $response.body#/features/0/properties/headline
+
+    outputs:
+      matched_address: $steps.geocode-address.outputs.matched_address
+      latitude: $steps.geocode-address.outputs.latitude
+      longitude: $steps.geocode-address.outputs.longitude
+      address_city: $steps.geocode-address.outputs.city
+      address_state: $steps.geocode-address.outputs.state
+      address_zip: $steps.geocode-address.outputs.zip
+      nws_relative_city: $steps.resolve-point.outputs.relative_city
+      nws_relative_state: $steps.resolve-point.outputs.relative_state
+      grid_id: $steps.resolve-point.outputs.grid_id
+      grid_x: $steps.resolve-point.outputs.grid_x
+      grid_y: $steps.resolve-point.outputs.grid_y
+      forecast_zone: $steps.resolve-point.outputs.forecast_zone
+      first_period_name: $steps.get-forecast.outputs.first_period_name
+      first_temperature: $steps.get-forecast.outputs.first_temperature
+      first_temperature_unit: $steps.get-forecast.outputs.first_temperature_unit
+      first_short_forecast: $steps.get-forecast.outputs.first_short_forecast
+      first_alert_event: $steps.check-active-alerts.outputs.first_alert_event
+      first_alert_severity: $steps.check-active-alerts.outputs.first_alert_severity
+      first_alert_headline: $steps.check-active-alerts.outputs.first_alert_headline
+      alerts: $steps.check-active-alerts.outputs.alerts

@@ -1,0 +1,11 @@
+{
+  "id": 101,
+  "name": "widget",
+  "full_name": "corpus-example/widget",
+  "owner": {"login": "corpus-example"},
+  "private": false,
+  "html_url": "https://github.com/corpus-example/widget",
+  "description": "Synthetic fixture repository; not a live capture",
+  "default_branch": "main",
+  "archived": false
+}

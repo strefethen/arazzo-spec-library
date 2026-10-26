@@ -1,0 +1,80 @@
+arazzo: 1.0.0
+info:
+  title: PyPI Resolved Release Metadata
+  version: 1.0.0
+  description: Resolve the project-reported current version, then inspect exact release files, hashes, yanked flags, and advisory metadata without downloading packages.
+sourceDescriptions:
+  - name: pypi
+    url: ../../fixtures/openapi/pypi/json-api.yaml
+    type: openapi
+components:
+  parameters:
+    userAgent: {name: User-Agent, in: header, value: $inputs.user_agent}
+    accept: {name: Accept, in: header, value: application/json}
+workflows:
+  - workflowId: package-release
+    summary: Resolve project identity and current version, then fetch version-specific metadata.
+    inputs:
+      type: object
+      required: [package]
+      properties:
+        package: {type: string, minLength: 1, default: sampleproject}
+        user_agent:
+          type: string
+          default: arazzo-spec-library (https://github.com/strefethen/arazzo-spec-library)
+    steps:
+      - stepId: resolve-project
+        operationId: $sourceDescriptions.pypi.getProject
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.accept
+          - {name: project, in: path, value: $inputs.package}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: '!($response.body#/info/name == null)'
+          - condition: '!($response.body#/info/version == null)'
+          - context: $response.body#/info/name
+            type: regex
+            condition: '^[A-Za-z0-9][A-Za-z0-9._-]*$'
+          - context: $response.body#/info/version
+            type: regex
+            condition: '^[^/[:space:]]+$'
+        outputs:
+          package: $response.body#/info/name
+          version: $response.body#/info/version
+      - stepId: get-release
+        operationId: $sourceDescriptions.pypi.getRelease
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.accept
+          - {name: project, in: path, value: $steps.resolve-project.outputs.package}
+          - {name: version, in: path, value: $steps.resolve-project.outputs.version}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/info/name == $steps.resolve-project.outputs.package
+          - condition: $response.body#/info/version == $steps.resolve-project.outputs.version
+          - condition: '!($response.body#/urls == null)'
+          - condition: '$response.body#/urls/0 == null || (!($response.body#/urls/0/filename == null) && !($response.body#/urls/0/digests/sha256 == null))'
+          - condition: '!($response.body#/vulnerabilities == null)'
+        outputs:
+          package: $response.body#/info/name
+          version: $response.body#/info/version
+          summary: $response.body#/info/summary
+          project_url: $response.body#/info/project_url
+          requires_python: $response.body#/info/requires_python
+          yanked: $response.body#/info/yanked
+          yanked_reason: $response.body#/info/yanked_reason
+          files: $response.body#/urls
+          vulnerabilities: $response.body#/vulnerabilities
+          last_serial: $response.body#/last_serial
+    outputs:
+      package: $steps.get-release.outputs.package
+      version: $steps.get-release.outputs.version
+      summary: $steps.get-release.outputs.summary
+      project_url: $steps.get-release.outputs.project_url
+      requires_python: $steps.get-release.outputs.requires_python
+      yanked: $steps.get-release.outputs.yanked
+      yanked_reason: $steps.get-release.outputs.yanked_reason
+      files: $steps.get-release.outputs.files
+      vulnerabilities: $steps.get-release.outputs.vulnerabilities
+      last_serial: $steps.get-release.outputs.last_serial

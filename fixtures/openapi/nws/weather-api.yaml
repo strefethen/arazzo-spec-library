@@ -1,0 +1,203 @@
+openapi: 3.0.3
+info:
+  title: National Weather Service API Subset
+  version: 0.1.0
+  description: >
+    Repository-local companion OpenAPI document for the NWS workflows in this
+    corpus. It models only the endpoints exercised by the Arazzo specs; the
+    canonical API definition is published by weather.gov.
+servers:
+  - url: https://api.weather.gov
+security:
+  - userAgent: []
+paths:
+  /points/{latitude},{longitude}:
+    get:
+      operationId: getPointMetadata
+      summary: Get forecast metadata for a latitude/longitude point
+      parameters:
+        - name: latitude
+          in: path
+          required: true
+          schema:
+            type: number
+            format: double
+        - name: longitude
+          in: path
+          required: true
+          schema:
+            type: number
+            format: double
+      responses:
+        "200":
+          description: Point metadata with linked forecast resources.
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/PointMetadata"
+        "404":
+          description: Point not found or outside supported NWS coverage.
+        default:
+          description: Error response.
+  /gridpoints/{wfo}/{x},{y}/forecast:
+    get:
+      operationId: getGridpointForecast
+      summary: Get 12-hour textual forecast periods for a gridpoint
+      parameters:
+        - name: wfo
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: x
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+        - name: y
+          in: path
+          required: true
+          schema:
+            type: integer
+            minimum: 0
+        - name: units
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - us
+              - si
+      responses:
+        "200":
+          description: Forecast periods for the gridpoint.
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/GridpointForecast"
+        default:
+          description: Error response.
+  /alerts/active:
+    get:
+      operationId: getActiveAlerts
+      summary: Get active alerts filtered by point
+      parameters:
+        - name: point
+          in: query
+          required: false
+          schema:
+            type: string
+            example: "39.7456,-97.0892"
+      responses:
+        "200":
+          description: Active alerts matching the filter.
+          content:
+            application/geo+json:
+              schema:
+                $ref: "#/components/schemas/AlertCollection"
+        "301":
+          description: Certain common queries may be redirected.
+        default:
+          description: Error response.
+components:
+  securitySchemes:
+    userAgent:
+      type: apiKey
+      name: User-Agent
+      in: header
+      description: >
+        NWS asks API consumers to include a descriptive User-Agent so they can
+        contact clients if unusual behavior is observed.
+  schemas:
+    PointMetadata:
+      type: object
+      properties:
+        type:
+          type: string
+        properties:
+          type: object
+          properties:
+            gridId:
+              type: string
+            gridX:
+              type: integer
+            gridY:
+              type: integer
+            forecast:
+              type: string
+              format: uri
+            forecastHourly:
+              type: string
+              format: uri
+            forecastGridData:
+              type: string
+              format: uri
+            forecastZone:
+              type: string
+              format: uri
+            relativeLocation:
+              type: object
+              properties:
+                properties:
+                  type: object
+                  properties:
+                    city:
+                      type: string
+                    state:
+                      type: string
+    GridpointForecast:
+      type: object
+      properties:
+        properties:
+          type: object
+          properties:
+            updated:
+              type: string
+              format: date-time
+            periods:
+              type: array
+              items:
+                type: object
+                properties:
+                  number:
+                    type: integer
+                  name:
+                    type: string
+                  temperature:
+                    type: integer
+                  temperatureUnit:
+                    type: string
+                  windSpeed:
+                    type: string
+                  windDirection:
+                    type: string
+                  shortForecast:
+                    type: string
+                  detailedForecast:
+                    type: string
+    AlertCollection:
+      type: object
+      properties:
+        type:
+          type: string
+        features:
+          type: array
+          items:
+            type: object
+            properties:
+              properties:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  event:
+                    type: string
+                  severity:
+                    type: string
+                  certainty:
+                    type: string
+                  urgency:
+                    type: string
+                  headline:
+                    type: string

@@ -1,0 +1,107 @@
+arazzo: 1.0.0
+info:
+  title: Docker Hub Public Repository Tag Platforms
+  version: 1.0.0
+  description: Resolve a public repository, select the first tag in a bounded page in provider order, and fetch its platform image digests. No image pulls.
+sourceDescriptions:
+  - name: dockerhub
+    url: ../../fixtures/openapi/dockerhub/hub.yaml
+    type: openapi
+components:
+  parameters:
+    userAgent: {name: User-Agent, in: header, value: $inputs.user_agent}
+    accept: {name: Accept, in: header, value: application/json}
+workflows:
+  - workflowId: repository-tag
+    summary: Public repository to selected tag detail and image platform digests.
+    inputs:
+      type: object
+      required: [namespace, repository]
+      properties:
+        namespace: {type: string, minLength: 1, default: library}
+        repository: {type: string, minLength: 1, default: alpine}
+        page: {type: integer, minimum: 1, maximum: 100, default: 1}
+        page_size: {type: integer, minimum: 1, maximum: 20, default: 5}
+        user_agent:
+          type: string
+          default: arazzo-spec-library (https://github.com/strefethen/arazzo-spec-library)
+    steps:
+      - stepId: resolve-repository
+        operationId: $sourceDescriptions.dockerhub.getRepository
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.accept
+          - {name: namespace, in: path, value: $inputs.namespace}
+          - {name: repository, in: path, value: $inputs.repository}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $inputs.page >= 1 && $inputs.page <= 100
+          - condition: $inputs.page_size >= 1 && $inputs.page_size <= 20
+          - condition: $response.body#/namespace == $inputs.namespace
+          - condition: $response.body#/name == $inputs.repository
+          - condition: $response.body#/is_private == false
+        outputs:
+          namespace: $response.body#/namespace
+          repository: $response.body#/name
+          description: $response.body#/description
+      - stepId: select-tag
+        description: Select index zero on the requested page, not a claim of newest or semver-highest. Empty pages fail before tag detail.
+        operationId: $sourceDescriptions.dockerhub.listTags
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.accept
+          - {name: namespace, in: path, value: $steps.resolve-repository.outputs.namespace}
+          - {name: repository, in: path, value: $steps.resolve-repository.outputs.repository}
+          - {name: page, in: query, value: $inputs.page}
+          - {name: page_size, in: query, value: $inputs.page_size}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/count > 0
+          - condition: $response.body#/results/0/id > 0
+          - condition: $response.body#/results/0/repository > 0
+          - condition: '!($response.body#/results/0/name == null)'
+        outputs:
+          tag: $response.body#/results/0/name
+          tag_id: $response.body#/results/0/id
+          repository_id: $response.body#/results/0/repository
+          count: $response.body#/count
+          next: $response.body#/next
+          previous: $response.body#/previous
+      - stepId: get-tag-detail
+        operationId: $sourceDescriptions.dockerhub.getTag
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.accept
+          - {name: namespace, in: path, value: $steps.resolve-repository.outputs.namespace}
+          - {name: repository, in: path, value: $steps.resolve-repository.outputs.repository}
+          - {name: tag, in: path, value: $steps.select-tag.outputs.tag}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/name == $steps.select-tag.outputs.tag
+          - condition: $response.body#/id == $steps.select-tag.outputs.tag_id
+          - condition: $response.body#/repository == $steps.select-tag.outputs.repository_id
+          - condition: '!($response.body#/images/0/os == null)'
+          - condition: '!($response.body#/images/0/architecture == null)'
+          - context: $response.body#/images/0/digest
+            type: regex
+            condition: '^sha256:[a-fA-F0-9]{64}$'
+        outputs:
+          tag: $response.body#/name
+          tag_id: $response.body#/id
+          images: $response.body#/images
+          last_updated: $response.body#/last_updated
+          full_size: $response.body#/full_size
+    outputs:
+      namespace: $steps.resolve-repository.outputs.namespace
+      repository: $steps.resolve-repository.outputs.repository
+      description: $steps.resolve-repository.outputs.description
+      tag: $steps.get-tag-detail.outputs.tag
+      tag_id: $steps.get-tag-detail.outputs.tag_id
+      images: $steps.get-tag-detail.outputs.images
+      last_updated: $steps.get-tag-detail.outputs.last_updated
+      full_size: $steps.get-tag-detail.outputs.full_size
+      tag_count: $steps.select-tag.outputs.count
+      next: $steps.select-tag.outputs.next
+      previous: $steps.select-tag.outputs.previous
+      page: $inputs.page
+      page_size: $inputs.page_size

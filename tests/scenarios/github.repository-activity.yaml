@@ -1,0 +1,110 @@
+# Synthetic contract-shaped examples, not live captures.
+cases:
+  - name: page-size-limit-stops-before-collections
+    workflow: repository-activity
+    inputs: {owner: corpus-example, repo: widget, per_page: 999}
+    requests:
+      - method: GET
+        path: /repos/corpus-example/widget
+        query: {}
+        response: {status: 200, fixture: fixtures/responses/github/repository-activity/repository.json}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: releases-and-recent-issues
+    workflow: repository-activity
+    inputs: {owner: corpus-example, repo: widget, page: 2, per_page: 2}
+    requests:
+      - &repository
+        method: GET
+        path: /repos/corpus-example/widget
+        query: {}
+        headers: &headers
+          accept: application/vnd.github+json
+          user-agent: arazzo-spec-library (https://github.com/strefethen/arazzo-spec-library)
+          x-github-api-version: '2022-11-28'
+        response: {status: 200, fixture: fixtures/responses/github/repository-activity/repository.json}
+      - &releases
+        method: GET
+        path: /repos/corpus-example/widget/releases
+        query: {page: '2', per_page: '2'}
+        headers: *headers
+        response:
+          status: 200
+          fixture: fixtures/responses/github/repository-activity/releases.json
+          headers: {Link: '<https://api.github.com/repos/corpus-example/widget/releases?page=3&per_page=2>; rel="next"'}
+      - &issues
+        method: GET
+        path: /repos/corpus-example/widget/issues
+        query: {page: '2', per_page: '2', state: all, sort: updated, direction: desc}
+        headers: *headers
+        response:
+          status: 200
+          fixture: fixtures/responses/github/repository-activity/issues.json
+          headers: {X-RateLimit-Remaining: '57', X-RateLimit-Reset: '1793000000'}
+    expect:
+      kind: success
+      outputs:
+        repository: corpus-example/widget
+        default_branch: main
+        archived: false
+        page: 2
+        per_page: 2
+        releases_link: '<https://api.github.com/repos/corpus-example/widget/releases?page=3&per_page=2>; rel="next"'
+        rate_remaining: '57'
+        rate_reset: '1793000000'
+      assert: '.outputs | (.releases | length) == 1 and .releases[0].tag_name == "v1.2.3" and (.issues | length) == 2 and .issues[1].pull_request.url != null'
+      view_contains: ['Repository: corpus-example/widget', 'v1.2.3', 'Issue #7', 'PR #8', 'not exhaustive', 'rel="next"']
+  - name: no-releases-or-issues
+    workflow: repository-activity
+    inputs: {owner: corpus-example, repo: widget, page: 2, per_page: 2}
+    requests:
+      - *repository
+      - <<: *releases
+        response: {status: 200, body: []}
+      - <<: *issues
+        response: {status: 200, body: []}
+    expect:
+      kind: success
+      outputs: {repository: corpus-example/widget, releases: [], issues: [], releases_link: null, issues_link: null}
+      view_contains: ['Releases: 0', 'Recent issues/PRs: 0']
+  - name: canonical-repository-identity
+    workflow: repository-activity
+    inputs: {owner: old-owner, repo: OldWidget, page: 2, per_page: 2}
+    requests:
+      - <<: *repository
+        path: /repos/old-owner/OldWidget
+      - *releases
+      - *issues
+    expect:
+      kind: success
+      outputs: {repository: corpus-example/widget, page: 2, per_page: 2}
+      view_contains: ['Repository: corpus-example/widget']
+  - name: missing-repository
+    workflow: repository-activity
+    inputs: {owner: corpus-example, repo: widget}
+    requests:
+      - <<: *repository
+        response: {status: 404, body: {message: Not Found}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: missing-repository-identity
+    workflow: repository-activity
+    inputs: {owner: corpus-example, repo: widget}
+    requests:
+      - <<: *repository
+        response: {status: 200, body: {message: not-a-repository}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: rate-limited-releases
+    workflow: repository-activity
+    inputs: {owner: corpus-example, repo: widget, page: 2, per_page: 2}
+    requests:
+      - *repository
+      - <<: *releases
+        response: {status: 403, body: {message: API rate limit exceeded}, headers: {X-RateLimit-Remaining: '0'}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: release-without-tag-identity
+    workflow: repository-activity
+    inputs: {owner: corpus-example, repo: widget, page: 2, per_page: 2}
+    requests:
+      - *repository
+      - <<: *releases
+        response: {status: 200, body: [{id: 201}]}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}

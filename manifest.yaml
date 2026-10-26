@@ -1,0 +1,218 @@
+version: 1
+specs:
+  - id: nws.address-forecast
+    provider: nws
+    category: weather
+    read_only: true
+    live_policy: public-read-only
+    compatibility: arazzo-cli 0.8.2
+    tests: tests/scenarios/nws.address-forecast.yaml
+    path: specs/nws/address-forecast.arazzo.yaml
+    description: Geocode an address, resolve the NWS gridpoint, and fetch forecast and alert data.
+    arazzo: "1.0.x"
+    tier: live
+    openapi:
+      - fixtures/openapi/nominatim/search.yaml
+      - fixtures/openapi/nws/weather-api.yaml
+    workflows:
+      - address-forecast
+    env: []
+    verification:
+      default:
+        - arazzo-cli --json validate specs/nws/address-forecast.arazzo.yaml
+        - arazzo-cli --json list specs/nws/address-forecast.arazzo.yaml
+        - arazzo-cli --json show address-forecast --dir specs/nws
+        - arazzo-cli --json run specs/nws/address-forecast.arazzo.yaml address-forecast --dry-run --strict-inputs --step geocode-address --input address="One Apple Park Way, Cupertino, CA 95014"
+      live:
+        - arazzo-cli --json run specs/nws/address-forecast.arazzo.yaml address-forecast --strict-inputs --input address="One Apple Park Way, Cupertino, CA 95014" --input user_agent="${NWS_USER_AGENT:-arazzo-spec-library-example}"
+    examples:
+      quickstart:
+        description: Fetch the current NWS forecast for Apple's corporate address.
+        command: >-
+          arazzo-cli --json run specs/nws/address-forecast.arazzo.yaml address-forecast
+          --strict-inputs
+          --input address="One Apple Park Way, Cupertino, CA 95014"
+          --input user_agent="${NWS_USER_AGENT:-arazzo-spec-library-example}"
+        jq: views/nws.address-forecast.summary.jq
+        highlights:
+          - matched_address
+          - latitude
+          - longitude
+          - grid_id
+          - grid_x
+          - grid_y
+          - first_period_name
+          - first_temperature
+          - first_temperature_unit
+          - first_short_forecast
+          - first_alert_event
+  - id: nws.point-forecast-alerts
+    provider: nws
+    category: weather
+    read_only: true
+    live_policy: public-read-only
+    compatibility: arazzo-cli 0.8.2
+    tests: tests/scenarios/nws.point-forecast-alerts.yaml
+    path: specs/nws/point-forecast-alerts.arazzo.yaml
+    description: Resolve an NWS point, fetch its forecast, and check active alerts.
+    arazzo: "1.0.x"
+    tier: live
+    openapi:
+      - fixtures/openapi/nws/weather-api.yaml
+    workflows:
+      - point-forecast-alerts
+    env: []
+    verification:
+      default:
+        - arazzo-cli --json validate specs/nws/point-forecast-alerts.arazzo.yaml
+        - arazzo-cli --json list specs/nws/point-forecast-alerts.arazzo.yaml
+        - arazzo-cli --json show point-forecast-alerts --dir specs/nws
+        - arazzo-cli --json run specs/nws/point-forecast-alerts.arazzo.yaml point-forecast-alerts --dry-run --strict-inputs --step resolve-point --input latitude=39.7456 --input longitude=-97.0892
+      live:
+        - arazzo-cli --json run specs/nws/point-forecast-alerts.arazzo.yaml point-forecast-alerts --strict-inputs --input latitude=39.7456 --input longitude=-97.0892 --input user_agent="${NWS_USER_AGENT:-arazzo-spec-library-example}"
+    examples:
+      quickstart:
+        jq: views/nws.point-forecast-alerts.summary.jq
+  - id: socket.package-risk-triage
+    provider: socket
+    category: supply-chain-security
+    compatibility: arazzo-cli 0.8.2
+    tests: tests/scenarios/socket.package-risk-triage.yaml
+    path: specs/socket/package-risk-triage.arazzo.yaml
+    description: Check Socket.dev quota and retrieve package risk metadata by PURL.
+    arazzo: "1.0.x"
+    tier: live
+    openapi:
+      - fixtures/openapi/socket/socket-api.yaml
+    workflows:
+      - package-risk-triage
+    env:
+      - SOCKET_TOKEN
+      - SOCKET_ORG_SLUG
+    live_policy: manual-quota-sensitive
+    read_only: false
+    examples:
+      quickstart:
+        jq: views/socket.package-risk-triage.summary.jq
+    verification:
+      default:
+        - arazzo-cli --json validate specs/socket/package-risk-triage.arazzo.yaml
+        - arazzo-cli --json list specs/socket/package-risk-triage.arazzo.yaml
+        - arazzo-cli --json show package-risk-triage --dir specs/socket
+        - arazzo-cli --json run specs/socket/package-risk-triage.arazzo.yaml package-risk-triage --dry-run --strict-inputs --input socket_token=redacted --input org_slug=example-org --input purl=pkg:npm/express@4.19.2
+      live:
+        - arazzo-cli --json run specs/socket/package-risk-triage.arazzo.yaml package-risk-triage --strict-inputs --input socket_token="${SOCKET_TOKEN:?SOCKET_TOKEN is required}" --input org_slug="${SOCKET_ORG_SLUG:?SOCKET_ORG_SLUG is required}" --input purl=pkg:npm/express@4.19.2
+  - id: github.repository-activity
+    provider: github
+    category: developer-platform
+    description: Resolve a public repository and inspect bounded releases and recent issues or pull requests.
+    path: specs/github/repository-activity.arazzo.yaml
+    arazzo: "1.0.x"
+    tier: live
+    read_only: true
+    live_policy: public-read-only
+    compatibility: arazzo-cli 0.8.2
+    openapi: [fixtures/openapi/github/rest.yaml]
+    workflows: [repository-activity]
+    env: []
+    tests: tests/scenarios/github.repository-activity.yaml
+    examples:
+      quickstart:
+        description: Inspect GitHub CLI public repository activity without credentials.
+        command: arazzo-cli --json run specs/github/repository-activity.arazzo.yaml repository-activity --strict-inputs --input owner=cli --input repo=cli
+        jq: views/github.repository-activity.summary.jq
+  - id: pypi.package-release
+    provider: pypi
+    category: package-intelligence
+    description: Resolve the current project version and inspect exact release files, hashes, yanked flags and advisory metadata.
+    path: specs/pypi/package-release.arazzo.yaml
+    arazzo: "1.0.x"
+    tier: live
+    read_only: true
+    live_policy: public-read-only
+    compatibility: arazzo-cli 0.8.2
+    openapi: [fixtures/openapi/pypi/json-api.yaml]
+    workflows: [package-release]
+    env: []
+    tests: tests/scenarios/pypi.package-release.yaml
+    examples:
+      quickstart:
+        description: Inspect sampleproject without downloading or executing packages.
+        command: arazzo-cli --json run specs/pypi/package-release.arazzo.yaml package-release --strict-inputs --input package=sampleproject
+        jq: views/pypi.package-release.summary.jq
+  - id: dockerhub.repository-tag
+    provider: dockerhub
+    category: container-intelligence
+    description: Resolve a public repository, select a bounded tag result and inspect image platforms and digests.
+    path: specs/dockerhub/repository-tag.arazzo.yaml
+    arazzo: "1.0.x"
+    tier: live
+    read_only: true
+    live_policy: public-read-only
+    compatibility: arazzo-cli 0.8.2
+    openapi: [fixtures/openapi/dockerhub/hub.yaml]
+    workflows: [repository-tag]
+    env: []
+    tests: tests/scenarios/dockerhub.repository-tag.yaml
+    examples:
+      quickstart:
+        description: Inspect Alpine's first returned tag, without pulling an image.
+        command: arazzo-cli --json run specs/dockerhub/repository-tag.arazzo.yaml repository-tag --strict-inputs --input namespace=library --input repository=alpine
+        jq: views/dockerhub.repository-tag.summary.jq
+  - id: openlibrary.book-editions
+    provider: openlibrary
+    category: books
+    description: Search for a book, resolve the selected work and inspect a bounded edition page.
+    path: specs/openlibrary/book-editions.arazzo.yaml
+    arazzo: "1.0.x"
+    tier: dry-run
+    read_only: true
+    live_policy: requires-identified-contact-and-rate-budget
+    compatibility: arazzo-cli 0.8.2
+    openapi: [fixtures/openapi/openlibrary/catalog.yaml]
+    workflows: [book-editions]
+    env: [OPENLIBRARY_USER_AGENT]
+    tests: tests/scenarios/openlibrary.book-editions.yaml
+    examples:
+      quickstart:
+        description: Preview only; provider README explains identified live prerequisites.
+        command: arazzo-cli --json run specs/openlibrary/book-editions.arazzo.yaml book-editions --dry-run --strict-inputs --step search-books --input query="The Wonderful Wizard of Oz" --input user_agent="corpus-fixture/1.0 (fixtures@example.invalid)"
+        jq: views/openlibrary.book-editions.summary.jq
+  - id: crossref.doi-provenance
+    provider: crossref
+    category: research-metadata
+    description: Resolve a DOI, identify its depositing member and fetch a bounded cursor page of member works.
+    path: specs/crossref/doi-provenance.arazzo.yaml
+    arazzo: "1.0.x"
+    tier: live
+    read_only: true
+    live_policy: public-read-only
+    compatibility: arazzo-cli 0.8.2
+    openapi: [fixtures/openapi/crossref/metadata.yaml]
+    workflows: [doi-provenance]
+    env: []
+    tests: tests/scenarios/crossref.doi-provenance.yaml
+    examples:
+      quickstart:
+        description: Inspect a Crossref DOI and its depositor's related publication metadata.
+        command: arazzo-cli --json run specs/crossref/doi-provenance.arazzo.yaml doi-provenance --strict-inputs --input doi=10.1038/nphys1170 --input-json rows=5
+        jq: views/crossref.doi-provenance.summary.jq
+  - id: crates.release-dependencies
+    provider: crates
+    category: package-intelligence
+    description: Resolve a crate's registry default version and inspect exact-version features and direct dependency requirements.
+    path: specs/crates/release-dependencies.arazzo.yaml
+    arazzo: "1.0.x"
+    tier: dry-run
+    read_only: true
+    live_policy: blocked-until-client-request-pacing
+    compatibility: arazzo-cli 0.8.2
+    openapi: [fixtures/openapi/crates/registry.yaml]
+    workflows: [release-dependencies]
+    env: [CRATES_USER_AGENT]
+    tests: tests/scenarios/crates.release-dependencies.yaml
+    examples:
+      quickstart:
+        description: Preview only; live execution needs conformant request pacing.
+        command: arazzo-cli --json run specs/crates/release-dependencies.arazzo.yaml release-dependencies --dry-run --strict-inputs --step get-crate --input crate=itoa --input user_agent="corpus-fixture/1.0 (fixtures@example.invalid)"
+        jq: views/crates.release-dependencies.summary.jq

@@ -1,0 +1,97 @@
+arazzo: 1.0.0
+info:
+  title: Crossref DOI Provenance and Depositor Works
+  version: 1.0.0
+  summary: Resolve a DOI, identify its depositing member, and inspect a bounded work page.
+sourceDescriptions:
+  - name: crossref
+    url: ../../fixtures/openapi/crossref/metadata.yaml
+    type: openapi
+components:
+  parameters:
+    userAgent:
+      name: User-Agent
+      in: header
+      value: $inputs.user_agent
+    acceptJson:
+      name: Accept
+      in: header
+      value: application/json
+workflows:
+  - workflowId: doi-provenance
+    summary: DOI to depositing member to recently indexed works from that member.
+    inputs:
+      type: object
+      properties:
+        doi: {type: string, minLength: 1, default: 10.1038/nphys1170}
+        user_agent: {type: string, minLength: 1, default: arazzo-spec-library/1.0}
+        rows: {type: integer, minimum: 1, maximum: 10, default: 5}
+        cursor: {type: string, minLength: 1, default: '*'}
+      required: [doi]
+    steps:
+      - stepId: get-doi
+        operationId: $sourceDescriptions.crossref.getWork
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.acceptJson
+          - {name: doi, in: path, value: $inputs.doi}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $inputs.rows >= 1 && $inputs.rows <= 10
+          - condition: $response.body#/status == 'ok'
+          - condition: $response.body#/message-type == 'work'
+          - condition: $response.body#/message/DOI == $inputs.doi
+          - condition: $response.body#/message/member != null
+          - condition: $response.body#/message/member != ''
+        outputs:
+          work: $response.body#/message
+          member_id: $response.body#/message/member
+      - stepId: get-member
+        operationId: $sourceDescriptions.crossref.getMember
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.acceptJson
+          - {name: member_id, in: path, value: $steps.get-doi.outputs.member_id}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/status == 'ok'
+          - condition: $response.body#/message-type == 'member'
+          - condition: $response.body#/message/id == $steps.get-doi.outputs.member_id
+          - condition: $response.body#/message/primary-name != null
+          - condition: $response.body#/message/primary-name != ''
+        outputs:
+          member: $response.body#/message
+          member_id: $response.body#/message/id
+      - stepId: get-related-works
+        description: Related by depositing member, not a claim of citation or topic similarity.
+        operationId: $sourceDescriptions.crossref.getMemberWorks
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.acceptJson
+          - {name: member_id, in: path, value: $steps.get-member.outputs.member_id}
+          - {name: rows, in: query, value: $inputs.rows}
+          - {name: cursor, in: query, value: $inputs.cursor}
+          - {name: sort, in: query, value: indexed}
+          - {name: order, in: query, value: desc}
+          - {name: select, in: query, value: 'DOI,title,type,publisher,member,published,URL'}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/status == 'ok'
+          - condition: $response.body#/message-type == 'work-list'
+          - condition: $response.body#/message/items != null
+          - condition: $response.body#/message/total-results >= 0
+          - condition: $response.body#/message/next-cursor != null
+          - condition: $response.body#/message/items/0 == null || $response.body#/message/items/0/DOI != null
+          - condition: $response.body#/message/items/0 == null || $response.body#/message/items/0/member == $steps.get-member.outputs.member_id
+        outputs:
+          works: $response.body#/message/items
+          total: $response.body#/message/total-results
+          next_cursor: $response.body#/message/next-cursor
+    outputs:
+      work: $steps.get-doi.outputs.work
+      member: $steps.get-member.outputs.member
+      related_works: $steps.get-related-works.outputs.works
+      total_related: $steps.get-related-works.outputs.total
+      next_cursor: $steps.get-related-works.outputs.next_cursor
+      cursor: $inputs.cursor
+      rows: $inputs.rows

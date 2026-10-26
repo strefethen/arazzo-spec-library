@@ -1,0 +1,91 @@
+arazzo: 1.0.0
+info:
+  title: crates.io Release Dependencies and Features
+  version: 1.0.0
+  summary: Resolve the registry default version and inspect its exact dependency metadata.
+  description: >
+    Fixture-only until conformant one-request-per-second pacing is available.
+    No package archives, builds, or code execution. Default version is selected
+    by the registry, not newest publication or the first versions array item.
+sourceDescriptions:
+  - name: crates
+    url: ../../fixtures/openapi/crates/registry.yaml
+    type: openapi
+components:
+  parameters:
+    userAgent:
+      name: User-Agent
+      in: header
+      value: $inputs.user_agent
+    acceptJson:
+      name: Accept
+      in: header
+      value: application/json
+workflows:
+  - workflowId: release-dependencies
+    summary: Crate metadata to exact default release to dependency requirements and features.
+    inputs:
+      type: object
+      properties:
+        crate: {type: string, minLength: 1, pattern: '^[A-Za-z0-9_-]+$', default: itoa}
+        user_agent:
+          type: string
+          minLength: 1
+          description: Application identifier and operator contact; no anonymous default.
+      required: [crate, user_agent]
+    steps:
+      - stepId: get-crate
+        operationId: $sourceDescriptions.crates.getCrate
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.acceptJson
+          - {name: crate, in: path, value: $inputs.crate}
+          - {name: include, in: query, value: default_version}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/crate/id == $inputs.crate
+          - condition: $response.body#/crate/name == $inputs.crate
+          - condition: $response.body#/crate/default_version != null
+          - condition: $response.body#/crate/default_version != ''
+        outputs:
+          crate: $response.body#/crate
+          name: $response.body#/crate/name
+          selected_version: $response.body#/crate/default_version
+      - stepId: get-version
+        operationId: $sourceDescriptions.crates.getVersion
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.acceptJson
+          - {name: crate, in: path, value: $steps.get-crate.outputs.name}
+          - {name: version, in: path, value: $steps.get-crate.outputs.selected_version}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/version/crate == $steps.get-crate.outputs.name
+          - condition: $response.body#/version/num == $steps.get-crate.outputs.selected_version
+          - condition: $response.body#/version/id > 0
+          - condition: $response.body#/version/yanked == false
+          - condition: $response.body#/version/features != null
+        outputs:
+          version: $response.body#/version
+          number: $response.body#/version/num
+          version_id: $response.body#/version/id
+          name: $response.body#/version/crate
+          features: $response.body#/version/features
+      - stepId: get-dependencies
+        operationId: $sourceDescriptions.crates.getDependencies
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.acceptJson
+          - {name: crate, in: path, value: $steps.get-version.outputs.name}
+          - {name: version, in: path, value: $steps.get-version.outputs.number}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/dependencies != null
+          - condition: $response.body#/dependencies/0 == null || $response.body#/dependencies/0/version_id == $steps.get-version.outputs.version_id
+        outputs:
+          dependencies: $response.body#/dependencies
+    outputs:
+      crate: $steps.get-crate.outputs.crate
+      version: $steps.get-version.outputs.version
+      features: $steps.get-version.outputs.features
+      dependencies: $steps.get-dependencies.outputs.dependencies

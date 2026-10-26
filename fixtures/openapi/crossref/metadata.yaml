@@ -1,0 +1,96 @@
+openapi: 3.0.3
+info:
+  title: Crossref Metadata Subset
+  version: 1.0.0
+  description: Local GET-only companion based on https://github.com/CrossRef/rest-api-doc.
+servers:
+  - url: https://api.crossref.org
+security: []
+paths:
+  /works/{doi}:
+    get:
+      operationId: getWork
+      parameters:
+        - {name: doi, in: path, required: true, schema: {type: string}}
+      responses:
+        '200':
+          description: Crossref DOI metadata; journal-specific fields are optional.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, message-type, message]
+                properties:
+                  status: {type: string}
+                  message-type: {type: string}
+                  message: {$ref: '#/components/schemas/Work'}
+        '404': {description: DOI not found in Crossref.}
+        default: {description: Provider error, including rate limiting.}
+  /members/{member_id}:
+    get:
+      operationId: getMember
+      parameters:
+        - {name: member_id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200':
+          description: Depositing member, which need not be the current publisher.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, message-type, message]
+                properties:
+                  status: {type: string}
+                  message-type: {type: string}
+                  message:
+                    type: object
+                    required: [id, primary-name]
+                    properties:
+                      id: {type: integer}
+                      primary-name: {type: string}
+                      prefixes: {type: array, items: {type: string}}
+        default: {description: Provider error.}
+  /members/{member_id}/works:
+    get:
+      operationId: getMemberWorks
+      parameters:
+        - {name: member_id, in: path, required: true, schema: {type: string}}
+        - {name: rows, in: query, schema: {type: integer, minimum: 1, maximum: 10}}
+        - {name: cursor, in: query, schema: {type: string}}
+        - {name: sort, in: query, schema: {type: string, enum: [indexed]}}
+        - {name: order, in: query, schema: {type: string, enum: [desc]}}
+        - {name: select, in: query, schema: {type: string}}
+      responses:
+        '200':
+          description: One bounded cursor page of works deposited by this member.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, message-type, message]
+                properties:
+                  status: {type: string}
+                  message-type: {type: string}
+                  message:
+                    type: object
+                    required: [items, total-results, next-cursor]
+                    properties:
+                      items: {type: array, items: {$ref: '#/components/schemas/Work'}}
+                      total-results: {type: integer}
+                      next-cursor: {type: string}
+        default: {description: Provider error.}
+components:
+  schemas:
+    Work:
+      type: object
+      required: [DOI, member]
+      properties:
+        DOI: {type: string}
+        member: {type: string}
+        title: {type: array, items: {type: string}}
+        publisher: {type: string}
+        type: {type: string}
+        URL: {type: string, format: uri}
+        published: {type: object}
+        ISSN: {type: array, items: {type: string}}
+        container-title: {type: array, items: {type: string}}

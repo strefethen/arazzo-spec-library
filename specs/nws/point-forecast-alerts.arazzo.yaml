@@ -1,0 +1,144 @@
+arazzo: 1.0.0
+info:
+  title: NWS Point Forecast and Alerts
+  summary: Resolve a point, fetch its forecast, and check active alerts.
+  version: 1.0.0
+  description: >
+    Demonstrates a small public-live workflow against the National Weather
+    Service API. It starts from latitude/longitude, resolves NWS grid metadata,
+    requests a textual forecast for that gridpoint, and checks active alerts for
+    the same point.
+sourceDescriptions:
+  - name: nws
+    url: ../../fixtures/openapi/nws/weather-api.yaml
+    type: openapi
+components:
+  parameters:
+    nwsUserAgent:
+      name: User-Agent
+      in: header
+      value: "{$inputs.user_agent}"
+    geoJsonAccept:
+      name: Accept
+      in: header
+      value: application/geo+json
+  failureActions:
+    failFast:
+      name: fail-fast
+      type: end
+workflows:
+  - workflowId: point-forecast-alerts
+    summary: Resolve a point, fetch the forecast, and check active alerts.
+    description: >
+      Starts from latitude/longitude inputs, resolves NWS linked-data metadata,
+      uses the resolved office and gridpoint for the forecast request, and
+      checks point alerts.
+    inputs:
+      type: object
+      properties:
+        latitude:
+          type: number
+          description: Latitude within NWS coverage, for example 39.7456.
+        longitude:
+          type: number
+          description: Longitude within NWS coverage, for example -97.0892.
+        user_agent:
+          type: string
+          description: Descriptive NWS User-Agent. Override with NWS_USER_AGENT for live runs.
+          default: arazzo-spec-library-example
+      required:
+        - latitude
+        - longitude
+    steps:
+      - stepId: resolve-point
+        description: Resolve latitude/longitude to NWS office, gridpoint, and zone metadata.
+        operationId: $sourceDescriptions.nws.getPointMetadata
+        parameters:
+          - reference: "$components.parameters.nwsUserAgent"
+          - reference: "$components.parameters.geoJsonAccept"
+          - name: latitude
+            in: path
+            value: $inputs.latitude
+          - name: longitude
+            in: path
+            value: $inputs.longitude
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/properties/gridId != null
+          - condition: $response.body#/properties/gridX != null
+          - condition: $response.body#/properties/gridY != null
+        onFailure:
+          - reference: "$components.failureActions.failFast"
+        outputs:
+          grid_id: $response.body#/properties/gridId
+          grid_x: $response.body#/properties/gridX
+          grid_y: $response.body#/properties/gridY
+          forecast_zone: $response.body#/properties/forecastZone
+          relative_city: $response.body#/properties/relativeLocation/properties/city
+          relative_state: $response.body#/properties/relativeLocation/properties/state
+
+      - stepId: get-forecast
+        description: Fetch the 12-hour textual forecast for the resolved gridpoint.
+        operationId: $sourceDescriptions.nws.getGridpointForecast
+        parameters:
+          - reference: "$components.parameters.nwsUserAgent"
+          - reference: "$components.parameters.geoJsonAccept"
+          - name: wfo
+            in: path
+            value: $steps.resolve-point.outputs.grid_id
+          - name: x
+            in: path
+            value: $steps.resolve-point.outputs.grid_x
+          - name: y
+            in: path
+            value: $steps.resolve-point.outputs.grid_y
+          - name: units
+            in: query
+            value: us
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/properties/periods/0/name != null
+        onFailure:
+          - reference: "$components.failureActions.failFast"
+        outputs:
+          first_period_name: $response.body#/properties/periods/0/name
+          first_temperature: $response.body#/properties/periods/0/temperature
+          first_temperature_unit: $response.body#/properties/periods/0/temperatureUnit
+          first_short_forecast: $response.body#/properties/periods/0/shortForecast
+          first_detailed_forecast: $response.body#/properties/periods/0/detailedForecast
+
+      - stepId: check-active-alerts
+        description: Check active NWS alerts affecting the input point.
+        operationId: $sourceDescriptions.nws.getActiveAlerts
+        parameters:
+          - reference: "$components.parameters.nwsUserAgent"
+          - reference: "$components.parameters.geoJsonAccept"
+          - name: point
+            in: query
+            value: "{$inputs.latitude},{$inputs.longitude}"
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/features != null
+        onFailure:
+          - reference: "$components.failureActions.failFast"
+        outputs:
+          alerts: $response.body#/features
+          first_alert_event: $response.body#/features/0/properties/event
+          first_alert_severity: $response.body#/features/0/properties/severity
+          first_alert_headline: $response.body#/features/0/properties/headline
+
+    outputs:
+      location: $steps.resolve-point.outputs.relative_city
+      state: $steps.resolve-point.outputs.relative_state
+      resolved_grid_id: $steps.resolve-point.outputs.grid_id
+      resolved_grid_x: $steps.resolve-point.outputs.grid_x
+      resolved_grid_y: $steps.resolve-point.outputs.grid_y
+      forecast_zone: $steps.resolve-point.outputs.forecast_zone
+      first_period_name: $steps.get-forecast.outputs.first_period_name
+      first_temperature: $steps.get-forecast.outputs.first_temperature
+      first_temperature_unit: $steps.get-forecast.outputs.first_temperature_unit
+      first_short_forecast: $steps.get-forecast.outputs.first_short_forecast
+      first_alert_event: $steps.check-active-alerts.outputs.first_alert_event
+      first_alert_severity: $steps.check-active-alerts.outputs.first_alert_severity
+      first_alert_headline: $steps.check-active-alerts.outputs.first_alert_headline
+      alerts: $steps.check-active-alerts.outputs.alerts

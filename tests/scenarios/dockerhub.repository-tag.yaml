@@ -1,0 +1,97 @@
+# Synthetic contract-shaped examples, not live captures.
+cases:
+  - name: page-size-limit-stops-before-tags
+    workflow: repository-tag
+    inputs: {namespace: corpus-example, repository: widget, page_size: 999}
+    requests:
+      - method: GET
+        path: /v2/namespaces/corpus-example/repositories/widget
+        query: {}
+        response: {status: 200, fixture: fixtures/responses/dockerhub/repository-tag/repository.json}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: selected-tag-platform-digests
+    workflow: repository-tag
+    inputs: {namespace: corpus-example, repository: widget, page: 2, page_size: 2}
+    requests:
+      - &repository
+        method: GET
+        path: /v2/namespaces/corpus-example/repositories/widget
+        query: {}
+        headers: &headers
+          accept: application/json
+          user-agent: arazzo-spec-library (https://github.com/strefethen/arazzo-spec-library)
+        response: {status: 200, fixture: fixtures/responses/dockerhub/repository-tag/repository.json}
+      - &tags
+        method: GET
+        path: /v2/namespaces/corpus-example/repositories/widget/tags
+        query: {page: '2', page_size: '2'}
+        headers: *headers
+        response: {status: 200, fixture: fixtures/responses/dockerhub/repository-tag/tags.json}
+      - &tag
+        method: GET
+        path: /v2/namespaces/corpus-example/repositories/widget/tags/1.2.3
+        query: {}
+        headers: *headers
+        response: {status: 200, fixture: fixtures/responses/dockerhub/repository-tag/tag.json}
+    expect:
+      kind: success
+      outputs:
+        namespace: corpus-example
+        repository: widget
+        tag: 1.2.3
+        tag_id: 401
+        page: 2
+        page_size: 2
+        tag_count: 9
+        next: https://hub.docker.com/v2/namespaces/corpus-example/repositories/widget/tags?page=3&page_size=2
+        previous: https://hub.docker.com/v2/namespaces/corpus-example/repositories/widget/tags?page=1&page_size=2
+      assert: '.outputs | (.images | length) == 2 and .images[0].digest == ("sha256:" + ("a" * 64)) and .images[1].architecture == "arm64" and .images[1].variant == "v8"'
+      view_contains: ['corpus-example/widget:1.2.3', 'linux/amd64', 'linux/arm64/v8', 'sha256:aaaa', 'not necessarily latest', 'not a security verdict']
+  - name: empty-tag-page
+    workflow: repository-tag
+    inputs: {namespace: corpus-example, repository: widget, page: 2, page_size: 2}
+    requests:
+      - *repository
+      - <<: *tags
+        response: {status: 200, body: {count: 0, next: null, previous: null, results: []}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: missing-repository
+    workflow: repository-tag
+    inputs: {namespace: corpus-example, repository: widget}
+    requests:
+      - <<: *repository
+        response: {status: 404, body: {message: not found}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: private-repository-refused
+    workflow: repository-tag
+    inputs: {namespace: corpus-example, repository: widget}
+    requests:
+      - <<: *repository
+        response: {status: 200, body: {name: widget, namespace: corpus-example, is_private: true}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: rate-limited-tags
+    workflow: repository-tag
+    inputs: {namespace: corpus-example, repository: widget, page: 2, page_size: 2}
+    requests:
+      - *repository
+      - <<: *tags
+        response: {status: 429, body: {message: Too Many Requests}, headers: {Retry-After: '60'}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: changed-tag-identity
+    workflow: repository-tag
+    inputs: {namespace: corpus-example, repository: widget, page: 2, page_size: 2}
+    requests:
+      - *repository
+      - *tags
+      - <<: *tag
+        response: {status: 200, body: {id: 999, name: 1.2.3, repository: 501, images: []}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: tag-without-images
+    workflow: repository-tag
+    inputs: {namespace: corpus-example, repository: widget, page: 2, page_size: 2}
+    requests:
+      - *repository
+      - *tags
+      - <<: *tag
+        response: {status: 200, body: {id: 401, name: 1.2.3, repository: 501, images: []}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}

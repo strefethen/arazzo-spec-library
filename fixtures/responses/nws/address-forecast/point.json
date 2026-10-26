@@ -1,0 +1,19 @@
+{
+  "type": "Feature",
+  "properties": {
+    "gridId": "MTR",
+    "gridX": 95,
+    "gridY": 83,
+    "forecast": "https://api.weather.gov/gridpoints/MTR/95,83/forecast",
+    "forecastHourly": "https://api.weather.gov/gridpoints/MTR/95,83/forecast/hourly",
+    "forecastGridData": "https://api.weather.gov/gridpoints/MTR/95,83",
+    "forecastZone": "https://api.weather.gov/zones/forecast/CAZ513",
+    "relativeLocation": {
+      "type": "Feature",
+      "properties": {
+        "city": "Cupertino",
+        "state": "CA"
+      }
+    }
+  }
+}

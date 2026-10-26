@@ -1,0 +1,92 @@
+openapi: 3.0.3
+info:
+  title: Docker Hub Public Metadata Read Subset
+  version: 1.0.0
+  description: Hand-maintained subset of https://docs.docker.com/reference/api/hub/latest/. Only public metadata is requested anonymously; no registry, login, or image pulls. Tag operation documentation currently advertises bearer auth; anonymous availability is an explicitly smoke-tested compatibility boundary, not private access support.
+servers:
+  - url: https://hub.docker.com
+security: []
+paths:
+  /v2/namespaces/{namespace}/repositories/{repository}:
+    parameters:
+      - {$ref: '#/components/parameters/namespace'}
+      - {$ref: '#/components/parameters/repository'}
+    get:
+      operationId: getRepository
+      responses:
+        '200':
+          description: Public repository metadata.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [name, namespace, is_private]
+                properties:
+                  name: {type: string}
+                  namespace: {type: string}
+                  is_private: {type: boolean}
+                  description: {type: string}
+        default: {description: Missing repository, access restriction, rate limit, or other error.}
+  /v2/namespaces/{namespace}/repositories/{repository}/tags:
+    parameters:
+      - {$ref: '#/components/parameters/namespace'}
+      - {$ref: '#/components/parameters/repository'}
+    get:
+      operationId: listTags
+      parameters:
+        - {name: page, in: query, schema: {type: integer, minimum: 1, maximum: 100}}
+        - {name: page_size, in: query, schema: {type: integer, minimum: 1, maximum: 20}}
+      responses:
+        '200':
+          description: One tag page in provider order. next and previous are exposed, never followed automatically.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [count, next, previous, results]
+                properties:
+                  count: {type: integer}
+                  next: {type: string, nullable: true}
+                  previous: {type: string, nullable: true}
+                  results: {type: array, items: {$ref: '#/components/schemas/Tag'}}
+        default: {description: Missing repository, access restriction, rate limit, or other error.}
+  /v2/namespaces/{namespace}/repositories/{repository}/tags/{tag}:
+    parameters:
+      - {$ref: '#/components/parameters/namespace'}
+      - {$ref: '#/components/parameters/repository'}
+    get:
+      operationId: getTag
+      parameters:
+        - {name: tag, in: path, required: true, schema: {type: string}}
+      responses:
+        '200':
+          description: Selected tag metadata; images is unpaginated and digests may be unavailable upstream.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Tag'}
+        default: {description: Missing tag, access restriction, rate limit, or other error.}
+components:
+  parameters:
+    namespace: {name: namespace, in: path, required: true, schema: {type: string}}
+    repository: {name: repository, in: path, required: true, schema: {type: string}}
+  schemas:
+    Tag:
+      type: object
+      required: [id, name, repository]
+      properties:
+        id: {type: integer}
+        name: {type: string}
+        repository: {type: integer}
+        last_updated: {type: string, nullable: true}
+        full_size: {type: integer}
+        images:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              os: {type: string}
+              architecture: {type: string}
+              variant: {type: string, nullable: true}
+              digest: {type: string, nullable: true}
+              size: {type: integer}

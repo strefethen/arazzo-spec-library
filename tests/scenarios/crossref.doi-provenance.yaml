@@ -1,0 +1,96 @@
+# Synthetic responses; seed deliberately has no journal-specific fields.
+cases:
+  - name: row-limit-stops-before-member-requests
+    workflow: doi-provenance
+    inputs: {doi: 10.5555/example.article, rows: 999}
+    requests:
+      - method: GET
+        path: /works/10.5555/example.article
+        query: {}
+        response: {status: 200, fixture: fixtures/responses/crossref/work.json}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: member-provenance-without-journal-fields
+    workflow: doi-provenance
+    inputs: &inputs {doi: 10.5555/example.article, rows: 2, cursor: '*', user_agent: corpus-fixture/1.0}
+    requests:
+      - &work
+        method: GET
+        path: /works/10.5555/example.article
+        query: {}
+        headers: {accept: application/json, user-agent: corpus-fixture/1.0}
+        response: {status: 200, fixture: fixtures/responses/crossref/work.json}
+      - &member
+        method: GET
+        path: /members/4242
+        query: {}
+        headers: {accept: application/json, user-agent: corpus-fixture/1.0}
+        response: {status: 200, fixture: fixtures/responses/crossref/member.json}
+      - &related
+        method: GET
+        path: /members/4242/works
+        query: {rows: '2', cursor: '*', sort: indexed, order: desc, select: 'DOI,title,type,publisher,member,published,URL'}
+        headers: {accept: application/json, user-agent: corpus-fixture/1.0}
+        response: {status: 200, fixture: fixtures/responses/crossref/works.json}
+    expect:
+      kind: success
+      outputs: {work: {DOI: 10.5555/example.article, member: '4242'}, member: {id: 4242, primary-name: Example Depositing Member}, total_related: 19, rows: 2, next_cursor: 'synthetic+cursor/next=='}
+      assert: '.outputs.related_works | length == 2 and all(.[]; .member == "4242")'
+      view_contains: ['Depositing member: Example Depositing Member [4242]', 'Related by depositor, not citations', 'title unavailable', 'Next cursor (not fetched): synthetic+cursor/next==']
+  - name: cursor-is-preserved-and-empty-page-succeeds
+    workflow: doi-provenance
+    inputs: {doi: 10.5555/example.article, rows: 2, cursor: 'synthetic+cursor/next==', user_agent: corpus-fixture/1.0}
+    requests:
+      - *work
+      - *member
+      - <<: *related
+        query: {rows: '2', cursor: 'synthetic+cursor/next==', sort: indexed, order: desc, select: 'DOI,title,type,publisher,member,published,URL'}
+        response: {status: 200, body: {status: ok, message-type: work-list, message: {total-results: 19, items: [], next-cursor: exhausted}}}
+    expect:
+      kind: success
+      outputs: {related_works: [], total_related: 19, cursor: 'synthetic+cursor/next=='}
+      view_contains: [End of this cursor result set.]
+  - name: doi-not-found
+    workflow: doi-provenance
+    inputs: *inputs
+    requests:
+      - <<: *work
+        response: {status: 404, body: {status: failed, message: not found}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: missing-member-is-not-replaced-by-journal
+    workflow: doi-provenance
+    inputs: *inputs
+    requests:
+      - <<: *work
+        response: {status: 200, body: {status: ok, message-type: work, message: {DOI: 10.5555/example.article, ISSN: ['1234-5678']}}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: mismatched-doi-fails
+    workflow: doi-provenance
+    inputs: *inputs
+    requests:
+      - <<: *work
+        response: {status: 200, body: {status: ok, message-type: work, message: {DOI: 10.5555/wrong, member: '4242'}}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: mismatched-member-fails
+    workflow: doi-provenance
+    inputs: *inputs
+    requests:
+      - *work
+      - <<: *member
+        response: {status: 200, body: {status: ok, message-type: member, message: {id: 999, primary-name: Wrong member}}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: related-work-from-wrong-member-fails
+    workflow: doi-provenance
+    inputs: *inputs
+    requests:
+      - *work
+      - *member
+      - <<: *related
+        response: {status: 200, body: {status: ok, message-type: work-list, message: {total-results: 1, next-cursor: next, items: [{DOI: 10.5555/other, member: '999'}]}}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: rate-limit-is-not-retried
+    workflow: doi-provenance
+    inputs: *inputs
+    requests:
+      - <<: *work
+        response: {status: 429, headers: {Retry-After: '1'}, body: {status: failed, message: rate limit}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}

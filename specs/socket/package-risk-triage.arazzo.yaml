@@ -1,0 +1,104 @@
+arazzo: 1.0.0
+info:
+  title: Socket.dev Package Risk Triage
+  summary: Check API quota and retrieve package risk metadata by PURL.
+  version: 1.0.0
+  description: >
+    Demonstrates a live-gated supply-chain workflow for Socket.dev. The workflow
+    first checks quota, then retrieves package metadata and alert summaries for a
+    package URL in an organization scope. Default verification uses dry-run only.
+sourceDescriptions:
+  - name: socket
+    url: ../../fixtures/openapi/socket/socket-api.yaml
+    type: openapi
+components:
+  parameters:
+    socketBearerToken:
+      name: Authorization
+      in: header
+      value: "Bearer {$inputs.socket_token}"
+    jsonAccept:
+      name: Accept
+      in: header
+      value: application/json
+  failureActions:
+    failFast:
+      name: fail-fast
+      type: end
+workflows:
+  - workflowId: package-risk-triage
+    summary: Check quota, then fetch package risk and alert metadata by PURL.
+    description: >
+      Uses Socket's quota endpoint as a low-cost auth and budget check before
+      calling the org-scoped PURL lookup endpoint with alert metadata enabled.
+    inputs:
+      type: object
+      properties:
+        socket_token:
+          type: string
+          description: Socket API token. Provide from SOCKET_TOKEN for live runs.
+        org_slug:
+          type: string
+          description: Socket organization slug. Provide from SOCKET_ORG_SLUG.
+        purl:
+          type: string
+          description: Package URL to triage, such as pkg:npm/express@4.19.2.
+      required:
+        - socket_token
+        - org_slug
+        - purl
+    steps:
+      - stepId: check-quota
+        description: Confirm the token can read quota before spending PURL quota.
+        operationId: $sourceDescriptions.socket.getQuota
+        parameters:
+          - reference: "$components.parameters.socketBearerToken"
+          - reference: "$components.parameters.jsonAccept"
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/quota >= 100
+        onFailure:
+          - reference: "$components.failureActions.failFast"
+        outputs:
+          quota_remaining: $response.body#/quota
+          quota_max: $response.body#/maxQuota
+
+      - stepId: lookup-package
+        description: Retrieve compact package metadata and alerts for one PURL.
+        operationId: $sourceDescriptions.socket.getPackagesByPurlForOrg
+        parameters:
+          - reference: "$components.parameters.socketBearerToken"
+          - reference: "$components.parameters.jsonAccept"
+          - name: org_slug
+            in: path
+            value: $inputs.org_slug
+          - name: alerts
+            in: query
+            value: true
+          - name: compact
+            in: query
+            value: true
+          - name: poll
+            in: query
+            value: false
+          - name: summary
+            in: query
+            value: true
+        requestBody:
+          contentType: application/json
+          payload:
+            components:
+              - purl: $inputs.purl
+        successCriteria:
+          - condition: $statusCode == 200
+        onFailure:
+          - reference: "$components.failureActions.failFast"
+        outputs:
+          lookup_status: $statusCode
+          packages: $response.body
+
+    outputs:
+      quota_remaining: $steps.check-quota.outputs.quota_remaining
+      quota_max: $steps.check-quota.outputs.quota_max
+      package_lookup_status: $steps.lookup-package.outputs.lookup_status
+      results: $steps.lookup-package.outputs.packages

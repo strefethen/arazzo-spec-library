@@ -1,0 +1,88 @@
+# Synthetic responses. All GETs have no request body; no archives are requested.
+cases:
+  - name: registry-default-not-newest-prerelease
+    workflow: release-dependencies
+    inputs: &inputs {crate: samplecrate, user_agent: corpus-fixture/1.0 (fixtures@example.invalid)}
+    requests:
+      - &crate
+        method: GET
+        path: /api/v1/crates/samplecrate
+        query: {include: default_version}
+        headers: {accept: application/json, user-agent: corpus-fixture/1.0 (fixtures@example.invalid)}
+        response: {status: 200, fixture: fixtures/responses/crates/crate.json}
+      - &version
+        method: GET
+        path: /api/v1/crates/samplecrate/4.0.0
+        query: {}
+        headers: {accept: application/json, user-agent: corpus-fixture/1.0 (fixtures@example.invalid)}
+        response: {status: 200, fixture: fixtures/responses/crates/version.json}
+      - &dependencies
+        method: GET
+        path: /api/v1/crates/samplecrate/4.0.0/dependencies
+        query: {}
+        headers: {accept: application/json, user-agent: corpus-fixture/1.0 (fixtures@example.invalid)}
+        response: {status: 200, fixture: fixtures/responses/crates/dependencies.json}
+    expect:
+      kind: success
+      outputs: {crate: {name: samplecrate, default_version: 4.0.0, newest_version: 5.0.0-beta.1}, version: {id: 123456, crate: samplecrate, num: 4.0.0, yanked: false}, features: {default: [std], std: [], derive: ['dep:samplederive']}}
+      assert: '.outputs.dependencies | length == 2 and all(.[]; .version_id == 123456)'
+      view_contains: ['samplecrate @ 4.0.0', 'samplederive ^1.2', 'optional=true default_features=false', 'derive: dep:samplederive', 'no package downloaded or executed']
+  - name: no-dependencies-or-features-is-valid
+    workflow: release-dependencies
+    inputs: *inputs
+    requests:
+      - *crate
+      - <<: *version
+        response: {status: 200, body: {version: {id: 123456, crate: samplecrate, num: 4.0.0, yanked: false, features: {}}}}
+      - <<: *dependencies
+        response: {status: 200, body: {dependencies: []}}
+    expect:
+      kind: success
+      outputs: {features: {}, dependencies: [], version: {num: 4.0.0}}
+      view_contains: ['none declared', 'Direct dependency requirements: 0']
+  - name: missing-crate
+    workflow: release-dependencies
+    inputs: *inputs
+    requests:
+      - <<: *crate
+        response: {status: 404, body: {errors: [{detail: crate not found}]}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: missing-default-does-not-use-newest
+    workflow: release-dependencies
+    inputs: *inputs
+    requests:
+      - <<: *crate
+        response: {status: 200, body: {crate: {id: samplecrate, name: samplecrate, newest_version: 5.0.0-beta.1}}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: mismatched-exact-version-fails
+    workflow: release-dependencies
+    inputs: *inputs
+    requests:
+      - *crate
+      - <<: *version
+        response: {status: 200, body: {version: {id: 123456, crate: samplecrate, num: 5.0.0-beta.1, yanked: false, features: {}}}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: yanked-default-is-not-substituted
+    workflow: release-dependencies
+    inputs: *inputs
+    requests:
+      - *crate
+      - <<: *version
+        response: {status: 200, body: {version: {id: 123456, crate: samplecrate, num: 4.0.0, yanked: true, features: {}}}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: dependency-version-identity-fails
+    workflow: release-dependencies
+    inputs: *inputs
+    requests:
+      - *crate
+      - *version
+      - <<: *dependencies
+        response: {status: 200, body: {dependencies: [{crate_id: wrong, version_id: 999, req: '^1'}]}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: rate-limit-is-not-retried
+    workflow: release-dependencies
+    inputs: *inputs
+    requests:
+      - <<: *crate
+        response: {status: 429, headers: {Retry-After: '1'}, body: {errors: [{detail: rate limit}]}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}

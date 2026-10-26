@@ -1,0 +1,84 @@
+openapi: 3.0.3
+info:
+  title: PyPI JSON Read Subset
+  version: 1.0.0
+  description: Hand-maintained subset of https://docs.pypi.org/api/json/. Arrays are unpaginated release snapshots; no file downloads.
+servers:
+  - url: https://pypi.org
+security: []
+paths:
+  /pypi/{project}/json:
+    get:
+      operationId: getProject
+      parameters:
+        - {$ref: '#/components/parameters/project'}
+      responses:
+        '200':
+          description: Project metadata including the project-reported current version. Historical releases are not consumed.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Release'}
+        default: {description: Unknown project, rate limit, or other error.}
+  /pypi/{project}/{version}/json:
+    get:
+      operationId: getRelease
+      parameters:
+        - {$ref: '#/components/parameters/project'}
+        - {name: version, in: path, required: true, schema: {type: string}}
+      responses:
+        '200':
+          description: Version-specific metadata, files and known vulnerability records; no pagination.
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Release'}
+        default: {description: Unknown release, rate limit, or other error.}
+components:
+  parameters:
+    project: {name: project, in: path, required: true, schema: {type: string}}
+  schemas:
+    Release:
+      type: object
+      required: [info, urls, vulnerabilities]
+      properties:
+        info:
+          type: object
+          required: [name, version]
+          properties:
+            name: {type: string}
+            version: {type: string}
+            summary: {type: string}
+            project_url: {type: string}
+            requires_python: {type: string, nullable: true}
+            yanked: {type: boolean}
+            yanked_reason: {type: string, nullable: true}
+        last_serial: {type: integer}
+        urls:
+          type: array
+          items:
+            type: object
+            required: [filename, url, digests, yanked]
+            properties:
+              filename: {type: string}
+              url: {type: string, format: uri}
+              packagetype: {type: string}
+              python_version: {type: string}
+              requires_python: {type: string, nullable: true}
+              size: {type: integer}
+              yanked: {type: boolean}
+              yanked_reason: {type: string, nullable: true}
+              digests:
+                type: object
+                required: [sha256]
+                properties:
+                  sha256: {type: string}
+        vulnerabilities:
+          type: array
+          items:
+            type: object
+            properties:
+              id: {type: string}
+              aliases: {type: array, items: {type: string}}
+              details: {type: string}
+              fixed_in: {type: array, items: {type: string}}
+              link: {type: string}
+              withdrawn: {type: string, nullable: true}

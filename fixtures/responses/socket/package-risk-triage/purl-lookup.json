@@ -1,0 +1,32 @@
+[
+  {
+    "id": "pkg:npm/express@4.19.2",
+    "type": "npm",
+    "namespace": null,
+    "name": "express",
+    "version": "4.19.2",
+    "purl": "pkg:npm/express@4.19.2",
+    "alerts": [
+      {
+        "type": "filesystemAccess",
+        "category": "supply-chain-risk",
+        "severity": "low",
+        "action": "monitor",
+        "message": "Package accesses the file system."
+      }
+    ],
+    "alertPriorities": {
+      "critical": 0,
+      "high": 0,
+      "middle": 0,
+      "low": 1
+    }
+  },
+  {
+    "summary": {
+      "resolved": 1,
+      "notFound": 0,
+      "malformed": 0
+    }
+  }
+]

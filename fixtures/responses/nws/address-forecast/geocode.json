@@ -1,0 +1,44 @@
+{
+  "type": "FeatureCollection",
+  "licence": "Data \u00a9 OpenStreetMap contributors, ODbL 1.0. http://osm.org/copyright",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "place_id": 322770695,
+        "osm_type": "way",
+        "osm_id": 413296616,
+        "place_rank": 26,
+        "category": "highway",
+        "type": "unclassified",
+        "importance": 0.05339264591439685,
+        "addresstype": "road",
+        "name": "Apple Park Way",
+        "display_name": "Apple Park Way, Cupertino, Santa Clara County, California, 95014, United States",
+        "address": {
+          "road": "Apple Park Way",
+          "city": "Cupertino",
+          "county": "Santa Clara County",
+          "state": "California",
+          "ISO3166-2-lvl4": "US-CA",
+          "postcode": "95014",
+          "country": "United States",
+          "country_code": "us"
+        }
+      },
+      "bbox": [
+        -122.014385,
+        37.3350249,
+        -122.014172,
+        37.3350413
+      ],
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -122.0142785,
+          37.3350331
+        ]
+      }
+    }
+  ]
+}

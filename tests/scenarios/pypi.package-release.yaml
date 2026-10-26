@@ -1,0 +1,80 @@
+# Synthetic contract-shaped examples, not live captures.
+cases:
+  - name: resolved-version-files-and-advisory
+    workflow: package-release
+    inputs: {package: SampleProject}
+    requests:
+      - &project
+        method: GET
+        path: /pypi/SampleProject/json
+        query: {}
+        headers: &headers
+          accept: application/json
+          user-agent: arazzo-spec-library (https://github.com/strefethen/arazzo-spec-library)
+        response: {status: 200, fixture: fixtures/responses/pypi/package-release/project.json}
+      - &release
+        method: GET
+        path: /pypi/sampleproject/4.0.0/json
+        query: {}
+        headers: *headers
+        response: {status: 200, fixture: fixtures/responses/pypi/package-release/release.json}
+    expect:
+      kind: success
+      outputs: {package: sampleproject, version: 4.0.0, requires_python: '>=3.9', yanked: false, last_serial: 12345}
+      assert: '.outputs | (.files | length) == 2 and .files[0].digests.sha256 == ("a" * 64) and .files[1].yanked == true and .vulnerabilities[0].id == "PYSEC-2099-0001"'
+      view_contains: ['sampleproject==4.0.0', 'sha256=aaaa', 'yanked=true', 'PYSEC-2099-0001', 'not a security verdict']
+  - name: no-files-or-vulnerabilities
+    workflow: package-release
+    inputs: {package: SampleProject}
+    requests:
+      - *project
+      - <<: *release
+        response:
+          status: 200
+          body: {info: {name: sampleproject, version: 4.0.0, yanked: false}, urls: [], vulnerabilities: []}
+    expect:
+      kind: success
+      outputs: {package: sampleproject, version: 4.0.0, files: [], vulnerabilities: [], yanked: false}
+      view_contains: ['Files: 0', 'Vulnerability records: 0', 'not a security verdict']
+  - name: missing-project
+    workflow: package-release
+    inputs: {package: SampleProject}
+    requests:
+      - <<: *project
+        response: {status: 404, body: {message: Not Found}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: project-without-version
+    workflow: package-release
+    inputs: {package: SampleProject}
+    requests:
+      - <<: *project
+        response: {status: 200, body: {info: {name: sampleproject}}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: release-version-mismatch
+    workflow: package-release
+    inputs: {package: SampleProject}
+    requests:
+      - *project
+      - <<: *release
+        response:
+          status: 200
+          body: {info: {name: sampleproject, version: 3.0.0}, urls: [], vulnerabilities: []}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: rate-limited-release
+    workflow: package-release
+    inputs: {package: SampleProject}
+    requests:
+      - *project
+      - <<: *release
+        response: {status: 429, body: {message: Too Many Requests}, headers: {Retry-After: '60'}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: missing-file-hash
+    workflow: package-release
+    inputs: {package: SampleProject}
+    requests:
+      - *project
+      - <<: *release
+        response:
+          status: 200
+          body: {info: {name: sampleproject, version: 4.0.0}, urls: [{filename: sample.whl}], vulnerabilities: []}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}

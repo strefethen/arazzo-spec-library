@@ -1,0 +1,83 @@
+cases:
+  - name: apple-park-no-alerts
+    workflow: address-forecast
+    inputs: {address: "One Apple Park Way, Cupertino, CA 95014"}
+    requests:
+      - &geocode
+        method: GET
+        path: /search
+        query: {q: "One Apple Park Way, Cupertino, CA 95014", format: geojson, limit: "1", addressdetails: "1", countrycodes: us}
+        headers: {user-agent: arazzo-spec-library-example}
+        response: {status: 200, fixture: fixtures/responses/nws/address-forecast/geocode.json}
+      - &point
+        method: GET
+        path: /points/37.3350331,-122.0142785
+        query: {}
+        headers: {accept: application/geo+json}
+        response: {status: 200, fixture: fixtures/responses/nws/address-forecast/point.json}
+      - &forecast
+        method: GET
+        path: /gridpoints/MTR/95,83/forecast
+        query: {units: us}
+        response: {status: 200, fixture: fixtures/responses/nws/address-forecast/forecast.json}
+      - &alerts
+        method: GET
+        path: /alerts/active
+        query: {point: "37.3350331,-122.0142785"}
+        response: {status: 200, fixture: fixtures/responses/nws/address-forecast/alerts-active.json}
+    expect:
+      kind: success
+      outputs: {latitude: 37.3350331, longitude: -122.0142785, grid_id: MTR, grid_x: 95, grid_y: 83, first_temperature: 72, first_short_forecast: Sunny, alerts: [], first_alert_event: null}
+      view_contains: [Cupertino, Sunny, "Active alerts: 0"]
+  - name: multiple-active-alerts
+    workflow: address-forecast
+    inputs: {address: "One Apple Park Way, Cupertino, CA 95014"}
+    requests:
+      - *geocode
+      - *point
+      - *forecast
+      - <<: *alerts
+        response:
+          status: 200
+          body:
+            features:
+              - properties: {event: High Wind Warning, severity: Severe, headline: Strong winds expected}
+              - properties: {event: Flood Watch, severity: Moderate, headline: Flooding possible}
+    expect:
+      kind: success
+      outputs: {grid_id: MTR, first_alert_event: High Wind Warning}
+      assert: .outputs.alerts | length == 2
+      view_contains: [High Wind Warning, Flood Watch, "Active alerts: 2"]
+  - name: no-address-match-stops-before-nws
+    workflow: address-forecast
+    inputs: {address: "One Apple Park Way, Cupertino, CA 95014"}
+    requests:
+      - <<: *geocode
+        response: {status: 200, body: {type: FeatureCollection, features: []}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: upstream-rate-limit-stops-before-nws
+    workflow: address-forecast
+    inputs: {address: "One Apple Park Way, Cupertino, CA 95014"}
+    requests:
+      - <<: *geocode
+        response: {status: 429, body: {error: Too many requests}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: missing-coordinates-stop-before-nws
+    workflow: address-forecast
+    inputs: {address: "One Apple Park Way, Cupertino, CA 95014"}
+    requests:
+      - <<: *geocode
+        response:
+          status: 200
+          body: {features: [{properties: {display_name: Cupertino}, geometry: {type: Point}}]}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: missing-alert-collection-is-not-no-alerts
+    workflow: address-forecast
+    inputs: {address: "One Apple Park Way, Cupertino, CA 95014"}
+    requests:
+      - *geocode
+      - *point
+      - *forecast
+      - <<: *alerts
+        response: {status: 200, body: {type: FeatureCollection}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}

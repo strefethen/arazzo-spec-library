@@ -1,0 +1,17 @@
+{
+  "package": "pypi:PyYAML",
+  "version": "6.0.3",
+  "checked_at": "2026-10-26",
+  "decision": "adopt-with-bounded-use",
+  "purpose": "Contributor-only YAML parsing via safe_load",
+  "license": "MIT",
+  "commercial_trap": false,
+  "installed_version": "6.0.3",
+  "osv_exact_version_response": {},
+  "osv_response_means": "No advisory matched; not a safety guarantee",
+  "bus_factor": "not-assessed",
+  "scorecard": "not-assessed",
+  "attestations": "not-verified",
+  "trust_evidence": "Registry metadata and local installed-version match; no artifact-provenance claim",
+  "sources": ["https://pypi.org/pypi/PyYAML/6.0.3/json", "https://pyyaml.org/wiki/PyYAMLDocumentation", "https://github.com/yaml/pyyaml/blob/main/CHANGES"]
+}

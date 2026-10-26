@@ -1,0 +1,36 @@
+# Synthetic request/response contracts only. Never consume real Socket quota.
+cases:
+  - name: quota-then-package-results
+    workflow: package-risk-triage
+    inputs: &inputs {socket_token: fixture-token-not-a-secret, org_slug: example-org, purl: "pkg:npm/express@4.19.2"}
+    requests:
+      - &quota
+        method: GET
+        path: /v0/quota
+        query: {}
+        headers: {authorization: Bearer fixture-token-not-a-secret, accept: application/json}
+        response: {status: 200, fixture: fixtures/responses/socket/package-risk-triage/quota.json}
+      - method: POST
+        path: /v0/orgs/example-org/purl
+        query: {alerts: "true", compact: "true", poll: "false", summary: "true"}
+        headers: {authorization: Bearer fixture-token-not-a-secret, content-type: application/json}
+        body: {components: [{purl: "pkg:npm/express@4.19.2"}]}
+        response: {status: 200, fixture: fixtures/responses/socket/package-risk-triage/purl-lookup.json}
+    expect:
+      kind: success
+      outputs: {quota_remaining: 9900, quota_max: 10000, package_lookup_status: 200}
+      assert: .outputs.results[0].purl == "pkg:npm/express@4.19.2"
+  - name: insufficient-quota-never-look-up-package
+    workflow: package-risk-triage
+    inputs: *inputs
+    requests:
+      - <<: *quota
+        response: {status: 200, body: {quota: 99, maxQuota: 10000}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: rejected-auth-never-look-up-package
+    workflow: package-risk-triage
+    inputs: *inputs
+    requests:
+      - <<: *quota
+        response: {status: 401, body: {error: Unauthorized}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}

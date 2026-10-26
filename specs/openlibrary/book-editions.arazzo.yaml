@@ -1,0 +1,109 @@
+arazzo: 1.0.0
+info:
+  title: Open Library Book and Editions
+  version: 1.0.0
+  summary: Find a work, identify the selected match, and inspect a bounded edition page.
+  description: >
+    Fixture-only until request pacing is available. Query API parameters preserve
+    full /works keys, avoiding string extraction and path-prefix duplication.
+sourceDescriptions:
+  - name: openlibrary
+    url: ../../fixtures/openapi/openlibrary/catalog.yaml
+    type: openapi
+components:
+  parameters:
+    userAgent:
+      name: User-Agent
+      in: header
+      value: $inputs.user_agent
+    acceptJson:
+      name: Accept
+      in: header
+      value: application/json
+workflows:
+  - workflowId: book-editions
+    summary: Search, resolve the first matching work, and list its editions.
+    inputs:
+      type: object
+      properties:
+        query: {type: string, minLength: 1, default: The Wonderful Wizard of Oz}
+        user_agent:
+          type: string
+          minLength: 1
+          description: Application name and operator contact email; no anonymous default.
+        edition_limit: {type: integer, minimum: 1, maximum: 10, default: 5}
+        edition_offset: {type: integer, minimum: 0, maximum: 1000, default: 0}
+      required: [query, user_agent]
+    steps:
+      - stepId: search-books
+        operationId: $sourceDescriptions.openlibrary.searchBooks
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.acceptJson
+          - {name: q, in: query, value: $inputs.query}
+          - {name: fields, in: query, value: 'key,title,author_name,edition_count'}
+          - {name: limit, in: query, value: 1}
+          - {name: page, in: query, value: 1}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $inputs.edition_limit >= 1 && $inputs.edition_limit <= 10
+          - condition: $inputs.edition_offset >= 0 && $inputs.edition_offset <= 1000
+          - context: $response.body#/docs/0/key
+            type: regex
+            condition: '^/works/OL[0-9]+W$'
+          - condition: $response.body#/docs/0/title != null
+          - condition: $response.body#/docs/0/title != ''
+          - condition: $response.body#/numFound > 0
+        outputs:
+          work_key: $response.body#/docs/0/key
+          selected_match: $response.body#/docs/0
+          total_matches: $response.body#/numFound
+          start: $response.body#/start
+      - stepId: get-work
+        operationId: $sourceDescriptions.openlibrary.queryCatalog
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.acceptJson
+          - {name: type, in: query, value: /type/work}
+          - {name: key, in: query, value: $steps.search-books.outputs.work_key}
+          - {name: title, in: query, value: ''}
+          - {name: description, in: query, value: ''}
+          - {name: subjects, in: query, value: ''}
+          - {name: limit, in: query, value: 1}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/0/key == $steps.search-books.outputs.work_key
+          - condition: $response.body#/0/title != null
+          - condition: $response.body#/0/title != ''
+        outputs:
+          work: $response.body#/0
+          work_key: $response.body#/0/key
+      - stepId: get-editions
+        operationId: $sourceDescriptions.openlibrary.queryCatalog
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.acceptJson
+          - {name: type, in: query, value: /type/edition}
+          - {name: works, in: query, value: $steps.get-work.outputs.work_key}
+          - {name: title, in: query, value: ''}
+          - {name: isbn_13, in: query, value: ''}
+          - {name: publish_date, in: query, value: ''}
+          - {name: publishers, in: query, value: ''}
+          - {name: limit, in: query, value: $inputs.edition_limit}
+          - {name: offset, in: query, value: $inputs.edition_offset}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body != null
+          - condition: $response.body#/0 == null || $response.body#/0/key != null
+          - condition: $response.body#/0 == null || $response.body#/0/title != null
+        outputs:
+          editions: $response.body
+    outputs:
+      query: $inputs.query
+      selected_match: $steps.search-books.outputs.selected_match
+      total_matches: $steps.search-books.outputs.total_matches
+      search_start: $steps.search-books.outputs.start
+      work: $steps.get-work.outputs.work
+      editions: $steps.get-editions.outputs.editions
+      edition_limit: $inputs.edition_limit
+      edition_offset: $inputs.edition_offset

@@ -1,0 +1,4 @@
+[
+  {"id": 301, "number": 7, "title": "Synthetic issue", "state": "open", "html_url": "https://github.com/corpus-example/widget/issues/7", "updated_at": "2026-01-02T00:00:00Z"},
+  {"id": 302, "number": 8, "title": "Synthetic pull request", "state": "closed", "html_url": "https://github.com/corpus-example/widget/pull/8", "updated_at": "2026-01-01T00:00:00Z", "pull_request": {"url": "https://api.github.com/repos/corpus-example/widget/pulls/8"}}
+]

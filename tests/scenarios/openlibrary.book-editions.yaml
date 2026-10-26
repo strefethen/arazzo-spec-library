@@ -1,0 +1,87 @@
+# Synthetic responses only. Anchors share exact ordered HTTP expectations.
+cases:
+  - name: edition-limit-stops-before-work-requests
+    workflow: book-editions
+    inputs: {query: test, user_agent: corpus-fixture/1.0, edition_limit: 999}
+    requests:
+      - method: GET
+        path: /search.json
+        query: {q: test, fields: 'key,title,author_name,edition_count', limit: '1', page: '1'}
+        response: {status: 200, fixture: fixtures/responses/openlibrary/search.json}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: full-work-key-and-bounded-editions
+    workflow: book-editions
+    inputs: &inputs {query: clockwork library, user_agent: corpus-fixture/1.0 (fixtures@example.invalid), edition_limit: 2, edition_offset: 4}
+    requests:
+      - &search
+        method: GET
+        path: /search.json
+        query: {q: clockwork library, fields: 'key,title,author_name,edition_count', limit: '1', page: '1'}
+        headers: {accept: application/json, user-agent: corpus-fixture/1.0 (fixtures@example.invalid)}
+        response: {status: 200, fixture: fixtures/responses/openlibrary/search.json}
+      - &work
+        method: GET
+        path: /query.json
+        query: {type: /type/work, key: /works/OL123456W, title: '', description: '', subjects: '', limit: '1'}
+        headers: {accept: application/json, user-agent: corpus-fixture/1.0 (fixtures@example.invalid)}
+        response: {status: 200, fixture: fixtures/responses/openlibrary/work.json}
+      - &editions
+        method: GET
+        path: /query.json
+        query: {type: /type/edition, works: /works/OL123456W, title: '', isbn_13: '', publish_date: '', publishers: '', limit: '2', offset: '4'}
+        headers: {accept: application/json, user-agent: corpus-fixture/1.0 (fixtures@example.invalid)}
+        response: {status: 200, fixture: fixtures/responses/openlibrary/editions.json}
+    expect:
+      kind: success
+      outputs: {work: {key: /works/OL123456W, title: The Clockwork Library}, total_matches: 12, edition_limit: 2, edition_offset: 4}
+      assert: '.outputs.editions | length == 2'
+      view_contains: ['Selected: The Clockwork Library [/works/OL123456W]', 'Next offset: 6', 'date unavailable']
+  - name: empty-search-fails-before-query
+    workflow: book-editions
+    inputs: *inputs
+    requests:
+      - <<: *search
+        response: {status: 200, body: {numFound: 0, start: 0, docs: []}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: unprefixed-key-is-not-silently-rewritten
+    workflow: book-editions
+    inputs: *inputs
+    requests:
+      - <<: *search
+        response: {status: 200, body: {numFound: 1, start: 0, docs: [{key: OL123456W, title: Invalid key shape}]}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: different-selected-work-fails
+    workflow: book-editions
+    inputs: *inputs
+    requests:
+      - *search
+      - <<: *work
+        response: {status: 200, body: [{key: /works/OL999999W, title: Wrong work}]}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: empty-edition-page-preserves-work
+    workflow: book-editions
+    inputs: *inputs
+    requests:
+      - *search
+      - *work
+      - <<: *editions
+        response: {status: 200, body: []}
+    expect:
+      kind: success
+      outputs: {editions: []}
+      view_contains: ['Editions: 0', 'Page shorter than requested limit']
+  - name: missing-work-fails
+    workflow: book-editions
+    inputs: *inputs
+    requests:
+      - *search
+      - <<: *work
+        response: {status: 404, body: {error: not found}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}
+  - name: rate-limit-is-not-retried
+    workflow: book-editions
+    inputs: *inputs
+    requests:
+      - <<: *search
+        response: {status: 429, headers: {Retry-After: '1'}, body: {error: rate limit}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}

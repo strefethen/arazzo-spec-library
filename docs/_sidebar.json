@@ -1,0 +1,37 @@
+{
+  "sections": [
+    {
+      "title": "Getting Started",
+      "slug": "getting-started",
+      "items": [
+        { "title": "Overview", "slug": "getting-started/overview" }
+      ]
+    },
+    {
+      "title": "Corpus",
+      "slug": "corpus",
+      "items": [
+        { "title": "Repository Structure", "slug": "corpus/repository-structure" },
+        { "title": "Adding Specs", "slug": "corpus/adding-specs" },
+        { "title": "Candidate APIs", "slug": "corpus/candidate-apis" },
+        { "title": "NWS Public-Live Slice", "slug": "corpus/nws" },
+        { "title": "Socket.dev First Slice", "slug": "corpus/socket-dev" }
+      ]
+    },
+    {
+      "title": "Verification",
+      "slug": "verification",
+      "items": [
+        { "title": "Verification Model", "slug": "verification/model" }
+      ]
+    },
+    {
+      "title": "Reference",
+      "slug": "reference",
+      "items": [
+        { "title": "Manifest", "slug": "reference/manifest" },
+        { "title": "Verification Tiers", "slug": "reference/verification-tiers" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+cases:
+  - name: point-to-forecast-no-alerts
+    workflow: point-forecast-alerts
+    inputs: {latitude: 39.7456, longitude: -97.0892}
+    requests:
+      - &point
+        method: GET
+        path: /points/39.7456,-97.0892
+        query: {}
+        response: {status: 200, fixture: fixtures/responses/nws/point-forecast-alerts/point.json}
+      - method: GET
+        path: /gridpoints/TOP/31,80/forecast
+        query: {units: us}
+        response: {status: 200, fixture: fixtures/responses/nws/point-forecast-alerts/forecast.json}
+      - method: GET
+        path: /alerts/active
+        query: {point: "39.7456,-97.0892"}
+        response: {status: 200, fixture: fixtures/responses/nws/point-forecast-alerts/alerts-active.json}
+    expect:
+      kind: success
+      outputs: {location: Linn, state: KS, resolved_grid_id: TOP, first_temperature: 76, alerts: []}
+      view_contains: [Linn, Mostly Sunny]
+  - name: outside-coverage
+    workflow: point-forecast-alerts
+    inputs: {latitude: 39.7456, longitude: -97.0892}
+    requests:
+      - <<: *point
+        response: {status: 404, body: {title: Data Unavailable For Requested Point}}
+    expect: {kind: error, code: RUNTIME_SUCCESS_CRITERIA_FAILED}

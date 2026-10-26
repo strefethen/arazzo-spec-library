@@ -1,0 +1,101 @@
+openapi: 3.0.3
+info:
+  title: GitHub Public REST Read Subset
+  version: 1.0.0
+  description: Hand-maintained subset, not an official complete schema. See https://docs.github.com/en/rest/repos/repos and https://docs.github.com/en/rest/releases/releases and https://docs.github.com/en/rest/issues/issues.
+servers:
+  - url: https://api.github.com
+security: []
+paths:
+  /repos/{owner}/{repo}:
+    parameters:
+      - {$ref: '#/components/parameters/owner'}
+      - {$ref: '#/components/parameters/repo'}
+    get:
+      operationId: getRepository
+      responses:
+        '200':
+          description: Public repository identity.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id, name, full_name, owner, private]
+                properties:
+                  id: {type: integer}
+                  name: {type: string}
+                  full_name: {type: string}
+                  private: {type: boolean}
+                  owner:
+                    type: object
+                    required: [login]
+                    properties:
+                      login: {type: string}
+        default: {description: Missing repository, rate limit, or other error.}
+  /repos/{owner}/{repo}/releases:
+    parameters:
+      - {$ref: '#/components/parameters/owner'}
+      - {$ref: '#/components/parameters/repo'}
+    get:
+      operationId: listReleases
+      parameters:
+        - {$ref: '#/components/parameters/page'}
+        - {$ref: '#/components/parameters/perPage'}
+      responses:
+        '200':
+          description: One bounded page, possibly empty; Link header advertises other pages.
+          headers:
+            Link: {schema: {type: string}, description: Pagination links, when present.}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, tag_name]
+                  properties:
+                    id: {type: integer}
+                    tag_name: {type: string}
+                    html_url: {type: string}
+                    published_at: {type: string, nullable: true}
+                    prerelease: {type: boolean}
+        default: {description: Missing repository, rate limit, or other error.}
+  /repos/{owner}/{repo}/issues:
+    parameters:
+      - {$ref: '#/components/parameters/owner'}
+      - {$ref: '#/components/parameters/repo'}
+    get:
+      operationId: listIssues
+      parameters:
+        - {$ref: '#/components/parameters/page'}
+        - {$ref: '#/components/parameters/perPage'}
+        - {name: state, in: query, schema: {type: string, enum: [all]}}
+        - {name: sort, in: query, schema: {type: string, enum: [updated]}}
+        - {name: direction, in: query, schema: {type: string, enum: [desc]}}
+      responses:
+        '200':
+          description: One bounded page of issues and pull requests, sorted by most recently updated.
+          headers:
+            Link: {schema: {type: string}, description: Pagination links, when present.}
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required: [id, number, title]
+                  properties:
+                    id: {type: integer}
+                    number: {type: integer}
+                    title: {type: string}
+                    state: {type: string}
+                    html_url: {type: string}
+                    updated_at: {type: string}
+                    pull_request: {type: object, additionalProperties: true}
+        default: {description: Missing repository, disabled issues, rate limit, or other error.}
+components:
+  parameters:
+    owner: {name: owner, in: path, required: true, schema: {type: string}}
+    repo: {name: repo, in: path, required: true, schema: {type: string}}
+    page: {name: page, in: query, schema: {type: integer, minimum: 1, maximum: 100}}
+    perPage: {name: per_page, in: query, schema: {type: integer, minimum: 1, maximum: 30}}

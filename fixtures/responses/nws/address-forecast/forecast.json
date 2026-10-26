@@ -1,0 +1,17 @@
+{
+  "properties": {
+    "generatedAt": "2026-06-06T18:00:52+00:00",
+    "periods": [
+      {
+        "number": 1,
+        "name": "Today",
+        "temperature": 72,
+        "temperatureUnit": "F",
+        "windSpeed": "8 to 12 mph",
+        "windDirection": "NW",
+        "shortForecast": "Sunny",
+        "detailedForecast": "Sunny. High near 72, with temperatures falling to around 69 in the afternoon. Northwest wind 8 to 12 mph, with gusts as high as 20 mph."
+      }
+    ]
+  }
+}

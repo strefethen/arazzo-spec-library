@@ -1,0 +1,129 @@
+openapi: 3.0.3
+info:
+  title: Nominatim Search API Subset
+  version: 0.1.0
+  description: >
+    Repository-local companion OpenAPI document for the Nominatim search step
+    used by the canonical NWS address-to-forecast workflow. It models the small
+    public search surface needed to turn a one-line place or address query into
+    latitude/longitude coordinates.
+servers:
+  - url: https://nominatim.openstreetmap.org
+paths:
+  /search:
+    get:
+      operationId: searchPlaces
+      summary: Search for a place or address
+      parameters:
+        - name: User-Agent
+          in: header
+          required: true
+          schema:
+            type: string
+          example: arazzo-spec-library-example
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+          example: One Apple Park Way, Cupertino, CA 95014
+        - name: format
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - json
+              - jsonv2
+              - geojson
+              - geocodejson
+            default: geojson
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 40
+            default: 1
+        - name: addressdetails
+          in: query
+          required: false
+          schema:
+            type: integer
+            enum:
+              - 0
+              - 1
+            default: 1
+        - name: countrycodes
+          in: query
+          required: false
+          schema:
+            type: string
+          example: us
+      responses:
+        "200":
+          description: Search results ordered by Nominatim relevance.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SearchResponse"
+        default:
+          description: Error response.
+components:
+  schemas:
+    SearchResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          example: FeatureCollection
+        licence:
+          type: string
+        features:
+          type: array
+          items:
+            $ref: "#/components/schemas/SearchFeature"
+    SearchFeature:
+      type: object
+      properties:
+        type:
+          type: string
+          example: Feature
+        properties:
+          $ref: "#/components/schemas/SearchProperties"
+        geometry:
+          type: object
+          properties:
+            type:
+              type: string
+              example: Point
+            coordinates:
+              type: array
+              items:
+                type: number
+              minItems: 2
+              maxItems: 2
+    SearchProperties:
+      type: object
+      properties:
+        place_id:
+          type: integer
+        osm_type:
+          type: string
+        osm_id:
+          type: integer
+        category:
+          type: string
+        type:
+          type: string
+        addresstype:
+          type: string
+        name:
+          type: string
+        display_name:
+          type: string
+        address:
+          type: object
+          additionalProperties:
+            type: string

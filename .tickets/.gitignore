@@ -1,0 +1,18 @@
+# tkt runtime coordination state; canonical tickets are Markdown files.
+.state/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.lock
+*.tmp
+
+# Derived docs-engine artifacts: regenerated from the ticket Markdown by
+# every tkt mutation and by `tkt export sidebar`. Build output, not
+# source -- the docs engine reads them from the working tree, and
+# `tkt rev` excludes them from the corpus hash. Anchored to this
+# directory so a ticket that happens to share a name is unaffected.
+/_*
+/index.md
+/focus.md
+/closed-tickets.md

@@ -1,0 +1,178 @@
+openapi: 3.0.3
+info:
+  title: Socket.dev REST API Subset
+  version: 0.1.0
+  description: >
+    Repository-local companion OpenAPI document for the Socket.dev workflows in
+    this corpus. It intentionally models only the endpoints exercised by the
+    Arazzo specs; Socket's canonical API reference remains the source of truth.
+servers:
+  - url: https://api.socket.dev/v0
+security:
+  - bearerAuth: []
+paths:
+  /quota:
+    get:
+      operationId: getQuota
+      summary: Get current API quota
+      responses:
+        "200":
+          description: Quota information.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quota"
+        "401":
+          description: Unauthorized.
+        "429":
+          description: Insufficient quota for API route.
+  /orgs/{org_slug}/purl:
+    post:
+      operationId: getPackagesByPurlForOrg
+      summary: Batch retrieve package metadata and alerts by PURL
+      parameters:
+        - name: org_slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: alerts
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: compact
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: poll
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+        - name: summary
+          in: query
+          required: false
+          schema:
+            type: boolean
+            default: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PurlBatchRequest"
+      responses:
+        "200":
+          description: Package metadata, alert details, and optional summary.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PurlBatchResponse"
+            application/x-ndjson:
+              schema:
+                type: string
+        "400":
+          description: Bad request.
+        "401":
+          description: Unauthorized.
+        "403":
+          description: Insufficient max quota for API method.
+        "429":
+          description: Insufficient quota for API route.
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    Quota:
+      type: object
+      required:
+        - quota
+        - maxQuota
+        - nextWindowRefresh
+      properties:
+        quota:
+          type: integer
+          minimum: 0
+        maxQuota:
+          type: integer
+          minimum: 0
+        nextWindowRefresh:
+          type: string
+          nullable: true
+    PurlBatchRequest:
+      type: object
+      required:
+        - components
+      properties:
+        components:
+          type: array
+          items:
+            type: object
+            required:
+              - purl
+            properties:
+              purl:
+                type: string
+                example: pkg:npm/express@4.19.2
+    PurlBatchResponse:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/SocketArtifact"
+          - $ref: "#/components/schemas/PurlSummary"
+    SocketArtifact:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        namespace:
+          type: string
+          nullable: true
+        name:
+          type: string
+        version:
+          type: string
+        purl:
+          type: string
+        alerts:
+          type: array
+          items:
+            $ref: "#/components/schemas/SocketAlert"
+        alertPriorities:
+          type: object
+          additionalProperties:
+            type: integer
+    SocketAlert:
+      type: object
+      properties:
+        type:
+          type: string
+        category:
+          type: string
+        severity:
+          type: string
+        action:
+          type: string
+        message:
+          type: string
+    PurlSummary:
+      type: object
+      properties:
+        summary:
+          type: object
+          properties:
+            resolved:
+              type: integer
+            notFound:
+              type: integer
+            malformed:
+              type: integer

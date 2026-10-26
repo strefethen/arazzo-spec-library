@@ -1,0 +1,4 @@
+[
+  {"key": "/books/OL456789M", "title": "The Clockwork Library", "isbn_13": ["9780000000002"], "publish_date": "2024", "publishers": ["Example Books"]},
+  {"key": "/books/OL456790M", "title": "The Clockwork Library, illustrated"}
+]

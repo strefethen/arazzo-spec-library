@@ -1,0 +1,4 @@
+{
+  "status": "ok", "message-type": "work", "message-version": "1.0.0",
+  "message": {"DOI": "10.5555/example.article", "member": "4242", "title": ["Synthetic metadata provenance"], "publisher": "Example Press", "type": "book-chapter", "URL": "https://doi.org/10.5555/example.article"}
+}

@@ -1,0 +1,11 @@
+{
+  "info": {"name": "sampleproject", "version": "4.0.0", "summary": "Synthetic release, not a live capture", "project_url": "https://pypi.org/project/sampleproject/", "requires_python": ">=3.9", "yanked": false, "yanked_reason": null},
+  "last_serial": 12345,
+  "urls": [
+    {"filename": "sampleproject-4.0.0-py3-none-any.whl", "url": "https://files.pythonhosted.org/synthetic/sampleproject-4.0.0-py3-none-any.whl", "packagetype": "bdist_wheel", "python_version": "py3", "requires_python": ">=3.9", "size": 1234, "yanked": false, "yanked_reason": null, "digests": {"sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}},
+    {"filename": "sampleproject-4.0.0.tar.gz", "url": "https://files.pythonhosted.org/synthetic/sampleproject-4.0.0.tar.gz", "packagetype": "sdist", "python_version": "source", "requires_python": ">=3.9", "size": 2345, "yanked": true, "yanked_reason": "Synthetic test reason", "digests": {"sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}}
+  ],
+  "vulnerabilities": [
+    {"id": "PYSEC-2099-0001", "aliases": ["CVE-2099-0001"], "details": "Synthetic advisory; not a real vulnerability", "fixed_in": ["4.0.1"], "link": "https://example.invalid/synthetic-advisory", "withdrawn": null}
+  ]
+}

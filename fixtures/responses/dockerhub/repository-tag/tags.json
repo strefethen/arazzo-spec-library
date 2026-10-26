@@ -1,0 +1,6 @@
+{
+  "count": 9,
+  "next": "https://hub.docker.com/v2/namespaces/corpus-example/repositories/widget/tags?page=3&page_size=2",
+  "previous": "https://hub.docker.com/v2/namespaces/corpus-example/repositories/widget/tags?page=1&page_size=2",
+  "results": [{"id": 401, "name": "1.2.3", "repository": 501}, {"id": 402, "name": "stable", "repository": 501}]
+}

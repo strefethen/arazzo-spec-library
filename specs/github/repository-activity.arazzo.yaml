@@ -1,0 +1,117 @@
+arazzo: 1.0.0
+info:
+  title: GitHub Public Repository Activity
+  version: 1.0.0
+  description: Resolve a repository, then retrieve bounded published releases and recently updated issues or pull requests.
+sourceDescriptions:
+  - name: github
+    url: ../../fixtures/openapi/github/rest.yaml
+    type: openapi
+components:
+  parameters:
+    userAgent:
+      name: User-Agent
+      in: header
+      value: $inputs.user_agent
+    accept:
+      name: Accept
+      in: header
+      value: application/vnd.github+json
+    apiVersion:
+      name: X-GitHub-Api-Version
+      in: header
+      value: '2022-11-28'
+workflows:
+  - workflowId: repository-activity
+    summary: Inspect a public repository's identity, releases, and recent issues or PRs.
+    inputs:
+      type: object
+      required: [owner, repo]
+      properties:
+        owner: {type: string, minLength: 1, default: cli}
+        repo: {type: string, minLength: 1, default: cli}
+        page: {type: integer, minimum: 1, maximum: 100, default: 1}
+        per_page: {type: integer, minimum: 1, maximum: 30, default: 5}
+        user_agent:
+          type: string
+          default: arazzo-spec-library (https://github.com/strefethen/arazzo-spec-library)
+    steps:
+      - stepId: resolve-repository
+        operationId: $sourceDescriptions.github.getRepository
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.accept
+          - reference: $components.parameters.apiVersion
+          - {name: owner, in: path, value: $inputs.owner}
+          - {name: repo, in: path, value: $inputs.repo}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $inputs.page >= 1 && $inputs.page <= 100
+          - condition: $inputs.per_page >= 1 && $inputs.per_page <= 30
+          - condition: $response.body#/id > 0
+          - condition: '!($response.body#/owner/login == null)'
+          - condition: '!($response.body#/name == null)'
+          - condition: '!($response.body#/full_name == null)'
+          - condition: $response.body#/private == false
+        outputs:
+          owner: $response.body#/owner/login
+          repo: $response.body#/name
+          full_name: $response.body#/full_name
+          url: $response.body#/html_url
+          description: $response.body#/description
+          default_branch: $response.body#/default_branch
+          archived: $response.body#/archived
+      - stepId: list-releases
+        description: Empty published releases are valid; do not use the latest endpoint, which returns 404 for this case.
+        operationId: $sourceDescriptions.github.listReleases
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.accept
+          - reference: $components.parameters.apiVersion
+          - {name: owner, in: path, value: $steps.resolve-repository.outputs.owner}
+          - {name: repo, in: path, value: $steps.resolve-repository.outputs.repo}
+          - {name: page, in: query, value: $inputs.page}
+          - {name: per_page, in: query, value: $inputs.per_page}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: '!($response.body# == null)'
+          - condition: '$response.body#/0 == null || ($response.body#/0/id > 0 && !($response.body#/0/tag_name == null))'
+        outputs:
+          releases: $response.body#
+          link: $response.header.link
+      - stepId: list-recent-issues
+        operationId: $sourceDescriptions.github.listIssues
+        parameters:
+          - reference: $components.parameters.userAgent
+          - reference: $components.parameters.accept
+          - reference: $components.parameters.apiVersion
+          - {name: owner, in: path, value: $steps.resolve-repository.outputs.owner}
+          - {name: repo, in: path, value: $steps.resolve-repository.outputs.repo}
+          - {name: state, in: query, value: all}
+          - {name: sort, in: query, value: updated}
+          - {name: direction, in: query, value: desc}
+          - {name: page, in: query, value: $inputs.page}
+          - {name: per_page, in: query, value: $inputs.per_page}
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: '!($response.body# == null)'
+          - condition: '$response.body#/0 == null || ($response.body#/0/id > 0 && $response.body#/0/number > 0 && !($response.body#/0/title == null))'
+        outputs:
+          issues: $response.body#
+          link: $response.header.link
+          rate_remaining: $response.header.x-ratelimit-remaining
+          rate_reset: $response.header.x-ratelimit-reset
+    outputs:
+      repository: $steps.resolve-repository.outputs.full_name
+      url: $steps.resolve-repository.outputs.url
+      description: $steps.resolve-repository.outputs.description
+      default_branch: $steps.resolve-repository.outputs.default_branch
+      archived: $steps.resolve-repository.outputs.archived
+      releases: $steps.list-releases.outputs.releases
+      releases_link: $steps.list-releases.outputs.link
+      issues: $steps.list-recent-issues.outputs.issues
+      issues_link: $steps.list-recent-issues.outputs.link
+      page: $inputs.page
+      per_page: $inputs.per_page
+      rate_remaining: $steps.list-recent-issues.outputs.rate_remaining
+      rate_reset: $steps.list-recent-issues.outputs.rate_reset
