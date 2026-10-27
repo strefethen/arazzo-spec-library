@@ -9,6 +9,9 @@ not a captured vCenter response. Names, IDs, UUIDs, documentation IP ranges and
 optional omissions, valid empty collections and deliberate malformed/error bodies.
 Tests prove CLI 0.8.2 wiring and declared failure behavior only. They do not prove
 real authentication, TLS trust, privileges, response parity or operational value.
+VM container regressions include encoded empty/populated JSON strings and wrong
+container types, with exact failure-logout request sequences. Genuine empty
+containers and populated maps whose keys overlap the typed probes remain valid.
 
 Contracts checked on 2026-10-27 against the exact official **8.0.3** pages:
 

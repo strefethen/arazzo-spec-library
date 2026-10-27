@@ -1482,3 +1482,1353 @@ cases:
     - missing-nic -> unknown configured NIC
     - interface[7] unavailable
     - missing-disk -> unknown configured disk
+# Container type regressions: encoded JSON is data, never a decoded container.
+- name: config-string-object
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '{"name": "app-01", "guest_OS": "UBUNTU_64", "power_state": "POWERED_ON", "identity": {"name":
+        "app-01", "bios_uuid": "00000000-0000-0000-0000-000000000042", "instance_uuid": "11111111-1111-1111-1111-111111111142"},
+        "hardware": {"version": "VMX_20", "upgrade_policy": "NEVER"}, "boot": {"type": "EFI", "delay": 0,
+        "retry": false, "retry_delay": 10000, "enter_setup_mode": false}, "boot_devices": [], "cpu": {"count":
+        4, "cores_per_socket": 2, "hot_add_enabled": false, "hot_remove_enabled": false}, "memory": {"size_MiB":
+        8192, "hot_add_enabled": false}, "disks": {"2000": {"label": "Hard disk 1", "type": "SCSI", "scsi":
+        {"bus": 0, "unit": 0}, "backing": {"type": "VMDK_FILE", "vmdk_file": "[lab-store] app-01/root.vmdk"},
+        "capacity": 68719476736}}, "nics": {"4000": {"label": "Network adapter 1", "type": "VMXNET3", "mac_type":
+        "ASSIGNED", "mac_address": "00:50:56:aa:bb:42", "wake_on_lan_enabled": true, "backing": {"type":
+        "STANDARD_PORTGROUP", "network": "network-9", "network_name": "Lab LAN"}, "state": "CONNECTED",
+        "start_connected": true, "allow_guest_control": true}}, "cdroms": {}, "floppies": {}, "parallel_ports":
+        {}, "serial_ports": {}, "sata_adapters": {}, "scsi_adapters": {"1000": {"label": "SCSI controller
+        0", "type": "PVSCSI", "scsi": {"bus": 0, "unit": 7}, "sharing": "NONE"}}, "nvme_adapters": {}}'
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: config-nics-string-object
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: app-01
+        guest_OS: UBUNTU_64
+        power_state: POWERED_ON
+        identity:
+          name: app-01
+          bios_uuid: 00000000-0000-0000-0000-000000000042
+          instance_uuid: 11111111-1111-1111-1111-111111111142
+        hardware:
+          version: VMX_20
+          upgrade_policy: NEVER
+        boot:
+          type: EFI
+          delay: 0
+          retry: false
+          retry_delay: 10000
+          enter_setup_mode: false
+        boot_devices: []
+        cpu:
+          count: 4
+          cores_per_socket: 2
+          hot_add_enabled: false
+          hot_remove_enabled: false
+        memory:
+          size_MiB: 8192
+          hot_add_enabled: false
+        disks:
+          '2000':
+            label: Hard disk 1
+            type: SCSI
+            scsi:
+              bus: 0
+              unit: 0
+            backing:
+              type: VMDK_FILE
+              vmdk_file: '[lab-store] app-01/root.vmdk'
+            capacity: 68719476736
+        nics: '{}'
+        cdroms: {}
+        floppies: {}
+        parallel_ports: {}
+        serial_ports: {}
+        sata_adapters: {}
+        scsi_adapters:
+          '1000':
+            label: SCSI controller 0
+            type: PVSCSI
+            scsi:
+              bus: 0
+              unit: 7
+            sharing: NONE
+        nvme_adapters: {}
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: config-disks-string-object
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: app-01
+        guest_OS: UBUNTU_64
+        power_state: POWERED_ON
+        identity:
+          name: app-01
+          bios_uuid: 00000000-0000-0000-0000-000000000042
+          instance_uuid: 11111111-1111-1111-1111-111111111142
+        hardware:
+          version: VMX_20
+          upgrade_policy: NEVER
+        boot:
+          type: EFI
+          delay: 0
+          retry: false
+          retry_delay: 10000
+          enter_setup_mode: false
+        boot_devices: []
+        cpu:
+          count: 4
+          cores_per_socket: 2
+          hot_add_enabled: false
+          hot_remove_enabled: false
+        memory:
+          size_MiB: 8192
+          hot_add_enabled: false
+        disks: '{}'
+        nics:
+          '4000':
+            label: Network adapter 1
+            type: VMXNET3
+            mac_type: ASSIGNED
+            mac_address: 00:50:56:aa:bb:42
+            wake_on_lan_enabled: true
+            backing:
+              type: STANDARD_PORTGROUP
+              network: network-9
+              network_name: Lab LAN
+            state: CONNECTED
+            start_connected: true
+            allow_guest_control: true
+        cdroms: {}
+        floppies: {}
+        parallel_ports: {}
+        serial_ports: {}
+        sata_adapters: {}
+        scsi_adapters:
+          '1000':
+            label: SCSI controller 0
+            type: PVSCSI
+            scsi:
+              bus: 0
+              unit: 7
+            sharing: NONE
+        nvme_adapters: {}
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: tools-string-object
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - method: GET
+    path: /api/vcenter/vm/vm-42/tools
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '{"auto_update_supported": false, "upgrade_policy": "MANUAL", "run_state": "RUNNING", "version":
+        "12.4.0", "version_number": 12384, "version_status": "UNMANAGED", "install_type": "OPEN_VM_TOOLS"}'
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: identity-string-object
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/identity
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '{"name": "UBUNTU_64", "family": "LINUX", "full_name": {"id": "fixture.os", "default_message":
+        "Ubuntu Linux (64-bit)", "args": []}, "host_name": "app-01.lab.invalid", "ip_address": "192.0.2.42"}'
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: identity-full-name-string-object
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/identity
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: UBUNTU_64
+        family: LINUX
+        full_name: '{}'
+        host_name: app-01.lab.invalid
+        ip_address: 192.0.2.42
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: networking-string-object
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '{}'
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: interfaces-string-array
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/interfaces
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '[]'
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: routes-string-array
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/routes
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '[]'
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: filesystems-string-object
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - *id013
+  - *id014
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/local-filesystem
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '{}'
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: config-nics-populated-string-object
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: app-01
+        guest_OS: UBUNTU_64
+        power_state: POWERED_ON
+        identity:
+          name: app-01
+          bios_uuid: 00000000-0000-0000-0000-000000000042
+          instance_uuid: 11111111-1111-1111-1111-111111111142
+        hardware:
+          version: VMX_20
+          upgrade_policy: NEVER
+        boot:
+          type: EFI
+          delay: 0
+          retry: false
+          retry_delay: 10000
+          enter_setup_mode: false
+        boot_devices: []
+        cpu:
+          count: 4
+          cores_per_socket: 2
+          hot_add_enabled: false
+          hot_remove_enabled: false
+        memory:
+          size_MiB: 8192
+          hot_add_enabled: false
+        disks:
+          '2000':
+            label: Hard disk 1
+            type: SCSI
+            scsi:
+              bus: 0
+              unit: 0
+            backing:
+              type: VMDK_FILE
+              vmdk_file: '[lab-store] app-01/root.vmdk'
+            capacity: 68719476736
+        nics: '{"4000": {"label": "Network adapter 1", "type": "VMXNET3", "mac_type": "ASSIGNED", "mac_address":
+          "00:50:56:aa:bb:42", "wake_on_lan_enabled": true, "backing": {"type": "STANDARD_PORTGROUP", "network":
+          "network-9", "network_name": "Lab LAN"}, "state": "CONNECTED", "start_connected": true, "allow_guest_control":
+          true}}'
+        cdroms: {}
+        floppies: {}
+        parallel_ports: {}
+        serial_ports: {}
+        sata_adapters: {}
+        scsi_adapters:
+          '1000':
+            label: SCSI controller 0
+            type: PVSCSI
+            scsi:
+              bus: 0
+              unit: 7
+            sharing: NONE
+        nvme_adapters: {}
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: interfaces-populated-string-array
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/interfaces
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '[{"mac_address": "00:50:56:aa:bb:42", "nic": "4000", "ip": {"ip_addresses": [{"ip_address":
+        "192.0.2.42", "prefix_length": 24, "origin": "MANUAL", "state": "PREFERRED"}], "dhcp": {"ipv4_enabled":
+        false, "ipv6_enabled": false}}}, {"mac_address": "00:00:00:00:00:00"}]'
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: routes-populated-string-array
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/routes
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '[{"network": "0.0.0.0", "prefix_length": 0, "gateway_address": "192.0.2.1", "interface_index":
+        0}, {"network": "198.51.100.0", "prefix_length": 24}]'
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: filesystems-populated-string-object
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - *id013
+  - *id014
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/local-filesystem
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '{"/": {"capacity": 64424509440, "free_space": 32212254720, "filesystem": "ext4", "mappings":
+        [{"disk": "2000"}]}, "/run": {"capacity": 1073741824, "free_space": 1000000000, "filesystem": "tmpfs"}}'
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: config-array-invalid
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: config-nics-array-invalid
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: app-01
+        guest_OS: UBUNTU_64
+        power_state: POWERED_ON
+        identity:
+          name: app-01
+          bios_uuid: 00000000-0000-0000-0000-000000000042
+          instance_uuid: 11111111-1111-1111-1111-111111111142
+        hardware:
+          version: VMX_20
+          upgrade_policy: NEVER
+        boot:
+          type: EFI
+          delay: 0
+          retry: false
+          retry_delay: 10000
+          enter_setup_mode: false
+        boot_devices: []
+        cpu:
+          count: 4
+          cores_per_socket: 2
+          hot_add_enabled: false
+          hot_remove_enabled: false
+        memory:
+          size_MiB: 8192
+          hot_add_enabled: false
+        disks:
+          '2000':
+            label: Hard disk 1
+            type: SCSI
+            scsi:
+              bus: 0
+              unit: 0
+            backing:
+              type: VMDK_FILE
+              vmdk_file: '[lab-store] app-01/root.vmdk'
+            capacity: 68719476736
+        nics: []
+        cdroms: {}
+        floppies: {}
+        parallel_ports: {}
+        serial_ports: {}
+        sata_adapters: {}
+        scsi_adapters:
+          '1000':
+            label: SCSI controller 0
+            type: PVSCSI
+            scsi:
+              bus: 0
+              unit: 7
+            sharing: NONE
+        nvme_adapters: {}
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: config-disks-array-invalid
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: app-01
+        guest_OS: UBUNTU_64
+        power_state: POWERED_ON
+        identity:
+          name: app-01
+          bios_uuid: 00000000-0000-0000-0000-000000000042
+          instance_uuid: 11111111-1111-1111-1111-111111111142
+        hardware:
+          version: VMX_20
+          upgrade_policy: NEVER
+        boot:
+          type: EFI
+          delay: 0
+          retry: false
+          retry_delay: 10000
+          enter_setup_mode: false
+        boot_devices: []
+        cpu:
+          count: 4
+          cores_per_socket: 2
+          hot_add_enabled: false
+          hot_remove_enabled: false
+        memory:
+          size_MiB: 8192
+          hot_add_enabled: false
+        disks: []
+        nics:
+          '4000':
+            label: Network adapter 1
+            type: VMXNET3
+            mac_type: ASSIGNED
+            mac_address: 00:50:56:aa:bb:42
+            wake_on_lan_enabled: true
+            backing:
+              type: STANDARD_PORTGROUP
+              network: network-9
+              network_name: Lab LAN
+            state: CONNECTED
+            start_connected: true
+            allow_guest_control: true
+        cdroms: {}
+        floppies: {}
+        parallel_ports: {}
+        serial_ports: {}
+        sata_adapters: {}
+        scsi_adapters:
+          '1000':
+            label: SCSI controller 0
+            type: PVSCSI
+            scsi:
+              bus: 0
+              unit: 7
+            sharing: NONE
+        nvme_adapters: {}
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: tools-array-invalid
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - method: GET
+    path: /api/vcenter/vm/vm-42/tools
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: identity-array-invalid
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/identity
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: identity-full-name-array-invalid
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/identity
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: UBUNTU_64
+        family: LINUX
+        full_name: []
+        host_name: app-01.lab.invalid
+        ip_address: 192.0.2.42
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: config-disks-null-invalid
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: app-01
+        guest_OS: UBUNTU_64
+        power_state: POWERED_ON
+        identity:
+          name: app-01
+          bios_uuid: 00000000-0000-0000-0000-000000000042
+          instance_uuid: 11111111-1111-1111-1111-111111111142
+        hardware:
+          version: VMX_20
+          upgrade_policy: NEVER
+        boot:
+          type: EFI
+          delay: 0
+          retry: false
+          retry_delay: 10000
+          enter_setup_mode: false
+        boot_devices: []
+        cpu:
+          count: 4
+          cores_per_socket: 2
+          hot_add_enabled: false
+          hot_remove_enabled: false
+        memory:
+          size_MiB: 8192
+          hot_add_enabled: false
+        disks: null
+        nics:
+          '4000':
+            label: Network adapter 1
+            type: VMXNET3
+            mac_type: ASSIGNED
+            mac_address: 00:50:56:aa:bb:42
+            wake_on_lan_enabled: true
+            backing:
+              type: STANDARD_PORTGROUP
+              network: network-9
+              network_name: Lab LAN
+            state: CONNECTED
+            start_connected: true
+            allow_guest_control: true
+        cdroms: {}
+        floppies: {}
+        parallel_ports: {}
+        serial_ports: {}
+        sata_adapters: {}
+        scsi_adapters:
+          '1000':
+            label: SCSI controller 0
+            type: PVSCSI
+            scsi:
+              bus: 0
+              unit: 7
+            sharing: NONE
+        nvme_adapters: {}
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: config-nics-missing-invalid
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: app-01
+        guest_OS: UBUNTU_64
+        power_state: POWERED_ON
+        identity:
+          name: app-01
+          bios_uuid: 00000000-0000-0000-0000-000000000042
+          instance_uuid: 11111111-1111-1111-1111-111111111142
+        hardware:
+          version: VMX_20
+          upgrade_policy: NEVER
+        boot:
+          type: EFI
+          delay: 0
+          retry: false
+          retry_delay: 10000
+          enter_setup_mode: false
+        boot_devices: []
+        cpu:
+          count: 4
+          cores_per_socket: 2
+          hot_add_enabled: false
+          hot_remove_enabled: false
+        memory:
+          size_MiB: 8192
+          hot_add_enabled: false
+        disks:
+          '2000':
+            label: Hard disk 1
+            type: SCSI
+            scsi:
+              bus: 0
+              unit: 0
+            backing:
+              type: VMDK_FILE
+              vmdk_file: '[lab-store] app-01/root.vmdk'
+            capacity: 68719476736
+        cdroms: {}
+        floppies: {}
+        parallel_ports: {}
+        serial_ports: {}
+        sata_adapters: {}
+        scsi_adapters:
+          '1000':
+            label: SCSI controller 0
+            type: PVSCSI
+            scsi:
+              bus: 0
+              unit: 7
+            sharing: NONE
+        nvme_adapters: {}
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: genuine-empty-device-and-guest-containers
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: app-01
+        guest_OS: UBUNTU_64
+        power_state: POWERED_ON
+        identity:
+          name: app-01
+          bios_uuid: 00000000-0000-0000-0000-000000000042
+          instance_uuid: 11111111-1111-1111-1111-111111111142
+        hardware:
+          version: VMX_20
+          upgrade_policy: NEVER
+        boot:
+          type: EFI
+          delay: 0
+          retry: false
+          retry_delay: 10000
+          enter_setup_mode: false
+        boot_devices: []
+        cpu:
+          count: 4
+          cores_per_socket: 2
+          hot_add_enabled: false
+          hot_remove_enabled: false
+        memory:
+          size_MiB: 8192
+          hot_add_enabled: false
+        disks: {}
+        nics: {}
+        cdroms: {}
+        floppies: {}
+        parallel_ports: {}
+        serial_ports: {}
+        sata_adapters: {}
+        scsi_adapters:
+          '1000':
+            label: SCSI controller 0
+            type: PVSCSI
+            scsi:
+              bus: 0
+              unit: 7
+            sharing: NONE
+        nvme_adapters: {}
+  - *id010
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/identity
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: UBUNTU_64
+        family: LINUX
+        full_name: {}
+        host_name: app-01.lab.invalid
+        ip_address: 192.0.2.42
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: {}
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/interfaces
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/routes
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/local-filesystem
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: {}
+  - *id006
+  expect:
+    kind: success
+    outputs:
+      configuration:
+        nics: {}
+        disks: {}
+      guest_identity:
+        full_name: {}
+      guest_networking: {}
+      guest_interfaces: []
+      guest_routes: []
+      guest_filesystems: {}
+    assert: .outputs | .configuration.nics == {} and .configuration.disks == {} and .guest_identity.full_name
+      == {} and .guest_networking == {} and .guest_interfaces == [] and .guest_routes == [] and .guest_filesystems
+      == {}
+    view_contains:
+    - 'Configured NICs: 0'
+    - 'Configured disks: 0'
+    - 'Guest interfaces: 0'
+    - 'Guest routes: 0'
+    - 'Guest filesystems: 0'
+    forbidden_output: *id007
+- name: container-probe-keys-remain-legitimate
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: app-01
+        guest_OS: UBUNTU_64
+        power_state: POWERED_ON
+        identity:
+          name: app-01
+          bios_uuid: 00000000-0000-0000-0000-000000000042
+          instance_uuid: 11111111-1111-1111-1111-111111111142
+        hardware:
+          version: VMX_20
+          upgrade_policy: NEVER
+        boot:
+          type: EFI
+          delay: 0
+          retry: false
+          retry_delay: 10000
+          enter_setup_mode: false
+        boot_devices: []
+        cpu:
+          count: 4
+          cores_per_socket: 2
+          hot_add_enabled: false
+          hot_remove_enabled: false
+        memory:
+          size_MiB: 8192
+          hot_add_enabled: false
+        disks:
+          '2000':
+            label: Hard disk 1
+            type: SCSI
+            scsi:
+              bus: 0
+              unit: 0
+            backing:
+              type: VMDK_FILE
+              vmdk_file: '[lab-store] app-01/root.vmdk'
+            capacity: 68719476736
+          name:
+            label: Hard disk 1
+            type: SCSI
+            scsi:
+              bus: 0
+              unit: 0
+            backing:
+              type: VMDK_FILE
+              vmdk_file: '[lab-store] app-01/root.vmdk'
+            capacity: 68719476736
+        nics:
+          '4000':
+            label: Network adapter 1
+            type: VMXNET3
+            mac_type: ASSIGNED
+            mac_address: 00:50:56:aa:bb:42
+            wake_on_lan_enabled: true
+            backing:
+              type: STANDARD_PORTGROUP
+              network: network-9
+              network_name: Lab LAN
+            state: CONNECTED
+            start_connected: true
+            allow_guest_control: true
+          name:
+            label: Network adapter 1
+            type: VMXNET3
+            mac_type: ASSIGNED
+            mac_address: 00:50:56:aa:bb:42
+            wake_on_lan_enabled: true
+            backing:
+              type: STANDARD_PORTGROUP
+              network: network-9
+              network_name: Lab LAN
+            state: CONNECTED
+            start_connected: true
+            allow_guest_control: true
+        cdroms: {}
+        floppies: {}
+        parallel_ports: {}
+        serial_ports: {}
+        sata_adapters: {}
+        scsi_adapters:
+          '1000':
+            label: SCSI controller 0
+            type: PVSCSI
+            scsi:
+              bus: 0
+              unit: 7
+            sharing: NONE
+        nvme_adapters: {}
+  - *id010
+  - *id011
+  - *id012
+  - *id013
+  - *id014
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/local-filesystem
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        /:
+          capacity: 64424509440
+          free_space: 32212254720
+          filesystem: ext4
+          mappings:
+          - disk: '2000'
+        /run:
+          capacity: 1073741824
+          free_space: 1000000000
+          filesystem: tmpfs
+        name:
+          capacity: 64424509440
+          free_space: 32212254720
+          filesystem: ext4
+          mappings:
+          - disk: '2000'
+  - *id006
+  expect:
+    kind: success
+    outputs:
+      configuration:
+        name: app-01
+        guest_OS: UBUNTU_64
+        power_state: POWERED_ON
+        identity:
+          name: app-01
+          bios_uuid: 00000000-0000-0000-0000-000000000042
+          instance_uuid: 11111111-1111-1111-1111-111111111142
+        hardware:
+          version: VMX_20
+          upgrade_policy: NEVER
+        boot:
+          type: EFI
+          delay: 0
+          retry: false
+          retry_delay: 10000
+          enter_setup_mode: false
+        boot_devices: []
+        cpu:
+          count: 4
+          cores_per_socket: 2
+          hot_add_enabled: false
+          hot_remove_enabled: false
+        memory:
+          size_MiB: 8192
+          hot_add_enabled: false
+        disks:
+          '2000':
+            label: Hard disk 1
+            type: SCSI
+            scsi:
+              bus: 0
+              unit: 0
+            backing:
+              type: VMDK_FILE
+              vmdk_file: '[lab-store] app-01/root.vmdk'
+            capacity: 68719476736
+          name:
+            label: Hard disk 1
+            type: SCSI
+            scsi:
+              bus: 0
+              unit: 0
+            backing:
+              type: VMDK_FILE
+              vmdk_file: '[lab-store] app-01/root.vmdk'
+            capacity: 68719476736
+        nics:
+          '4000':
+            label: Network adapter 1
+            type: VMXNET3
+            mac_type: ASSIGNED
+            mac_address: 00:50:56:aa:bb:42
+            wake_on_lan_enabled: true
+            backing:
+              type: STANDARD_PORTGROUP
+              network: network-9
+              network_name: Lab LAN
+            state: CONNECTED
+            start_connected: true
+            allow_guest_control: true
+          name:
+            label: Network adapter 1
+            type: VMXNET3
+            mac_type: ASSIGNED
+            mac_address: 00:50:56:aa:bb:42
+            wake_on_lan_enabled: true
+            backing:
+              type: STANDARD_PORTGROUP
+              network: network-9
+              network_name: Lab LAN
+            state: CONNECTED
+            start_connected: true
+            allow_guest_control: true
+        cdroms: {}
+        floppies: {}
+        parallel_ports: {}
+        serial_ports: {}
+        sata_adapters: {}
+        scsi_adapters:
+          '1000':
+            label: SCSI controller 0
+            type: PVSCSI
+            scsi:
+              bus: 0
+              unit: 7
+            sharing: NONE
+        nvme_adapters: {}
+      guest_filesystems:
+        /:
+          capacity: 64424509440
+          free_space: 32212254720
+          filesystem: ext4
+          mappings:
+          - disk: '2000'
+        /run:
+          capacity: 1073741824
+          free_space: 1000000000
+          filesystem: tmpfs
+        name:
+          capacity: 64424509440
+          free_space: 32212254720
+          filesystem: ext4
+          mappings:
+          - disk: '2000'
+      guest_interfaces:
+      - mac_address: 00:50:56:aa:bb:42
+        nic: '4000'
+        ip:
+          ip_addresses:
+          - ip_address: 192.0.2.42
+            prefix_length: 24
+            origin: MANUAL
+            state: PREFERRED
+          dhcp:
+            ipv4_enabled: false
+            ipv6_enabled: false
+      - mac_address: 00:00:00:00:00:00
+      guest_routes:
+      - network: 0.0.0.0
+        prefix_length: 0
+        gateway_address: 192.0.2.1
+        interface_index: 0
+      - network: 198.51.100.0
+        prefix_length: 24
+      guest_identity:
+        name: UBUNTU_64
+        family: LINUX
+        full_name:
+          id: fixture.os
+          default_message: Ubuntu Linux (64-bit)
+          args: []
+        host_name: app-01.lab.invalid
+        ip_address: 192.0.2.42
+      guest_networking:
+        dns_values:
+          host_name: app-01
+          domain_name: lab.invalid
+        dns:
+          ip_addresses:
+          - 192.0.2.53
+          search_domains:
+          - lab.invalid
+    view_contains:
+    - 'NIC name: Network adapter 1'
+    - 'Disk name: Hard disk 1'
+    - 'Filesystem name:'
+    - 4000 -> Network adapter 1
+    - 2000 -> Hard disk 1
+    forbidden_output: *id007

@@ -2,9 +2,9 @@
 title: Reject stringified containers in vSphere VM telemetry
 type: bug
 priority: 1
-state: open
+state: in_progress
 created_at: 2026-10-27T19:18:45Z
-last_changed: 2026-10-27T19:18:57Z
+last_changed: 2026-10-27T19:27:43Z
 plan: investigation
 files:
     README.md: m
@@ -13,6 +13,7 @@ files:
     specs/vsphere/cluster-infrastructure-assessment.arazzo.yaml: r
     specs/vsphere/vm-guest-diagnosis.arazzo.yaml: m
     tests/scenarios/vsphere.vm-guest-diagnosis.yaml: m
+assignee: codex
 deps:
     - asl-785d1
 ---

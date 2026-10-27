@@ -208,6 +208,12 @@ shapes and the pinned SDK source used to disambiguate filesystem maps and
 optional fields. Subset schemas and runtime shape/identity guards do not claim
 full JSON Schema response validation.
 
+VM container guards combine shape checks with CLI 0.8.2 typed property/index
+access, so decoded JSON strings such as `"{}"` and `"[]"` cannot impersonate
+objects or arrays. The type probes compare a member with itself: genuine empty
+containers, optional omissions and arbitrary map keys remain valid. Offline
+scenarios require malformed data to stop work, attempt logout and exit nonzero.
+
 ```bash
 python3 scripts/verify.py vsphere.vm-guest-diagnosis
 python3 -m unittest discover -s tests -p 'test_vsphere_auth.py'

@@ -139,6 +139,9 @@ workflows:
     - type: regex
       context: $response.body
       condition: ^\{
+    # Regex unwraps strings. Typed property access requires an actual object;
+    # reflexive equality permits absent properties and every legitimate value.
+    - condition: ($response.body#).name == ($response.body#).name
     - type: regex
       context: $response.body#/name
       condition: ^\S.*$
@@ -157,9 +160,12 @@ workflows:
     - type: regex
       context: $response.body#/nics
       condition: ^\{
+    # No device-map key is reserved or required by these type probes.
+    - condition: ($response.body#/nics).name == ($response.body#/nics).name
     - type: regex
       context: $response.body#/disks
       condition: ^\{
+    - condition: ($response.body#/disks).name == ($response.body#/disks).name
     onFailure:
     - name: cleanup-after-failure
       type: goto
@@ -176,6 +182,7 @@ workflows:
     - type: regex
       context: $response.body
       condition: ^\{
+    - condition: ($response.body#).run_state == ($response.body#).run_state
     - type: regex
       context: $response.body#/run_state
       condition: ^\S.*$
@@ -201,6 +208,7 @@ workflows:
     - type: regex
       context: $response.body
       condition: ^\{
+    - condition: ($response.body#).name == ($response.body#).name
     - type: regex
       context: $response.body#/name
       condition: ^\S.*$
@@ -212,6 +220,7 @@ workflows:
     - type: regex
       context: $response.body#/full_name
       condition: ^\{
+    - condition: ($response.body#/full_name).id == ($response.body#/full_name).id
     - condition: '!($response.body#/host_name == null)'
     onFailure:
     - name: cleanup-after-failure
@@ -229,6 +238,7 @@ workflows:
     - type: regex
       context: $response.body
       condition: ^\{
+    - condition: ($response.body#).dns_values == ($response.body#).dns_values
     onFailure:
     - name: cleanup-after-failure
       type: goto
@@ -245,6 +255,9 @@ workflows:
     - type: regex
       context: $response.body
       condition: ^\[
+    # Typed indexing accepts genuine empty arrays (absent index is null) and
+    # populated arrays without imposing a schema on their first element.
+    - condition: ($response.body#)[0] == ($response.body#)[0]
     onFailure:
     - name: cleanup-after-failure
       type: goto
@@ -261,6 +274,7 @@ workflows:
     - type: regex
       context: $response.body
       condition: ^\[
+    - condition: ($response.body#)[0] == ($response.body#)[0]
     onFailure:
     - name: cleanup-after-failure
       type: goto
@@ -277,6 +291,7 @@ workflows:
     - type: regex
       context: $response.body
       condition: ^\{
+    - condition: ($response.body#).name == ($response.body#).name
     onFailure:
     - name: cleanup-after-failure
       type: goto
