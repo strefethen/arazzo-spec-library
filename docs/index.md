@@ -36,7 +36,7 @@ repository, for example `../arazzo-spec-library/docs`.
 
 ## Current Status
 
-The corpus has ten workflows across NWS, Socket, GitHub, PyPI, Docker Hub,
+The corpus has eleven workflows across NWS, Socket, GitHub, PyPI, Docker Hub,
 Open Library, Crossref, crates.io and vSphere. The manifest records runnable entries and
 their test scenarios; provider READMEs record live evidence and limitations.
 
@@ -45,9 +45,12 @@ their test scenarios; provider READMEs record live evidence and limitations.
 - GitHub, PyPI, Docker Hub and Crossref with bounded public read-only live proof.
 - Open Library and crates.io with complete fixture execution but explicit
   identified-client/pacing gates before live use.
-- [vSphere VM/guest diagnosis](../specs/vsphere/README.md) with integrated session
+- [vSphere VM/guest diagnosis and cluster assessment](../specs/vsphere/README.md) with integrated session
   lifecycle and a configured private endpoint pickup path: **vSphere 8.0 U3
   contract-based; synthetic fixtures; live execution unverified.** Authentication
   creates/deletes a temporary session; no live vCenter access was used.
+  Cluster assessment covers HA/DRS, the returned root pool's allocations and
+  children, and cluster-filtered host/VM inventory. Configured totals do not
+  establish utilization, storage/network backings or placement readiness.
 
 Run `python3 scripts/verify.py` from the repository root for offline proof.

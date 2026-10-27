@@ -1,0 +1,337 @@
+openapi: 3.0.3
+info:
+  title: vSphere scoped cluster assessment subset
+  version: 8.0.3
+  description: vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified. Unwrapped
+    /api bodies. Get responses do not supply mandatory resource IDs; retain request identities. Optional
+    fields remain absent. Additional properties preserved; subset and runtime guards are not full response
+    validation.
+servers:
+- url: https://vcenter.invalid
+paths:
+  /api/vcenter/datacenter:
+    get:
+      operationId: listDatacenters
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/datacenter/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: &id001
+          type: string
+      - name: names
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id001
+      responses:
+        '200':
+          description: Versioned unwrapped response; collection caps are hard failure limits, not pagination.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Datacenter'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error, including exceeded collection cap
+        '503':
+          description: Service unavailable
+  /api/vcenter/cluster:
+    get:
+      operationId: listClusters
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/cluster/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: names
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id001
+      - name: datacenters
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id001
+      responses:
+        '200':
+          description: Versioned unwrapped response; collection caps are hard failure limits, not pagination.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClusterSummary'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error, including exceeded collection cap
+        '503':
+          description: Service unavailable
+  /api/vcenter/cluster/{cluster}:
+    get:
+      operationId: getCluster
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/cluster/cluster/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: cluster
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '200':
+          description: Versioned unwrapped response; collection caps are hard failure limits, not pagination.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cluster'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error, including exceeded collection cap
+        '503':
+          description: Service unavailable
+  /api/vcenter/resource-pool/{resource_pool}:
+    get:
+      operationId: getResourcePool
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/resource-pool/resource_pool/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: resource_pool
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '200':
+          description: Versioned unwrapped response; collection caps are hard failure limits, not pagination.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourcePool'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error, including exceeded collection cap
+        '503':
+          description: Service unavailable
+  /api/vcenter/host:
+    get:
+      operationId: listHosts
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/host/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: clusters
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id001
+      responses:
+        '200':
+          description: Versioned unwrapped response; collection caps are hard failure limits, not pagination.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Host'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error, including exceeded collection cap
+        '503':
+          description: Service unavailable
+  /api/vcenter/vm:
+    get:
+      operationId: listVms
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/vm/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: clusters
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id001
+      responses:
+        '200':
+          description: Versioned unwrapped response; collection caps are hard failure limits, not pagination.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VmSummary'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error, including exceeded collection cap
+        '503':
+          description: Service unavailable
+components:
+  schemas:
+    Datacenter:
+      type: object
+      required:
+      - datacenter
+      - name
+      properties:
+        datacenter: &id002
+          type: string
+        name: *id002
+    ClusterSummary:
+      type: object
+      required:
+      - cluster
+      - name
+      - ha_enabled
+      - drs_enabled
+      properties:
+        cluster: *id001
+        name: *id001
+        ha_enabled: &id003
+          type: boolean
+        drs_enabled: *id003
+    Cluster:
+      type: object
+      required:
+      - name
+      - resource_pool
+      properties:
+        name: *id001
+        resource_pool: *id001
+    Shares:
+      type: object
+      required:
+      - level
+      properties:
+        level:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CUSTOM
+        shares: &id004
+          type: integer
+          format: int64
+    Allocation:
+      type: object
+      required:
+      - reservation
+      - expandable_reservation
+      - limit
+      - shares
+      properties:
+        reservation: *id004
+        expandable_reservation: *id003
+        limit: *id004
+        shares:
+          $ref: '#/components/schemas/Shares'
+    ResourcePool:
+      type: object
+      required:
+      - name
+      - resource_pools
+      properties:
+        name: *id001
+        resource_pools:
+          type: array
+          items: *id001
+        cpu_allocation:
+          $ref: '#/components/schemas/Allocation'
+        memory_allocation:
+          $ref: '#/components/schemas/Allocation'
+    Host:
+      type: object
+      required:
+      - host
+      - name
+      - connection_state
+      properties:
+        host: *id001
+        name: *id001
+        connection_state:
+          type: string
+          enum:
+          - CONNECTED
+          - DISCONNECTED
+          - NOT_RESPONDING
+        power_state:
+          type: string
+          enum:
+          - POWERED_ON
+          - POWERED_OFF
+          - STANDBY
+    VmSummary:
+      type: object
+      required:
+      - vm
+      - name
+      - power_state
+      properties:
+        vm: *id001
+        name: *id001
+        power_state:
+          type: string
+          enum:
+          - POWERED_ON
+          - POWERED_OFF
+          - SUSPENDED
+        cpu_count: *id004
+        memory_size_MiB: *id004

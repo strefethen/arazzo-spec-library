@@ -1,4 +1,4 @@
-# vSphere VM and guest diagnosis
+# vSphere diagnostic reports
 
 **vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified.**
 No real vCenter has verified authentication, TLS trust, privileges, response
@@ -6,10 +6,12 @@ compatibility or operational usefulness. Synthetic tests prove request wiring
 and declared failures only. `vm-guest-diagnosis` correlates one uniquely scoped
 VM's configured hardware with Tools and all documented guest telemetry. It
 creates a temporary session, reads inventory/guest information, then deletes
-the session. It performs no VM changes. Cluster assessment and OVF preparation
-are separate future slices.
+the session. `cluster-infrastructure-assessment` combines cluster configuration,
+root-pool allocations and cluster-filtered host/VM inventory. Both reports
+perform inventory reads plus session creation/deletion. OVF preparation remains
+a separate future slice.
 
-## Selection and report
+## VM selection and report
 
 Provide an exact datacenter name and an exact VM name. The workflow requires
 exactly one visible datacenter match, then exactly one VM match filtered by
@@ -214,3 +216,115 @@ python3 -m unittest discover -s tests -p 'test_vsphere_auth.py'
 No live compatibility is established by those commands. A real deployment still
 needs to confirm TLS, Basic authentication, least-privilege account access,
 version/response compatibility and usefulness of its reported telemetry.
+
+## Cluster configuration and inventory assessment
+
+**vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified.**
+The approved documented scope is configuration/HA/DRS, the returned root resource
+pool's allocations and child IDs, and cluster-filtered host/VM inventory. This
+workflow does not call ConfigTargets or negotiate a release, substitute
+datacenter-wide resources, inspect storage/network backings, map VMs to hosts,
+or establish utilization, available capacity or placement readiness.
+
+Provide exact `datacenter_name` and `cluster_name` strings. The chain is login →
+unique visible named datacenter → unique cluster filtered by that datacenter ID
+and name → cluster detail → the returned root resource pool → hosts filtered by
+the selected cluster ID → VMs filtered by the same cluster ID → logout. The
+cluster detail name must agree with selection. Neither cluster get nor pool get
+supplies a mandatory ID in its response; `selected_cluster.cluster` and
+`resource_pool_id` preserve the identities used in the requests. Child pool IDs
+are reported without recursive reads. The exact fixture request path proves
+the returned pool is followed, including a different synthetic root-pool ID.
+There is no separate pool response-ID comparison or invented name constraint.
+
+Datacenter/cluster list limits are 1000 each, host lists 2500, and VM lists 4000.
+These are hard provider failure caps, not pagination. No whole-estate query or
+automatic retry follows a limit error. All lists are account-visible inventory;
+the two scoped lists are separate reads, not an atomic snapshot. Normal commands
+below explicitly bound each response to 10 MiB, each HTTP request to 30 seconds
+and the whole run to 5 minutes. A response-size or workflow-timeout failure is
+not a partial report; whole-run timeout can skip cleanup.
+
+Raw output includes datacenter and cluster selection, full cluster detail,
+requested pool identity, complete pool data and every field of every host/VM
+entry. Root `resource_pools`, hosts and VMs are required arrays; an empty array
+is valid, while a missing/null/object-shaped array fails. Runtime guards check
+every inventory entry, including later entries, before the next work request;
+malformed entries route to failure logout. Required names/IDs/states and
+booleans must have their documented types/values. Optional host `power_state`,
+VM `cpu_count`/`memory_size_MiB`, pool allocations and shares counts remain absent
+when not reported. Present allocation objects need their required fields;
+malformed/null optional data fails rather than becoming a default value.
+These guards are a scoped response check, not complete JSON Schema validation.
+
+The jq report shows HA/DRS, pool reservation/limit/expandability/shares, child
+pool IDs, per-host states, per-VM state/configuration, state counts and configured
+CPU and memory sums. VM memory is **MiB**; resource-pool memory reservation/limit
+uses the provider's **MB** wording, and pool CPU uses **MHz**. A limit of `-1`
+means unlimited; shares are relative and their count is relevant only for
+`CUSTOM`. Missing allocation objects display as unknown. VM totals show the
+known subtotal and how many VMs supplied each field; any omitted value makes
+the full total unknown. Empty inventories have complete zero configured totals.
+None of these configured allocations measures utilization.
+
+Use the shared endpoint helper, credential setup and TLS/cleanup guidance
+above. The helper includes both registered vSphere workflows; if an older bundle
+exists, choose a new output directory. Have the administrator confirm privileges
+for datacenter/cluster lists, cluster and resource-pool get, and scoped host/VM
+lists, including `System.Read` where required. Login alone proves no read access.
+Discovery, strict validation and first-login preview make no vCenter calls:
+
+```bash
+python3 scripts/configure_vsphere.py \
+  --server https://vcenter.example.invalid \
+  --output-dir .artifacts/vsphere-cluster-configured
+arazzo-cli --json catalog specs/vsphere
+arazzo-cli --json show cluster-infrastructure-assessment --dir specs/vsphere
+arazzo-cli --json validate .artifacts/vsphere-cluster-configured/specs/vsphere/cluster-infrastructure-assessment.arazzo.yaml --strict
+arazzo-cli --json run .artifacts/vsphere-cluster-configured/specs/vsphere/cluster-infrastructure-assessment.arazzo.yaml cluster-infrastructure-assessment \
+  --dry-run --strict-inputs --max-redirects 0 --step login \
+  --input authorization=synthetic-preview \
+  --input datacenter_name='Lab DC' --input cluster_name='Compute A'
+```
+
+The preview prints only a login plan: no cluster, pool or inventory results.
+After choosing an authorized real HTTPS origin and privately setting
+`VSPHERE_AUTHORIZATION` using the hidden-prompt setup above, run the whole chain:
+
+```bash
+set -o pipefail
+umask 077
+: "${VSPHERE_AUTHORIZATION:?VSPHERE_AUTHORIZATION must contain a complete Basic header}"
+arazzo-cli --json run .artifacts/vsphere-cluster-configured/specs/vsphere/cluster-infrastructure-assessment.arazzo.yaml cluster-infrastructure-assessment \
+  --strict-inputs --max-redirects 0 \
+  --http-timeout 30s --execution-timeout 5m --max-response-size 10485760 \
+  --input 'authorization=${VSPHERE_AUTHORIZATION}' \
+  --input datacenter_name='Lab DC' --input cluster_name='Compute A' \
+  > .artifacts/vsphere-cluster-assessment.json && \
+  jq -er -f views/vsphere.cluster-infrastructure-assessment.summary.jq .artifacts/vsphere-cluster-assessment.json
+unset VSPHERE_AUTHORIZATION
+```
+
+Agents use `.artifacts/vsphere-cluster-assessment.json` as raw data; jq only
+presents it and rejects error envelopes. Never use live `--step`, traces,
+verbose output, global Basic headers or redirects. Ordinary failures after
+login attempt the separate failure logout and remain nonzero; successful work
+also requires successful logout. Cancellation/whole-run timeout can skip
+cleanup, and cleanup replaces the original top-level error. Use the approved
+administrator session-revocation/expiry process if cleanup fails or is skipped.
+No real credentials or live calls were used in this implementation.
+
+Inspect the full raw outputs separately without losing optional omissions:
+
+```bash
+jq -e '.outputs' .artifacts/vsphere-cluster-assessment.json
+```
+
+The [cluster OpenAPI subset](../../fixtures/openapi/vsphere/cluster-infrastructure-assessment.yaml)
+links the exact official 8.0.3 operation pages. The
+[fixture provenance](../../fixtures/responses/vsphere/README.md) links the
+required/optional field definitions. Run its complete synthetic scenarios with:
+
+```bash
+python3 scripts/verify.py vsphere.cluster-infrastructure-assessment
+```

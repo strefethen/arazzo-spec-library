@@ -1,0 +1,13 @@
+[
+  {
+    "host": "host-31",
+    "name": "esx-a.example.invalid",
+    "connection_state": "CONNECTED",
+    "power_state": "POWERED_ON"
+  },
+  {
+    "host": "host-32",
+    "name": "esx-b.example.invalid",
+    "connection_state": "DISCONNECTED"
+  }
+]

@@ -1,0 +1,3410 @@
+cases:
+- name: rich-cluster-report
+  workflow: cluster-infrastructure-assessment
+  inputs: &id001
+    authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    datacenter_name: Lab DC
+    cluster_name: Compute A
+  requests:
+  - &id002
+    method: POST
+    path: /api/session
+    query: {}
+    headers:
+      Authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    absent_headers:
+    - vmware-api-session-id
+    response:
+      status: 201
+      body: synthetic-session-sentinel-42
+  - &id010
+    method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/datacenters.json
+  - &id012
+    method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/clusters.json
+  - &id013
+    method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/cluster.json
+  - &id019
+    method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/pool.json
+  - &id021
+    method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/hosts.json
+  - &id023
+    method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/vms.json
+  - &id003
+    method: DELETE
+    path: /api/session
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 204
+      body: null
+  expect:
+    kind: success
+    outputs:
+      datacenter: &id009
+        datacenter: datacenter-21
+        name: Lab DC
+      selected_cluster: &id011
+        cluster: domain-c7
+        name: Compute A
+        ha_enabled: true
+        drs_enabled: false
+      cluster_configuration:
+        name: Compute A
+        resource_pool: resgroup-73
+      resource_pool_id: resgroup-73
+      resource_pool:
+        name: Resources
+        resource_pools: &id014
+        - resgroup-74
+        - resgroup-75
+        cpu_allocation: &id017
+          reservation: 2400
+          expandable_reservation: true
+          limit: -1
+          shares: &id016
+            level: NORMAL
+        memory_allocation: &id015
+          reservation: 4096
+          expandable_reservation: false
+          limit: 65536
+          shares: &id018
+            level: CUSTOM
+            shares: 12000
+      hosts:
+      - &id020
+        host: host-31
+        name: esx-a.example.invalid
+        connection_state: CONNECTED
+        power_state: POWERED_ON
+      - host: host-32
+        name: esx-b.example.invalid
+        connection_state: DISCONNECTED
+      vms:
+      - &id022
+        vm: vm-42
+        name: app-01
+        power_state: POWERED_ON
+        cpu_count: 4
+        memory_size_MiB: 8192
+      - vm: vm-43
+        name: batch-01
+        power_state: POWERED_OFF
+        cpu_count: 8
+        memory_size_MiB: 16384
+      - vm: vm-44
+        name: paused-01
+        power_state: SUSPENDED
+        cpu_count: 2
+        memory_size_MiB: 4096
+    forbidden_output: &id004
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+    view_contains:
+    - 'HA enabled: true; DRS enabled: false'
+    - resgroup-73, requested identity
+    - 'Child resource pools: 2'
+    - 'Host connection DISCONNECTED: 1'
+    - power=unknown
+    - 'VM power SUSPENDED: 1'
+    - 'Configured CPU: 14 vCPUs known across 3/3 VMs'
+    - 'Configured memory: 28672 MiB'
+    - reservation=2400 MHz
+    - unlimited (-1)
+    - shares=unknown
+    - shares=12000
+- name: empty-host-and-vm-inventory
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/datacenters.json
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/clusters.json
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/cluster.json
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/pool.json
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id003
+  expect:
+    kind: success
+    outputs:
+      hosts: []
+      vms: []
+    forbidden_output: *id004
+    view_contains:
+    - 'Hosts: 0'
+    - 'VMs: 0'
+    - 'Configured CPU: 0 vCPUs known across 0/0 VMs'
+    - 'Configured memory: 0 MiB'
+    - complete configured total
+- name: optional-allocations-and-vm-config-absent
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/datacenters.json
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/clusters.json
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/cluster.json
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: &id005
+        name: Resources
+        resource_pools: []
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/hosts.json
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: &id006
+      - vm: vm-42
+        name: app-01
+        power_state: POWERED_ON
+      - vm: vm-43
+        name: batch-01
+        power_state: POWERED_OFF
+        cpu_count: 8
+  - *id003
+  expect:
+    kind: success
+    outputs:
+      resource_pool: *id005
+      vms: *id006
+    forbidden_output: *id004
+    view_contains:
+    - 'Pool CPU allocation: unknown (not reported)'
+    - 'Pool memory allocation: unknown (not reported)'
+    - 'Child resource pools: 0'
+    - 'Configured CPU: 8 vCPUs known across 1/2 VMs; unknown for 1; total unknown'
+    - 'Configured memory: 0 MiB known across 0/2 VMs; unknown for 2; total unknown'
+    assert: (.outputs.resource_pool | has("cpu_allocation") | not) and (.outputs.resource_pool | has("memory_allocation")
+      | not) and (.outputs.vms[0] | has("cpu_count") | not) and (.outputs.hosts[1] | has("power_state")
+      | not)
+- name: only-cpu_allocation-absent
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/datacenters.json
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/clusters.json
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/cluster.json
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: &id007
+        name: Resources
+        resource_pools:
+        - resgroup-74
+        - resgroup-75
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: false
+          limit: 65536
+          shares:
+            level: CUSTOM
+            shares: 12000
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/hosts.json
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/vms.json
+  - *id003
+  expect:
+    kind: success
+    outputs:
+      resource_pool: *id007
+    forbidden_output: *id004
+    view_contains:
+    - unknown (not reported)
+- name: only-memory_allocation-absent
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/datacenters.json
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/clusters.json
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/cluster.json
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: &id008
+        name: Resources
+        resource_pools:
+        - resgroup-74
+        - resgroup-75
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: true
+          limit: -1
+          shares:
+            level: NORMAL
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/hosts.json
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/vms.json
+  - *id003
+  expect:
+    kind: success
+    outputs:
+      resource_pool: *id008
+    forbidden_output: *id004
+    view_contains:
+    - unknown (not reported)
+- name: returned-root-pool-identity-not-hardcoded
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/datacenters.json
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/clusters.json
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Compute A
+        resource_pool: resgroup-901
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-901
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/pool.json
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/hosts.json
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/vms.json
+  - *id003
+  expect:
+    kind: success
+    outputs:
+      resource_pool_id: resgroup-901
+    forbidden_output: *id004
+    view_contains:
+    - resgroup-901, requested identity
+- name: datacenters-zero
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: datacenters-duplicate
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - *id009
+      - *id009
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: datacenters-object-shaped
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        '0': *id009
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: datacenters-null
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: null
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: datacenters-missing-id
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - name: Lab DC
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: datacenters-empty-id
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datacenter: ''
+        name: Lab DC
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: datacenters-nonstring-id
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datacenter: 42
+        name: Lab DC
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: datacenters-missing-name
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datacenter: datacenter-21
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: datacenters-wrong-name
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datacenter: datacenter-21
+        name: Wrong identity
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: clusters-zero
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: clusters-duplicate
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - *id011
+      - *id011
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: clusters-object-shaped
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        '0': *id011
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: clusters-null
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: null
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: clusters-missing-id
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - name: Compute A
+        ha_enabled: true
+        drs_enabled: false
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: clusters-empty-id
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - cluster: ''
+        name: Compute A
+        ha_enabled: true
+        drs_enabled: false
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: clusters-nonstring-id
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - cluster: 42
+        name: Compute A
+        ha_enabled: true
+        drs_enabled: false
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: clusters-missing-name
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - cluster: domain-c7
+        ha_enabled: true
+        drs_enabled: false
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: clusters-wrong-name
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - cluster: domain-c7
+        name: Wrong identity
+        ha_enabled: true
+        drs_enabled: false
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cluster-invalid-ha_enabled-None
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - cluster: domain-c7
+        name: Compute A
+        ha_enabled: null
+        drs_enabled: false
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cluster-invalid-ha_enabled-true
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - cluster: domain-c7
+        name: Compute A
+        ha_enabled: 'true'
+        drs_enabled: false
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cluster-invalid-ha_enabled-1
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - cluster: domain-c7
+        name: Compute A
+        ha_enabled: 1
+        drs_enabled: false
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cluster-invalid-drs_enabled-None
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - cluster: domain-c7
+        name: Compute A
+        ha_enabled: true
+        drs_enabled: null
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cluster-invalid-drs_enabled-true
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - cluster: domain-c7
+        name: Compute A
+        ha_enabled: true
+        drs_enabled: 'true'
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cluster-invalid-drs_enabled-1
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - cluster: domain-c7
+        name: Compute A
+        ha_enabled: true
+        drs_enabled: 1
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cluster-detail-wrong-name
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Other cluster
+        resource_pool: resgroup-73
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cluster-detail-missing-pool
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Compute A
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cluster-detail-empty-pool
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Compute A
+        resource_pool: ''
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cluster-detail-nonstring-pool
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Compute A
+        resource_pool: 73
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cluster-detail-object-required
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: pool-missing-name
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        resource_pools: []
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: pool-missing-children
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: pool-children-object
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: {}
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: pool-invalid-later-child
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools:
+        - resgroup-74
+        - 42
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: pool-object-required
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cpu_allocation-null
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation: null
+        memory_allocation: *id015
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cpu_allocation-empty
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation: {}
+        memory_allocation: *id015
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cpu_allocation-negative-reservation
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation:
+          reservation: -2
+          expandable_reservation: true
+          limit: -1
+          shares: *id016
+        memory_allocation: *id015
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cpu_allocation-fraction-reservation
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation:
+          reservation: 1.5
+          expandable_reservation: true
+          limit: -1
+          shares: *id016
+        memory_allocation: *id015
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cpu_allocation-bad-limit
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: true
+          limit: -2
+          shares: *id016
+        memory_allocation: *id015
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cpu_allocation-bad-expandable
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: 'true'
+          limit: -1
+          shares: *id016
+        memory_allocation: *id015
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cpu_allocation-bad-level
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: true
+          limit: -1
+          shares:
+            level: unknown
+        memory_allocation: *id015
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cpu_allocation-bad-shares
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: true
+          limit: -1
+          shares:
+            level: CUSTOM
+            shares: '100'
+        memory_allocation: *id015
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: memory_allocation-null
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation: *id017
+        memory_allocation: null
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: memory_allocation-empty
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation: *id017
+        memory_allocation: {}
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: memory_allocation-negative-reservation
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation: *id017
+        memory_allocation:
+          reservation: -2
+          expandable_reservation: false
+          limit: 65536
+          shares: *id018
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: memory_allocation-fraction-reservation
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation: *id017
+        memory_allocation:
+          reservation: 1.5
+          expandable_reservation: false
+          limit: 65536
+          shares: *id018
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: memory_allocation-bad-limit
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation: *id017
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: false
+          limit: -2
+          shares: *id018
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: memory_allocation-bad-expandable
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation: *id017
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: 'true'
+          limit: 65536
+          shares: *id018
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: memory_allocation-bad-level
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation: *id017
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: false
+          limit: 65536
+          shares:
+            level: unknown
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: memory_allocation-bad-shares
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: *id014
+        cpu_allocation: *id017
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: false
+          limit: 65536
+          shares:
+            level: CUSTOM
+            shares: '100'
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: hosts-missing
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: null
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: hosts-object
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: {}
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: hosts-primitive
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - *id020
+      - 42
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: hosts-empty-entry
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - *id020
+      - {}
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: hosts-later-invalid-host
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - host: host-31
+        name: esx-a.example.invalid
+        connection_state: CONNECTED
+        power_state: POWERED_ON
+      - host: null
+        name: esx-b.example.invalid
+        connection_state: DISCONNECTED
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: hosts-later-invalid-name
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - host: host-31
+        name: esx-a.example.invalid
+        connection_state: CONNECTED
+        power_state: POWERED_ON
+      - host: host-32
+        name: 42
+        connection_state: DISCONNECTED
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: hosts-later-invalid-connection_state
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - host: host-31
+        name: esx-a.example.invalid
+        connection_state: CONNECTED
+        power_state: POWERED_ON
+      - host: host-32
+        name: esx-b.example.invalid
+        connection_state: unknown
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: hosts-later-invalid-power_state
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - host: host-31
+        name: esx-a.example.invalid
+        connection_state: CONNECTED
+        power_state: POWERED_ON
+      - host: host-32
+        name: esx-b.example.invalid
+        connection_state: DISCONNECTED
+        power_state: null
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-missing
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: null
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-object
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: {}
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-primitive
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - *id022
+      - 42
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-empty-entry
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - *id022
+      - {}
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-later-invalid-vm
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - vm: vm-42
+        name: app-01
+        power_state: POWERED_ON
+        cpu_count: 4
+        memory_size_MiB: 8192
+      - vm: null
+        name: batch-01
+        power_state: POWERED_OFF
+        cpu_count: 8
+        memory_size_MiB: 16384
+      - vm: vm-44
+        name: paused-01
+        power_state: SUSPENDED
+        cpu_count: 2
+        memory_size_MiB: 4096
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-later-invalid-name
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - vm: vm-42
+        name: app-01
+        power_state: POWERED_ON
+        cpu_count: 4
+        memory_size_MiB: 8192
+      - vm: vm-43
+        name: 42
+        power_state: POWERED_OFF
+        cpu_count: 8
+        memory_size_MiB: 16384
+      - vm: vm-44
+        name: paused-01
+        power_state: SUSPENDED
+        cpu_count: 2
+        memory_size_MiB: 4096
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-later-invalid-power_state
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - vm: vm-42
+        name: app-01
+        power_state: POWERED_ON
+        cpu_count: 4
+        memory_size_MiB: 8192
+      - vm: vm-43
+        name: batch-01
+        power_state: unknown
+        cpu_count: 8
+        memory_size_MiB: 16384
+      - vm: vm-44
+        name: paused-01
+        power_state: SUSPENDED
+        cpu_count: 2
+        memory_size_MiB: 4096
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-later-invalid-cpu_count
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - vm: vm-42
+        name: app-01
+        power_state: POWERED_ON
+        cpu_count: 4
+        memory_size_MiB: 8192
+      - vm: vm-43
+        name: batch-01
+        power_state: POWERED_OFF
+        cpu_count: '4'
+        memory_size_MiB: 16384
+      - vm: vm-44
+        name: paused-01
+        power_state: SUSPENDED
+        cpu_count: 2
+        memory_size_MiB: 4096
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-later-invalid-memory_size_MiB
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - vm: vm-42
+        name: app-01
+        power_state: POWERED_ON
+        cpu_count: 4
+        memory_size_MiB: 8192
+      - vm: vm-43
+        name: batch-01
+        power_state: POWERED_OFF
+        cpu_count: 8
+        memory_size_MiB: null
+      - vm: vm-44
+        name: paused-01
+        power_state: SUSPENDED
+        cpu_count: 2
+        memory_size_MiB: 4096
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-fractional-cpu_count
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - vm: vm-42
+        name: app-01
+        power_state: POWERED_ON
+        cpu_count: 4
+        memory_size_MiB: 8192
+      - vm: vm-43
+        name: batch-01
+        power_state: POWERED_OFF
+        cpu_count: 1.5
+        memory_size_MiB: 16384
+      - vm: vm-44
+        name: paused-01
+        power_state: SUSPENDED
+        cpu_count: 2
+        memory_size_MiB: 4096
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-negative-cpu_count
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - vm: vm-42
+        name: app-01
+        power_state: POWERED_ON
+        cpu_count: 4
+        memory_size_MiB: 8192
+      - vm: vm-43
+        name: batch-01
+        power_state: POWERED_OFF
+        cpu_count: -1
+        memory_size_MiB: 16384
+      - vm: vm-44
+        name: paused-01
+        power_state: SUSPENDED
+        cpu_count: 2
+        memory_size_MiB: 4096
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-fractional-memory_size_MiB
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - vm: vm-42
+        name: app-01
+        power_state: POWERED_ON
+        cpu_count: 4
+        memory_size_MiB: 8192
+      - vm: vm-43
+        name: batch-01
+        power_state: POWERED_OFF
+        cpu_count: 8
+        memory_size_MiB: 1.5
+      - vm: vm-44
+        name: paused-01
+        power_state: SUSPENDED
+        cpu_count: 2
+        memory_size_MiB: 4096
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-negative-memory_size_MiB
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - vm: vm-42
+        name: app-01
+        power_state: POWERED_ON
+        cpu_count: 4
+        memory_size_MiB: 8192
+      - vm: vm-43
+        name: batch-01
+        power_state: POWERED_OFF
+        cpu_count: 8
+        memory_size_MiB: -1
+      - vm: vm-44
+        name: paused-01
+        power_state: SUSPENDED
+        cpu_count: 2
+        memory_size_MiB: 4096
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: datacenters-forbidden403
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: datacenters-missing404
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 404
+      body:
+        error_type: NOT_FOUND
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: clusters-forbidden403
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: clusters-missing404
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 404
+      body:
+        error_type: NOT_FOUND
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cluster-forbidden403
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cluster-missing404
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 404
+      body:
+        error_type: NOT_FOUND
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: pool-forbidden403
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: pool-missing404
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 404
+      body:
+        error_type: NOT_FOUND
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: hosts-forbidden403
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: hosts-missing404
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 404
+      body:
+        error_type: NOT_FOUND
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-forbidden403
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-missing404
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 404
+      body:
+        error_type: NOT_FOUND
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: datacenters-provider-limit500
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 500
+      body:
+        error_type: UNABLE_TO_ALLOCATE_RESOURCE
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: clusters-provider-limit500
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 500
+      body:
+        error_type: UNABLE_TO_ALLOCATE_RESOURCE
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: hosts-provider-limit500
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 500
+      body:
+        error_type: UNABLE_TO_ALLOCATE_RESOURCE
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-provider-limit500
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 500
+      body:
+        error_type: UNABLE_TO_ALLOCATE_RESOURCE
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: auth401
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - method: POST
+    path: /api/session
+    query: {}
+    headers:
+      Authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    absent_headers:
+    - vmware-api-session-id
+    response:
+      status: 401
+      body:
+        error_type: UNAUTHENTICATED
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: unexpected-status-no-token-preview
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - method: POST
+    path: /api/session
+    query: {}
+    headers:
+      Authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    absent_headers:
+    - vmware-api-session-id
+    response:
+      status: 200
+      body: synthetic-session-sentinel-42
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: normal-logout-failure
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - *id023
+  - &id024
+    method: DELETE
+    path: /api/session
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 503
+      body:
+        error_type: SERVICE_UNAVAILABLE
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: work-and-cleanup-failure
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id024
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: reported-zero-configuration-is-preserved
+  workflow: cluster-infrastructure-assessment
+  inputs:
+    authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    datacenter_name: Lab DC
+    cluster_name: Compute A
+  requests:
+  - method: POST
+    path: /api/session
+    query: {}
+    headers:
+      Authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    absent_headers:
+    - vmware-api-session-id
+    response:
+      status: 201
+      body: synthetic-session-sentinel-42
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/datacenters.json
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/clusters.json
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/cluster.json
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/pool.json
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/hosts.json
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: &id025
+      - vm: vm-0
+        name: initializing
+        power_state: POWERED_OFF
+        cpu_count: 0
+        memory_size_MiB: 0
+  - method: DELETE
+    path: /api/session
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 204
+      body: null
+  expect:
+    kind: success
+    outputs:
+      vms: *id025
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+    view_contains:
+    - 'Configured CPU: 0 vCPUs known across 1/1 VMs; unknown for 0; complete configured total'
+    - 'Configured memory: 0 MiB known across 1/1 VMs; unknown for 0; complete configured total'
+- name: hosts-invalid-first-entry
+  workflow: cluster-infrastructure-assessment
+  inputs:
+    authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    datacenter_name: Lab DC
+    cluster_name: Compute A
+  requests:
+  - method: POST
+    path: /api/session
+    query: {}
+    headers:
+      Authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    absent_headers:
+    - vmware-api-session-id
+    response:
+      status: 201
+      body: synthetic-session-sentinel-42
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/datacenters.json
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/clusters.json
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/cluster.json
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/pool.json
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - 42
+  - method: DELETE
+    path: /api/session
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 204
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: vms-invalid-first-entry
+  workflow: cluster-infrastructure-assessment
+  inputs:
+    authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    datacenter_name: Lab DC
+    cluster_name: Compute A
+  requests:
+  - method: POST
+    path: /api/session
+    query: {}
+    headers:
+      Authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    absent_headers:
+    - vmware-api-session-id
+    response:
+      status: 201
+      body: synthetic-session-sentinel-42
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/datacenters.json
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/clusters.json
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/cluster.json
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/pool.json
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/cluster-infrastructure-assessment/hosts.json
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - 42
+  - method: DELETE
+    path: /api/session
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 204
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42

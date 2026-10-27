@@ -1,0 +1,8 @@
+[
+  {
+    "cluster": "domain-c7",
+    "name": "Compute A",
+    "ha_enabled": true,
+    "drs_enabled": false
+  }
+]
