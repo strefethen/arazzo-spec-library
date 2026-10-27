@@ -2,9 +2,10 @@
 title: Reject stringified containers in vSphere VM telemetry
 type: bug
 priority: 1
-state: in_progress
+resolution: completed
+close_reason: '[fce4c00](https://github.com/strefethen/arazzo-spec-library/commit/fce4c00026993b9783f5892c4df1aa2a5c13685e) enforce actual VM telemetry containers with failure cleanup'
 created_at: 2026-10-27T19:18:45Z
-last_changed: 2026-10-27T19:27:43Z
+last_changed: 2026-10-27T19:35:38Z
 plan: investigation
 files:
     README.md: m
@@ -13,6 +14,13 @@ files:
     specs/vsphere/cluster-infrastructure-assessment.arazzo.yaml: r
     specs/vsphere/vm-guest-diagnosis.arazzo.yaml: m
     tests/scenarios/vsphere.vm-guest-diagnosis.yaml: m
+changes:
+    - at: 2026-10-27T19:35:38.52981Z
+      action: close
+      from: in_progress
+      to: closed
+      resolution: completed
+      reason: '[fce4c00](https://github.com/strefethen/arazzo-spec-library/commit/fce4c00026993b9783f5892c4df1aa2a5c13685e) enforce actual VM telemetry containers with failure cleanup'
 assignee: codex
 deps:
     - asl-785d1
@@ -37,3 +45,15 @@ Grounding: confirmed on HEAD91db004 with scripts/verify.py::run_case against a c
 ## Testing Obligations
 - Run python3 scripts/verify.py vsphere.vm-guest-diagnosis with bounded new cases for affected arrays/maps/object contexts and genuine empty controls; verify CLI error, exact cleanup sequence and jq outputs.
 - Run python3 -m unittest discover -s tests -p 'test_*.py' and python3 scripts/verify.py whole corpus; configured strict validation/login dryrun, diff checks and independent exact-candidate ticket-code-review. No live calls.
+
+### Evidence
+AC1 PASS: all ten intended VM container guards require actual object/array typed access;22 added malformed-response scenarios exit nonzero, attempt failure logout and prevent later work. AC2 PASS: genuine empty/populated containers, optional MAC/mapping absence and arbitrary map-key collisions preserved;44 original cases unchanged, auth/outputs/contracts unchanged.
+Testing PASS:68 VM scenarios,240 whole-corpus scenarios,58 unit tests, configured strict validation/login dryrun, cumulative diff and committed-byte parity. Independent reviewer reran68 VM plus configured/diff/parity checks and inspected240corpus/58unit evidence. Zero live calls.
+Fresh independent T3 vsphere-vm-guards-review-1 gpt-6-astra/high PASS f199e7dd0dbeb272e438de8580f3ca05a982247a..fce4c00026993b9783f5892c4df1aa2a5c13685e. No findings.
+Retained baseline8728fc03730fbae3566ce437c0c16c80c073161b115344043f01c2da23c46dbf/start1a8e14a461be43aede8f8e0fc03e69c91376ea74debabd73ef63952543cdbea1, file/Git preflight, evidence.md/logs/hash parity under.artifacts/vsphere-execution/asl-d3ccf/. Requirements/files/dependencies unchanged before evidence-only append. Live vCenter behavior remains unverified.
+
+## Note (2026-10-27 19:35 UTC)
+[fce4c00](https://github.com/strefethen/arazzo-spec-library/commit/fce4c00026993b9783f5892c4df1aa2a5c13685e) pushed after independent PASS; published VM container guard defect repaired.
+
+## Note (2026-10-27 19:35 UTC) — Closed
+[fce4c00](https://github.com/strefethen/arazzo-spec-library/commit/fce4c00026993b9783f5892c4df1aa2a5c13685e) enforce actual VM telemetry containers with failure cleanup
