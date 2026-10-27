@@ -65,9 +65,23 @@ class ConfigurationTests(unittest.TestCase):
 
     def test_valid_origins(self):
         for value in ("https://vc.example.invalid", "https://localhost:443/",
+                      "https://vc.example.invalid.", "https://vc.example.invalid.:8443/",
                       "https://127.0.0.1", "https://[2001:db8::1]:8443"):
             with self.subTest(value=value):
                 self.assertEqual(server_origin(value), value.rstrip("/"))
+
+    def test_single_root_dot_is_preserved_in_configured_bundle(self):
+        self.run_configure(server="https://vc.example.invalid.:8443/")
+        configured = yaml.safe_load((self.output / self.entry["openapi"][0]).read_text())
+        self.assertEqual(configured["servers"][0]["url"], "https://vc.example.invalid.:8443")
+
+    def test_empty_dns_labels_do_not_publish_bundle(self):
+        for host in ("vc.example.invalid..", "vc.example.invalid...", ".vc.example.invalid",
+                     "vc..example.invalid", ".", ".."):
+            for suffix in ("", ":8443/"):
+                with self.subTest(host=host, suffix=suffix), self.assertRaises(ValueError):
+                    self.run_configure(server="https://" + host + suffix)
+                self.assertFalse(self.output.exists())
 
     def test_multiple_registered_specs_share_companion_and_ignore_other_providers(self):
         second = dict(self.entry, id="vsphere.second", path="specs/vsphere/second.arazzo.yaml")

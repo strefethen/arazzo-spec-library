@@ -32,7 +32,7 @@ def server_origin(value):
         if ":" in host:
             ipaddress.IPv6Address(host)
         elif not all(re.fullmatch(r"[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?", label)
-                     for label in host.rstrip(".").split(".")) or len(host) > 253:
+                     for label in host.removesuffix(".").split(".")) or len(host) > 253:
             raise ValueError
         if parsed.netloc.endswith(":") or (parsed.port is not None and not 1 <= parsed.port <= 65535):
             raise ValueError
