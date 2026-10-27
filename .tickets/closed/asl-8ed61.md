@@ -5,8 +5,8 @@ priority: 1
 resolution: completed
 close_reason: '[12c8a87](https://github.com/strefethen/arazzo-spec-library/commit/12c8a87e75d42dfa2156b3cf65afa2905b04dc86) authenticated multi-resource VM diagnosis with verified offline scenarios'
 created_at: 2026-10-27T18:30:28Z
-last_changed: 2026-10-27T18:58:36Z
-plan: plans/current/vsphere-workflows.md
+last_changed: 2026-10-27T20:14:05Z
+plan: plans/completed/vsphere-workflows.md
 files:
     README.md: m
     docs/index.md: m

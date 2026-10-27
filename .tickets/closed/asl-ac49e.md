@@ -2,10 +2,11 @@
 title: Implement authenticated vSphere OVF deployment preparation
 type: task
 priority: 1
-state: in_progress
+resolution: completed
+close_reason: '[e90cb39](https://github.com/strefethen/arazzo-spec-library/commit/e90cb39f49ce7a07557c181ff3b4efcfb42ce169) authenticated OVF preparation with documented requirements and verified offline scenarios'
 created_at: 2026-10-27T18:30:28Z
-last_changed: 2026-10-27T20:08:11Z
-plan: plans/current/vsphere-workflows.md
+last_changed: 2026-10-27T20:14:05Z
+plan: plans/completed/vsphere-workflows.md
 files:
     README.md: m
     docs/index.md: m
@@ -21,6 +22,13 @@ files:
     specs/vsphere/ovf-deployment-preparation.arazzo.yaml: c
     tests/scenarios/vsphere.ovf-deployment-preparation.yaml: c
     views/vsphere.ovf-deployment-preparation.summary.jq: c
+changes:
+    - at: 2026-10-27T20:12:33.355939Z
+      action: close
+      from: in_progress
+      to: closed
+      resolution: completed
+      reason: '[e90cb39](https://github.com/strefethen/arazzo-spec-library/commit/e90cb39f49ce7a07557c181ff3b4efcfb42ce169) authenticated OVF preparation with documented requirements and verified offline scenarios'
 assignee: codex
 deps:
     - asl-8ed61
@@ -51,6 +59,12 @@ Provider guide includes complete runnable configure + env-based auth command wit
 - Run python3 scripts/verify.py vsphere.ovf-deployment-preparation covering full metadata+requirements, optional omissions, empty requirement collections, wrong type/library, zero/duplicate/malformed target results, wrong-folder type, errors including OVF400/404/500 and logout failure; exact POST target wrapping/query/header assertions and useful jq output.
 - Run python3 -m unittest discover -s tests -p 'test_*.py' and python3 scripts/verify.py (whole corpus), configure helper + strict validation/dry-run of configured spec. No live calls.
 - Check official versioned content item/filter/folder/datastore/network contracts against companion; git diff --check and fresh independent exact-candidate ticket-code-review before push/closure.
+
+### Evidence
+AC1 PASS: complete authenticated multi-resource OVF preparation chain and report, raw template/pool/folder/storage/network candidates and OVF requirements with unresolved placement/mappings explicit. AC2 PASS:156 focused scenarios prove typed identity/containers, every typed extension element, all failure/cleanup ordering and valid optional/empty/multiline data. AC3 PASS: secure runnable guide, versioned sources and prominent synthetic/live-unverified notices.
+All testing obligations PASS:156 focused scenarios,396 full corpus scenarios,58 unit tests; configured strict validation/loginpreview; documented commands exercised on loopback; official contracts; diff checks;18 tested source/doc hashes match candidate. Zero live calls.
+Fresh independent T3 vsphere-ovf-review-2 gpt-6-astra/high PASS cumulative7e92ea4f94ccca0ff2fb10ca8356a59998a49592..e90cb39f49ce7a07557c181ff3b4efcfb42ce169. Reviewer independently reran156focused and58units, inspected396corpus/configured/guide evidence and all18 hashes. Prior P1 multiline rejection fixed; P2 object elements validated using official response-required string type, retaining unknown fields. No requirement weakening.
+Retained original show457e73940ad27a793c40bc8d6ad18a6d381dfb9fe2ee588ecd60fce56f019a65/start7afc1cb4c219b6f5e8161b64d355adbfaf08d30187d968390d175e8086182b41; remediation and response-invariant artifacts retain pause/resume/notes/source proof. Current48183b20b843a3758cbc6dc0ee13439dbad44b9de70eb8b386c2b0b17d14e2a2 requirements/files/dependencies unchanged; source-correction/lifecycle notes reconciled. Full evidence index handoff.json plus response-invariant/handoff.json in.artifacts/vsphere-execution/asl-ac49e/. Live vCenter behavior remains unverified.
 
 ## Note (2026-10-27 19:46 UTC)
 Implementation complete for parent-owned exact-candidate review; keep in_progress per explicit handoff instruction. No push or closure performed.
@@ -88,3 +102,9 @@ AC1 PASS: full fixed-chain report and valid open typed extensions; raw/jq full m
 Testing obligation1 PASS: python3 scripts/verify.py vsphere.ovf-deployment-preparation — 156 scenarios. Obligation2 PASS: python3 -m unittest discover -s tests -p test_*.py — 58 tests; python3 scripts/verify.py — 396 scenarios, zero live provider requests; configure helper + strict configured validation + single-login strict preview. All 15 guide shell blocks parse; exact documented synthetic full CLI/env/raw/jq commands pass. Obligation3 provider/diff checks PASS: pinned official item/filter/folder/datastore/network fields, filters, enums, optionality and request body checked against unchanged companion operations; SDK response invariant checked live through documentation only. git diff --check passes. Fresh independent exact-candidate ticket-code-review is PENDING and owned by parent; no overall review/closure PASS is claimed.
 Evidence: .artifacts/vsphere-execution/asl-ac49e/response-invariant/ contains guarded source note/start/show, contract-comparison.json, logs, source-and-invariant-check.json, tested-content-sha256.json and retained-evidence-sha256.json. Original show-before revision457e73940ad27a793c40bc8d6ad18a6d381dfb9fe2ee588ecd60fce56f019a65 and start revision7afc1cb4c219b6f5e8161b64d355adbfaf08d30187d968390d175e8086182b41 remain immutable. Original Goal/Design/AC/testing/files/dependencies/plan unchanged; resume closeout only updates lifecycle revision. Readiness four-way PASS; reservations acquired by guarded paused->start. Source and cumulative tested-byte parity will be bound to exact committed head in response-invariant/handoff.json.
 Cumulative review base [7e92ea4](https://github.com/strefethen/arazzo-spec-library/commit/7e92ea4f94ccca0ff2fb10ca8356a59998a49592) through the final local head recorded in handoff.json. Parent must re-review BOTH prior findings plus corrected response schema invariant, original contract and full final range before any push/closure. Preexisting unrelated untracked files preserved; no forecast expansion. Real-vCenter execution/compatibility remains unverified.
+
+## Note (2026-10-27 20:12 UTC)
+[e90cb39](https://github.com/strefethen/arazzo-spec-library/commit/e90cb39f49ce7a07557c181ff3b4efcfb42ce169) pushed after independent cumulative PASS. All three documented vSphere workflows delivered; system-level final discovery/preview proof follows.
+
+## Note (2026-10-27 20:12 UTC) — Closed
+[e90cb39](https://github.com/strefethen/arazzo-spec-library/commit/e90cb39f49ce7a07557c181ff3b4efcfb42ce169) authenticated OVF preparation with documented requirements and verified offline scenarios

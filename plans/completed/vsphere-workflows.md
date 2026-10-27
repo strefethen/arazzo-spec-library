@@ -2,6 +2,7 @@
 status: decomposed
 epic: asl-41557
 created: 2026-10-27
+completed: 2026-10-27
 ---
 
 # Documented vSphere diagnostic workflows
@@ -132,9 +133,22 @@ candidate and ticket contract. Reviewed changes and closure records are pushed
 to `origin/main`; the three tickets and epic are completed. Git's unrelated
 pre-existing untracked paths remain untouched.
 
+**Observed PASS, 2026-10-27:** all five epic members completed, including the
+investigation-backed VM guard repair. The final source candidate is
+`e90cb39f49ce7a07557c181ff3b4efcfb42ce169`. Its complete offline corpus has
+396 passing scenarios and 58 passing unit tests. Independent exact-candidate
+reviews passed every source slice and required remediation. After closure,
+the orchestrator configured all three workflows together and confirmed source
+parity, companion parity except endpoint URLs, catalog/show discovery, strict
+validation and first-login dry-runs with zero external requests. See the
+[dated delivery record](../assessments/vsphere-delivery-2026-10-27.md).
+Real-vCenter execution remains unverified; backing discovery remains the
+separately paused follow-up `asl-635cd` approved outside this delivery.
+
 ---
 
-**Disposition:** Decomposed into epic `asl-41557`: foundation `asl-b4622`,
+**Disposition:** Completed after system verification on 2026-10-27. Decomposed
+into epic `asl-41557`: foundation `asl-b4622`,
 VM diagnosis `asl-8ed61`, documented cluster assessment `asl-785d1` and OVF
 preparation `asl-ac49e`, serialized in that order. Accepted under Steve's
 2026-10-27 direction to implement and
