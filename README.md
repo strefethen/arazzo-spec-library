@@ -160,7 +160,7 @@ It never executes shell commands from the manifest or falls back to a live API.
 See [the scenario contract](tests/README.md). Offline fixture proof is not a
 claim of live provider compatibility. Socket receives **zero live test calls**.
 The GitHub Actions workflow installs tools, then runs the same offline checks.
-The current baseline is **360 passing workflow scenarios and 58 verifier unit
+The current baseline is **365 passing workflow scenarios and 58 verifier unit
 tests**. See [CI results](https://github.com/strefethen/arazzo-spec-library/actions/workflows/verify.yml)
 for the latest run. Dependency installation uses the network; the checks
 themselves do not call live provider APIs.

@@ -231,9 +231,9 @@ workflows:
     - condition: ($response.body#).name == ($response.body#).name
     - type: jsonpath
       context: $response.body
-      condition: $[?match($.name, ".+") && match($.library_id, ".+") && match($.content_version, ".*")
-        && match($.metadata_version, ".*") && match($.version, ".*") && match($.creation_time, ".+") &&
-        match($.last_modified_time, ".+") && match($.description, ".*") && ($.cached == true || $.cached
+      condition: $[?match($.name, ".+") && match($.library_id, ".+") && search($.content_version, "")
+        && search($.metadata_version, "") && search($.version, "") && match($.creation_time, ".+") &&
+        match($.last_modified_time, ".+") && search($.description, "") && ($.cached == true || $.cached
         == false)]
     - condition: $response.body#/library_id == $inputs.expected_library_id
     - type: jsonpath
@@ -374,17 +374,17 @@ workflows:
     - condition: ($response.body#/EULAs)[0] == ($response.body#/EULAs)[0]
     - type: jsonpath
       context: $response.body
-      condition: $[?length($.EULAs) == count($.EULAs[:]) && count($.EULAs[?!match(@, ".*")]) == 0]
+      condition: $[?length($.EULAs) == count($.EULAs[:]) && count($.EULAs[?!search(@, "")]) == 0]
     - condition: ($response.body#/networks == null) || (($response.body#/networks)[0] == ($response.body#/networks)[0])
     - type: jsonpath
       context: $response.body
-      condition: $[?!$.networks || (length($.networks) == count($.networks[:]) && count($.networks[?!match(@,
-        ".*")]) == 0)]
+      condition: $[?!$.networks || (length($.networks) == count($.networks[:]) && count($.networks[?!search(@,
+        "")]) == 0)]
     - condition: ($response.body#/storage_groups == null) || (($response.body#/storage_groups)[0] == ($response.body#/storage_groups)[0])
     - type: jsonpath
       context: $response.body
-      condition: $[?!$.storage_groups || (length($.storage_groups) == count($.storage_groups[:]) && count($.storage_groups[?!match(@,
-        ".*")]) == 0)]
+      condition: $[?!$.storage_groups || (length($.storage_groups) == count($.storage_groups[:]) && count($.storage_groups[?!search(@,
+        "")]) == 0)]
     - condition: ($response.body#/additional_params == null) || (($response.body#/additional_params)[0]
         == ($response.body#/additional_params)[0])
     - type: jsonpath

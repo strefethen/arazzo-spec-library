@@ -4232,3 +4232,380 @@ cases:
     forbidden_output: *id009
     outputs:
       resource_pool_id: resgroup-901
+- name: multiline-free-text
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: library-101
+        name: App appliance
+        type: ovf
+        content_version: '17
+
+          18'
+        metadata_version: '8
+
+          9'
+        version: '8
+
+          9'
+        cached: true
+        size: 4294967296
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: 'First line
+
+          Second line'
+        security_compliance: true
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: 'Appliance annotation
+
+          Second paragraph'
+        EULAs:
+        - 'License terms
+
+          Second paragraph'
+        networks:
+        - 'Management
+
+          Network'
+        storage_groups:
+        - 'System
+
+          Disks'
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: success
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+    outputs:
+      item_id: item-201
+      item:
+        description: 'First line
+
+          Second line'
+        content_version: '17
+
+          18'
+        metadata_version: '8
+
+          9'
+        version: '8
+
+          9'
+      requirements:
+        EULAs:
+        - 'License terms
+
+          Second paragraph'
+        annotation: 'Appliance annotation
+
+          Second paragraph'
+        networks:
+        - 'Management
+
+          Network'
+        storage_groups:
+        - 'System
+
+          Disks'
+    view_contains:
+    - Filter inspection does not deploy
+    - EULAs (not accepted)
+    - 'Item description: First line
+
+      Second line'
+    - License terms\nSecond paragraph
+    - 'annotation=Appliance annotation
+
+      Second paragraph'
+- name: empty-free-text
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: library-101
+        name: App appliance
+        type: ovf
+        content_version: ''
+        metadata_version: ''
+        version: ''
+        cached: true
+        size: 4294967296
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: ''
+        security_compliance: true
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: ''
+        EULAs:
+        - ''
+        networks:
+        - ''
+        storage_groups:
+        - ''
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: success
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+    outputs:
+      item_id: item-201
+      item:
+        description: ''
+        content_version: ''
+        metadata_version: ''
+        version: ''
+      requirements:
+        EULAs:
+        - ''
+        annotation: ''
+        networks:
+        - ''
+        storage_groups:
+        - ''
+    view_contains:
+    - Filter inspection does not deploy
+    - EULAs (not accepted)
+- name: control-characters-free-text
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: library-101
+        name: App appliance
+        type: ovf
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: true
+        size: 4294967296
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: "First\r\nSecond\tline\0end"
+        security_compliance: true
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: "First\r\nSecond\tline"
+        EULAs:
+        - "License\r\nParagraph\tend\0"
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: success
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+    outputs:
+      item_id: item-201
+      item:
+        description: "First\r\nSecond\tline\0end"
+      requirements:
+        EULAs:
+        - "License\r\nParagraph\tend\0"
+        annotation: "First\r\nSecond\tline"
+    view_contains:
+    - Filter inspection does not deploy
+    - EULAs (not accepted)
+- name: description-object-rejected
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: library-101
+        name: App appliance
+        type: ovf
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: true
+        size: 4294967296
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: {}
+        security_compliance: true
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: EULAs-malformed-first-entry
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - false
+        - valid
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
