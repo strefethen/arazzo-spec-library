@@ -30,9 +30,13 @@ def load_yaml(path):
         return yaml.safe_load(stream)
 
 
-def command(args, cwd=ROOT, env=None):
+def command(args, cwd=ROOT, env=None, forbidden_output=()):
     result = subprocess.run(args, cwd=cwd, env=env, text=True, capture_output=True,
                             timeout=45, check=False)
+    # Check before parsing or assertions that could reproduce captured output.
+    if any(value in stream for value in forbidden_output
+           for stream in (result.stdout, result.stderr)):
+        raise AssertionError("forbidden output detected in CLI capture")
     try:
         data = json.loads(result.stdout)
     except ValueError as error:
@@ -94,6 +98,8 @@ def check_entry(root, entry):
         if case["workflow"] not in entry["workflows"]:
             raise ValueError("unknown scenario workflow")
         expected = case["expect"]
+        if "forbidden_output" in expected:
+            check_strings(expected["forbidden_output"], "forbidden_output")
         if expected["kind"] == "success":
             if not expected.get("outputs"):
                 raise ValueError("success case requires output assertions")
@@ -101,6 +107,8 @@ def check_entry(root, entry):
         elif expected["kind"] != "error" or not expected.get("code"):
             raise ValueError("error case requires specific CLI code")
         for request in case["requests"]:
+            if "absent_headers" in request:
+                check_strings(request["absent_headers"], "absent_headers")
             response = request["response"]
             if ("fixture" in response) == ("body" in response):
                 raise ValueError("response requires exactly one of fixture/body")
@@ -114,6 +122,11 @@ def check_entry(root, entry):
     if view:
         local_path(root, view)
     return spec, suite
+
+
+def check_strings(value, field):
+    if not isinstance(value, list) or any(not isinstance(item, str) or not item for item in value):
+        raise ValueError(f"{field} requires a list of nonempty strings")
 
 
 def run_case(root, cli, entry, spec, case):
@@ -137,7 +150,7 @@ def run_case(root, cli, entry, spec, case):
             args += ["--input-json", f"{key}={json.dumps(value)}"]
         env = {key: value for key, value in os.environ.items() if "proxy" not in key.lower()}
         env["NO_PROXY"] = "*"
-        result, data = command(args, temp, env)
+        result, data = command(args, temp, env, case["expect"].get("forbidden_output", []))
         assert_consumed(requests, state)
         expected = case["expect"]
         assert_subset({"kind": expected["kind"]}, data, "result")

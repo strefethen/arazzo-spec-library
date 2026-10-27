@@ -1,16 +1,18 @@
 import copy
 from pathlib import Path
+import socket
 import sys
 import tempfile
 import unittest
 from urllib.request import urlopen
 from urllib.error import HTTPError
+from unittest.mock import patch
 
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from fixture_server import assert_consumed, fixture_server, match_request
-from verify import assert_subset, check_entry, local_path, verify
+from verify import assert_subset, check_entry, command, local_path, run_case, verify
 
 
 class RequestMatchingTests(unittest.TestCase):
@@ -46,6 +48,34 @@ class RequestMatchingTests(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, "header"):
             self.check(headers={"Authorization": "Bearer wrong"})
 
+    def test_basic_authorization_absent_downstream_case_insensitive(self):
+        expected = {"method": "GET", "path": "/inventory", "absent_headers": ["AUTHORIZATION"],
+                    "headers": {"vmware-api-session-id": "synthetic-session"}}
+        match_request(expected, "GET", "/inventory", {"VMWARE-API-SESSION-ID": "synthetic-session"}, b"")
+        with self.assertRaisesRegex(AssertionError, "forbidden request header") as raised:
+            match_request(expected, "GET", "/inventory",
+                          {"Authorization": "Basic secret", "vmware-api-session-id": "synthetic-session"}, b"")
+        self.assertNotIn("Basic secret", str(raised.exception))
+
+    def test_204_has_no_wire_body_or_framing(self):
+        requests = [{"method": "DELETE", "path": "/api/session", "response": {
+            "status": 204, "body": "must never reach the wire",
+            "headers": {"Content-Length": "999", "Transfer-Encoding": "chunked"}}}]
+        with fixture_server(requests, lambda _: None) as (url, state):
+            from urllib.parse import urlsplit
+            parsed = urlsplit(url)
+            with socket.create_connection((parsed.hostname, parsed.port), timeout=2) as client:
+                client.sendall(b"DELETE /api/session HTTP/1.0\r\nHost: localhost\r\n\r\n")
+                chunks = []
+                while chunk := client.recv(4096):
+                    chunks.append(chunk)
+            headers, body = b"".join(chunks).split(b"\r\n\r\n", 1)
+            self.assertIn(b"204", headers)
+            self.assertNotIn(b"content-length", headers.lower())
+            self.assertNotIn(b"transfer-encoding", headers.lower())
+            self.assertEqual(body, b"")
+            assert_consumed(requests, state)
+
     def test_wrong_body(self):
         with self.assertRaisesRegex(AssertionError, "body"):
             self.check(body=b'{"name":"b"}')
@@ -73,6 +103,19 @@ class RequestMatchingTests(unittest.TestCase):
 
 
 class AssertionTests(unittest.TestCase):
+    def test_forbidden_output_checked_before_json_parsing_and_diagnostics(self):
+        sentinel = "synthetic-private-value"
+        for program in (f"print('{sentinel}')", f"import sys; print('{sentinel}', file=sys.stderr)"):
+            with self.subTest(program=program), self.assertRaisesRegex(AssertionError, "forbidden output") as raised:
+                command([sys.executable, "-c", program], forbidden_output=[sentinel])
+            self.assertNotIn(sentinel, str(raised.exception))
+
+    def test_clean_output_passes(self):
+        result, data = command([sys.executable, "-c", 'print(\'{"kind":"success"}\')'],
+                               forbidden_output=["synthetic-private-value"])
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(data, {"kind": "success"})
+
     def test_nested_subset(self):
         assert_subset({"a": {"b": 3}}, {"a": {"b": 3, "c": 4}})
 
@@ -163,6 +206,31 @@ class PreflightTests(unittest.TestCase):
         self.write()
         with self.assertRaisesRegex(ValueError, "redirects"):
             check_entry(self.root, self.entry)
+
+    def test_new_assertion_types_preflight(self):
+        for value in (None, "Authorization", {}, [1], [""]):
+            for field in ("absent_headers", "forbidden_output"):
+                with self.subTest(field=field, value=value):
+                    self.suite["cases"][0]["expect"].pop("forbidden_output", None)
+                    self.suite["cases"][0]["requests"] = []
+                    if field == "forbidden_output":
+                        self.suite["cases"][0]["expect"][field] = value
+                    else:
+                        self.suite["cases"][0]["requests"] = [{field: value, "response": {"body": {}}}]
+                    self.write()
+                    with self.assertRaisesRegex(ValueError, field):
+                        check_entry(self.root, self.entry)
+
+    def test_run_case_checks_forbidden_capture_before_other_assertions(self):
+        self.write()
+        case = self.suite["cases"][0]
+        case["expect"]["forbidden_output"] = ["synthetic-private-value"]
+        import subprocess
+        captured = subprocess.CompletedProcess([], 1, "synthetic-private-value", "")
+        with patch("verify.subprocess.run", return_value=captured):
+            with self.assertRaisesRegex(AssertionError, "forbidden output") as raised:
+                run_case(self.root, "synthetic-cli", self.entry, self.spec, case)
+        self.assertNotIn("synthetic-private-value", str(raised.exception))
 
     def test_path_escape_rejected(self):
         with self.assertRaisesRegex(ValueError, "nonlocal"):

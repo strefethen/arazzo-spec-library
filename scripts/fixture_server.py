@@ -20,6 +20,9 @@ def match_request(expected, method, target, headers, body):
     if actual_query != wanted_query:
         raise AssertionError(f"query: {actual_query!r} != {wanted_query!r}")
     lower_headers = {key.lower(): value for key, value in headers.items()}
+    for key in expected.get("absent_headers", []):
+        if key.lower() in lower_headers:
+            raise AssertionError("forbidden request header present")
     for key, value in expected.get("headers", {}).items():
         if lower_headers.get(key.lower()) != value:
             raise AssertionError(f"header {key!r} did not match")
@@ -76,11 +79,15 @@ def fixture_server(requests, read_fixture):
                     data = (read_fixture(response["fixture"]) if "fixture" in response
                             else response["body"])
                     state["index"] += 1
-                    payload = json.dumps(data).encode()
-                    self.send_response(response.get("status", 200))
-                    self.send_header("Content-Type", "application/json")
-                    self.send_header("Content-Length", str(len(payload)))
+                    status = response.get("status", 200)
+                    payload = b"" if status == 204 else json.dumps(data).encode()
+                    self.send_response(status)
+                    if status != 204:
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Content-Length", str(len(payload)))
                     for key, value in response.get("headers", {}).items():
+                        if status == 204 and key.lower() in {"content-length", "transfer-encoding"}:
+                            continue
                         self.send_header(key, value)
                     self.end_headers()
                     if self.command != "HEAD":

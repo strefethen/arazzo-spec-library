@@ -46,6 +46,19 @@ is a jq boolean expression evaluated against the CLI envelope, for collection
 invariants. Optional `view_contains` lists strings required in the jq summary.
 All paths are repository-relative and must stay inside the repository.
 
+Optional request `absent_headers: [Authorization]` asserts that none of the
+listed header names is present, case-insensitively. This can prove Basic
+credentials are absent on downstream session-authenticated requests. It must
+be a list of nonempty strings. HTTP 204 responses send no wire body (and no
+Content-Length or Transfer-Encoding), even though the scenario still supplies
+exactly one `body` or `fixture` field; use `body: null` for clarity.
+
+Optional `expect.forbidden_output: [synthetic-session-sentinel]` is a list of
+nonempty strings that must not occur in either captured CLI stdout or stderr.
+The check runs before JSON parsing or other assertions that could print the
+captured value. A failure reports only that forbidden output was detected,
+never the forbidden string. Use synthetic sentinels, not real credentials.
+
 Only local `sourceDescriptions` are supported. Temporary copies rebase OpenAPI
 server URLs to a loopback fixture server; the original specifications are never
 edited. Remote sources, operation-level server overrides, URL-based targets,

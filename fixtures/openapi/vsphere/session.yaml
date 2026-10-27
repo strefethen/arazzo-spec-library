@@ -1,0 +1,55 @@
+openapi: 3.0.3
+info:
+  title: vSphere Automation API session subset
+  version: 8.0.3
+  description: >-
+    vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified.
+    Authentication creates temporary sessions even when subsequent inventory
+    operations are read-only. Header parameters are explicit for arazzo-cli
+    0.8.2; this subset does not configure an implicit authentication handler.
+servers:
+  - url: https://vcenter.invalid
+paths:
+  /api/session:
+    post:
+      operationId: createSession
+      summary: Create a temporary authenticated session
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/cis/api/session/post/
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          description: Complete HTTP Basic header, supplied only on this operation.
+          schema:
+            type: string
+      responses:
+        '201':
+          description: Session token as a JSON string, without a historical /rest wrapper.
+          content:
+            application/json:
+              schema:
+                type: string
+        '401':
+          description: Authentication failed.
+        '500':
+          description: Session could not be created.
+    delete:
+      operationId: deleteSession
+      summary: Delete the current session
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/cis/api/session/delete/
+      parameters:
+        - name: vmware-api-session-id
+          in: header
+          required: true
+          description: Session token returned by createSession; do not send Basic credentials.
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Session deleted; no response body.
+        '401':
+          description: Session is unauthenticated or no longer valid.
+        '500':
+          description: Session could not be deleted.
