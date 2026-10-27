@@ -4,7 +4,7 @@ type: task
 priority: 1
 state: open
 created_at: 2026-10-27T18:30:28Z
-last_changed: 2026-10-27T18:30:34Z
+last_changed: 2026-10-27T18:34:04Z
 plan: plans/current/vsphere-workflows.md
 files:
     README.md: m
@@ -23,6 +23,7 @@ files:
     views/vsphere.ovf-deployment-preparation.summary.jq: c
 deps:
     - asl-8ed61
+    - asl-785d1
 ---
 # Implement authenticated vSphere OVF deployment preparation
 

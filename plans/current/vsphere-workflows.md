@@ -1,5 +1,5 @@
 ---
-status: accepted
+status: decomposed
 epic: asl-41557
 created: 2026-10-27
 ---
@@ -39,11 +39,14 @@ No match, ambiguous selection or unavailable telemetry is an explicit failure.
 ### Cluster infrastructure assessment
 
 Authenticate, resolve one cluster within a supplied datacenter, follow its root
-resource-pool identity, inspect host and VM inventory, negotiate the release
-contract and retrieve cluster configuration targets. Report HA/DRS, allocations,
-host states, configured workload totals and supporting storage/network
-candidates. Do not imply utilization, full VM-to-host topology, universal host
-accessibility or placement readiness from inventory alone.
+resource-pool identity, and inspect host and VM inventory. Report HA/DRS,
+resource-pool allocations, host states and configured workload totals. Do not
+imply utilization, full VM-to-host topology, supporting storage/network
+relationships or placement readiness from inventory alone. Steve explicitly
+approved this documented cluster scope on 2026-10-27 after the configuration
+target contract research could not establish required parameter placement.
+Storage/network enrichment is a separate gated follow-up, outside completion
+of this delivery.
 
 ### OVF deployment preparation
 
@@ -97,7 +100,6 @@ limitations and any explicit operator-selected insecure-host invocation.
 
 Implement and review the shared configuration/authentication verification
 foundation first, then VM diagnosis, cluster assessment and OVF preparation.
-Resolve configuration-target wire semantics before the cluster ticket starts.
 One writer
 owns the checkout; contract research and review remain read-only. Each ticket
 must pass independent exact-candidate review before the next source slice.
@@ -132,11 +134,20 @@ pre-existing untracked paths remain untouched.
 
 ---
 
-**Disposition:** Accepted under Steve's 2026-10-27 direction to implement and
+**Disposition:** Decomposed into epic `asl-41557`: foundation `asl-b4622`,
+VM diagnosis `asl-8ed61`, documented cluster assessment `asl-785d1` and OVF
+preparation `asl-ac49e`, serialized in that order. Accepted under Steve's
+2026-10-27 direction to implement and
 push the three workflows discussed in this thread. The bounded independent
 plan review and its single correction recheck passed; the two findings are
 addressed by redirect refusal and secret-safe login failure requirements.
 The endpoint helper is decided by recommendation: CLI 0.8.2 lacks a server
 override and a local credential-free copy keeps existing source contracts intact.
-Decomposition starts with the settled foundation and VM slices. The cluster
-ticket cannot start before its remaining wire-contract research gate is settled.
+Steve approved the documented cluster scope after the source investigation
+could not establish the configuration-target wire contract. That enrichment
+remains a gated follow-up. The foundation, VM, cluster and OVF slices carry the
+accepted delivery; no unsupported wire request is required by this plan.
+The four tickets stay inside the existing corpus boundary; transfer audit is
+optional under the fewer-than-five, single-unit rule. Tier 2 lint passed and
+dependencies serialize overlapping provider/manifest edits. Follow-up
+`asl-635cd` is outside this delivery's success condition.

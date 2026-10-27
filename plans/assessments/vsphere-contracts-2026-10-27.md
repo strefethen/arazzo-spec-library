@@ -88,9 +88,25 @@ Research evidence is retained outside tracked source under
 The installed binary was checked against sibling source at tag `v0.8.2`,
 because sibling main has newer behavior.
 
-Before cluster implementation, settle the configuration-target release wire
-contract. Preserve failed operations as failures; do not silently return
+Any future configuration-target enrichment requires settling its release wire
+contract first. Preserve failed operations as failures; do not silently return
 partial reports or substitute wider inventory.
+
+### Cluster scope disposition
+
+Focused follow-up inspected the official 8.0 U3 Python and Java bindings as
+well as the API page. None established the placement of `api_release` for
+configuration targets. `8.0.3.0` is an actual API release identifier; that does
+not establish how this particular operation accepts it. Do not guess either
+a query parameter or a header.
+
+Steve approved shipping cluster configuration, resource-pool allocations,
+hosts and VM inventory on 2026-10-27, with storage/network enrichment gated as
+a follow-up. The accepted cluster workflow therefore does not need the
+unresolved endpoint and must not imply that it inspected cluster backings.
+OVF preparation inspects explicit datacenter-scoped candidates and reports
+remaining placement checks; it does not relabel those candidates as proven
+cluster-accessible resources.
 
 Publish a prominent statement in each workflow and its documentation:
 **vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified.**
