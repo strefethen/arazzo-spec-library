@@ -11,7 +11,7 @@ readable output views; the CLI repository owns the execution engine and tooling.
 
 ## Available Workflows
 
-The current corpus contains **11 workflows across 9 providers**. Every workflow
+The current corpus contains **12 workflows across 9 providers**. Every workflow
 has complete offline fixture tests; that is separate from live-provider proof.
 
 | Provider | Workflow | Live Use |
@@ -26,6 +26,7 @@ has complete offline fixture tests; that is separate from live-provider proof.
 | [Socket.dev](specs/socket/README.md) | Quota check -> organization-scoped PURL risk metadata | Manual approval and quota required; no live verification calls |
 | [vSphere](specs/vsphere/README.md) | Login -> unique scoped VM -> configuration, Tools and guest diagnosis -> logout | vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified. Private endpoint/credentials required; session side effects |
 | [vSphere](specs/vsphere/README.md#cluster-configuration-and-inventory-assessment) | Login -> unique scoped cluster -> HA/DRS, returned root pool allocations/children, scoped host/VM inventory -> logout | vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified. Configured allocations, not utilization or storage/network/placement proof; session side effects |
+| [vSphere](specs/vsphere/README.md#ovf-deployment-preparation) | Login -> scoped cluster/pool -> explicit OVF item -> target candidates -> OVF requirements -> logout | vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified. No deployment or EULA acceptance; mappings and placement remain operator checks |
 
 Provider READMEs document inputs, limits, copy-paste commands, and dated live
 observations. Package metadata and an absence of advisory records are **not a
@@ -159,7 +160,7 @@ It never executes shell commands from the manifest or falls back to a live API.
 See [the scenario contract](tests/README.md). Offline fixture proof is not a
 claim of live provider compatibility. Socket receives **zero live test calls**.
 The GitHub Actions workflow installs tools, then runs the same offline checks.
-The current baseline is **240 passing workflow scenarios and 58 verifier unit
+The current baseline is **360 passing workflow scenarios and 58 verifier unit
 tests**. See [CI results](https://github.com/strefethen/arazzo-spec-library/actions/workflows/verify.yml)
 for the latest run. Dependency installation uses the network; the checks
 themselves do not call live provider APIs.

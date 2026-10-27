@@ -1,0 +1,21 @@
+{
+  "name": "App appliance",
+  "annotation": "Synthetic OVF requirement inspection",
+  "EULAs": [
+    "Synthetic EULA: operator review required."
+  ],
+  "networks": [
+    "Management",
+    "Application"
+  ],
+  "storage_groups": [
+    "System disks",
+    "Data disks"
+  ],
+  "additional_params": [
+    {
+      "type": "SyntheticExtension",
+      "custom_setting": "operator must inspect this open parameter"
+    }
+  ]
+}

@@ -1,0 +1,445 @@
+arazzo: 1.0.0
+info:
+  title: vSphere OVF deployment preparation
+  version: 1.0.0
+  description: vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified. Inspect one
+    explicitly identified OVF item, scoped cluster/root pool and explicit datacenter-scoped folder/datastore/network
+    candidates, then OVF requirements and logout. No deployment, EULA acceptance, retries or readiness
+    guarantee. Cancellation can skip cleanup; failure cleanup replaces the original top-level error.
+sourceDescriptions:
+- name: session
+  url: ../../fixtures/openapi/vsphere/session.yaml
+  type: openapi
+- name: vcenter
+  url: ../../fixtures/openapi/vsphere/ovf-deployment-preparation.yaml
+  type: openapi
+components:
+  parameters:
+    session:
+      name: vmware-api-session-id
+      in: header
+      value: $steps.login.outputs.session_token
+workflows:
+- workflowId: ovf-deployment-preparation
+  summary: Inspect OVF provenance, target candidates and requirements; leave mapping and placement checks
+    explicit.
+  inputs:
+    type: object
+    required:
+    - authorization
+    - datacenter_name
+    - cluster_name
+    - item_id
+    - expected_library_id
+    - folder_id
+    - datastore_id
+    - network_id
+    properties:
+      authorization:
+        type: string
+        minLength: 1
+        writeOnly: true
+        format: password
+      datacenter_name:
+        type: string
+        minLength: 1
+      cluster_name:
+        type: string
+        minLength: 1
+      item_id:
+        type: string
+        minLength: 1
+      expected_library_id:
+        type: string
+        minLength: 1
+      folder_id:
+        type: string
+        minLength: 1
+      datastore_id:
+        type: string
+        minLength: 1
+      network_id:
+        type: string
+        minLength: 1
+  steps:
+  - stepId: login
+    operationId: $sourceDescriptions.session.createSession
+    parameters:
+    - name: Authorization
+      in: header
+      value: $inputs.authorization
+    successCriteria:
+    - condition: $statusCode == 201
+    - condition: '!($response.body# == null)'
+    - type: regex
+      context: $response.body
+      condition: ^.+$
+    onFailure:
+    - name: login-failed-without-body-preview
+      type: end
+    outputs:
+      session_token: $response.body#
+  - stepId: resolve-datacenter
+    operationId: $sourceDescriptions.vcenter.listDatacenters
+    parameters:
+    - reference: $components.parameters.session
+    - name: names
+      in: query
+      value: $inputs.datacenter_name
+    successCriteria:
+    - condition: $statusCode == 200
+    - condition: ($response.body#)[0] == ($response.body#)[0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?length($) == 1 && count($[0]) == 1]
+    - type: regex
+      context: $response.body#/0/datacenter
+      condition: ^\S.*$
+    - condition: '!($response.body#/0/datacenter == null)'
+    - type: regex
+      context: $response.body#/0/name
+      condition: ^\S.*$
+    - condition: '!($response.body#/0/name == null)'
+    - condition: $response.body#/0/name == $inputs.datacenter_name
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match(@.datacenter, ".+") && match(@.name, ".+")]
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      datacenter: $response.body#/0
+      datacenter_id: $response.body#/0/datacenter
+  - stepId: resolve-cluster
+    operationId: $sourceDescriptions.vcenter.listClusters
+    parameters:
+    - reference: $components.parameters.session
+    - name: names
+      in: query
+      value: $inputs.cluster_name
+    - name: datacenters
+      in: query
+      value: $steps.resolve-datacenter.outputs.datacenter_id
+    successCriteria:
+    - condition: $statusCode == 200
+    - condition: ($response.body#)[0] == ($response.body#)[0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?length($) == 1 && count($[0]) == 1]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match(@.cluster, ".+") && match(@.name, ".+") && (@.ha_enabled == true || @.ha_enabled
+        == false) && (@.drs_enabled == true || @.drs_enabled == false)]
+    - condition: $response.body#/0/name == $inputs.cluster_name
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      selected_cluster: $response.body#/0
+      cluster_id: $response.body#/0/cluster
+      cluster_name: $response.body#/0/name
+  - stepId: get-cluster
+    operationId: $sourceDescriptions.vcenter.getCluster
+    parameters:
+    - &id001
+      reference: $components.parameters.session
+    - name: cluster
+      in: path
+      value: $steps.resolve-cluster.outputs.cluster_id
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body
+      condition: ^\{
+    - condition: ($response.body#).name == ($response.body#).name
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match($.name, ".+") && match($.resource_pool, ".+")]
+    - condition: $response.body#/name == $steps.resolve-cluster.outputs.cluster_name
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      configuration: $response.body#
+      resource_pool_id: $response.body#/resource_pool
+  - stepId: get-pool
+    operationId: $sourceDescriptions.vcenter.getResourcePool
+    parameters:
+    - *id001
+    - name: resource_pool
+      in: path
+      value: $steps.get-cluster.outputs.resource_pool_id
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body
+      condition: ^\{
+    - condition: ($response.body#).name == ($response.body#).name
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match($.name, ".+")]
+    - type: regex
+      context: $response.body#/resource_pools
+      condition: ^\[
+    - type: jsonpath
+      context: $response.body
+      condition: $[?length($.resource_pools) == count($.resource_pools[:]) && count($.resource_pools[?!match(@,
+        ".+")]) == 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?!$.cpu_allocation || ($.cpu_allocation.reservation >= 0 && $.cpu_allocation.limit
+        >= -1 && ($.cpu_allocation.expandable_reservation == true || $.cpu_allocation.expandable_reservation
+        == false) && ($.cpu_allocation.shares.level == "LOW" || $.cpu_allocation.shares.level == "NORMAL"
+        || $.cpu_allocation.shares.level == "HIGH" || $.cpu_allocation.shares.level == "CUSTOM") && (!$.cpu_allocation.shares.shares
+        || $.cpu_allocation.shares.shares >= 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?!$.memory_allocation || ($.memory_allocation.reservation >= 0 && $.memory_allocation.limit
+        >= -1 && ($.memory_allocation.expandable_reservation == true || $.memory_allocation.expandable_reservation
+        == false) && ($.memory_allocation.shares.level == "LOW" || $.memory_allocation.shares.level ==
+        "NORMAL" || $.memory_allocation.shares.level == "HIGH" || $.memory_allocation.shares.level ==
+        "CUSTOM") && (!$.memory_allocation.shares.shares || $.memory_allocation.shares.shares >= 0))]
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      resource_pool: $response.body#
+    onSuccess:
+    - name: reject-noninteger-configuration
+      type: goto
+      stepId: logout-failed
+      criteria:
+      - type: regex
+        context: $response.body
+        condition: '"(cpu_count|memory_size_MiB|reservation|limit|shares)"\s*:\s*-?[0-9]+(?:\.[0-9]+|[eE][-+]?[0-9]+)'
+  - stepId: get-item
+    operationId: $sourceDescriptions.vcenter.getLibraryItem
+    parameters:
+    - reference: $components.parameters.session
+    - name: library_item_id
+      in: path
+      value: $inputs.item_id
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body
+      condition: ^\{
+    - condition: ($response.body#).name == ($response.body#).name
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match($.name, ".+") && match($.library_id, ".+") && match($.content_version, ".*")
+        && match($.metadata_version, ".*") && match($.version, ".*") && match($.creation_time, ".+") &&
+        match($.last_modified_time, ".+") && match($.description, ".*") && ($.cached == true || $.cached
+        == false)]
+    - condition: $response.body#/library_id == $inputs.expected_library_id
+    - type: jsonpath
+      context: $response.body
+      condition: $[?$.type == "ovf"]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?!$.size || $.size >= 0]
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      item_id: $inputs.item_id
+      item: $response.body#
+    onSuccess:
+    - name: reject-noninteger-size
+      type: goto
+      stepId: logout-failed
+      criteria:
+      - type: regex
+        context: $response.body
+        condition: '"size"\s*:\s*-?[0-9]+(?:\.[0-9]+|[eE][-+]?[0-9]+)'
+  - stepId: resolve-folder
+    operationId: $sourceDescriptions.vcenter.listFolders
+    parameters:
+    - reference: $components.parameters.session
+    - name: folders
+      in: query
+      value: $inputs.folder_id
+    - name: datacenters
+      in: query
+      value: $steps.resolve-datacenter.outputs.datacenter_id
+    - name: type
+      in: query
+      value: VIRTUAL_MACHINE
+    successCriteria:
+    - condition: $statusCode == 200
+    - condition: ($response.body#)[0] == ($response.body#)[0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?length($) == 1 && count($[0]) == 1]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match(@.folder, ".+") && match(@.name, ".+") && (@.type == "VIRTUAL_MACHINE")]
+    - condition: $response.body#/0/folder == $inputs.folder_id
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      folder: $response.body#/0
+      folder_id: $response.body#/0/folder
+  - stepId: resolve-datastore
+    operationId: $sourceDescriptions.vcenter.listDatastores
+    parameters:
+    - reference: $components.parameters.session
+    - name: datastores
+      in: query
+      value: $inputs.datastore_id
+    - name: datacenters
+      in: query
+      value: $steps.resolve-datacenter.outputs.datacenter_id
+    successCriteria:
+    - condition: $statusCode == 200
+    - condition: ($response.body#)[0] == ($response.body#)[0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?length($) == 1 && count($[0]) == 1]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match(@.datastore, ".+") && match(@.name, ".+") && (@.type == "VMFS" || @.type ==
+        "NFS" || @.type == "NFS41" || @.type == "CIFS" || @.type == "VSAN" || @.type == "VFFS" || @.type
+        == "VVOL")]
+    - condition: $response.body#/0/datastore == $inputs.datastore_id
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(!@.free_space || @.free_space >= 0) && (!@.capacity || @.capacity >= 0)]
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      datastore: $response.body#/0
+      datastore_id: $response.body#/0/datastore
+    onSuccess:
+    - name: reject-noninteger-space
+      type: goto
+      stepId: logout-failed
+      criteria:
+      - type: regex
+        context: $response.body
+        condition: '"(capacity|free_space)"\s*:\s*-?[0-9]+(?:\.[0-9]+|[eE][-+]?[0-9]+)'
+  - stepId: resolve-network
+    operationId: $sourceDescriptions.vcenter.listNetworks
+    parameters:
+    - reference: $components.parameters.session
+    - name: networks
+      in: query
+      value: $inputs.network_id
+    - name: datacenters
+      in: query
+      value: $steps.resolve-datacenter.outputs.datacenter_id
+    successCriteria:
+    - condition: $statusCode == 200
+    - condition: ($response.body#)[0] == ($response.body#)[0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?length($) == 1 && count($[0]) == 1]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match(@.network, ".+") && match(@.name, ".+") && (@.type == "STANDARD_PORTGROUP" ||
+        @.type == "DISTRIBUTED_PORTGROUP" || @.type == "OPAQUE_NETWORK")]
+    - condition: $response.body#/0/network == $inputs.network_id
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      network: $response.body#/0
+      network_id: $response.body#/0/network
+  - stepId: filter-ovf
+    operationId: $sourceDescriptions.vcenter.filterOvf
+    parameters:
+    - reference: $components.parameters.session
+    - name: ovf_library_item_id
+      in: path
+      value: $steps.get-item.outputs.item_id
+    - name: action
+      in: query
+      value: filter
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body
+      condition: ^\{
+    - condition: ($response.body#).name == ($response.body#).name
+    - condition: ($response.body#/EULAs)[0] == ($response.body#/EULAs)[0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?length($.EULAs) == count($.EULAs[:]) && count($.EULAs[?!match(@, ".*")]) == 0]
+    - condition: ($response.body#/networks == null) || (($response.body#/networks)[0] == ($response.body#/networks)[0])
+    - type: jsonpath
+      context: $response.body
+      condition: $[?!$.networks || (length($.networks) == count($.networks[:]) && count($.networks[?!match(@,
+        ".*")]) == 0)]
+    - condition: ($response.body#/storage_groups == null) || (($response.body#/storage_groups)[0] == ($response.body#/storage_groups)[0])
+    - type: jsonpath
+      context: $response.body
+      condition: $[?!$.storage_groups || (length($.storage_groups) == count($.storage_groups[:]) && count($.storage_groups[?!match(@,
+        ".*")]) == 0)]
+    - condition: ($response.body#/additional_params == null) || (($response.body#/additional_params)[0]
+        == ($response.body#/additional_params)[0])
+    - type: jsonpath
+      context: $response.body
+      condition: $[?!$.additional_params || (length($.additional_params) == count($.additional_params[:]))]
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      requirements: $response.body#
+    requestBody:
+      contentType: application/json
+      payload:
+        target:
+          resource_pool_id: $steps.get-cluster.outputs.resource_pool_id
+          folder_id: $steps.resolve-folder.outputs.folder_id
+  - stepId: logout
+    description: Explicit end avoids falling into failure cleanup.
+    operationId: $sourceDescriptions.session.deleteSession
+    parameters:
+    - &id002
+      reference: $components.parameters.session
+    successCriteria:
+    - condition: $statusCode == 204
+    onSuccess:
+    - name: end
+      type: end
+    onFailure:
+    - name: end-failed
+      type: end
+  - stepId: logout-failed
+    description: Deliberately fails after cleanup to preserve nonzero outcome; original top-level error
+      is replaced.
+    operationId: $sourceDescriptions.session.deleteSession
+    parameters:
+    - *id002
+    successCriteria:
+    - condition: $statusCode == 204
+    - condition: 'false'
+    onSuccess:
+    - name: end
+      type: end
+    onFailure:
+    - name: end-failed
+      type: end
+  outputs:
+    datacenter: $steps.resolve-datacenter.outputs.datacenter
+    selected_cluster: $steps.resolve-cluster.outputs.selected_cluster
+    cluster_configuration: $steps.get-cluster.outputs.configuration
+    resource_pool_id: $steps.get-cluster.outputs.resource_pool_id
+    resource_pool: $steps.get-pool.outputs.resource_pool
+    item_id: $steps.get-item.outputs.item_id
+    item: $steps.get-item.outputs.item
+    folder: $steps.resolve-folder.outputs.folder
+    datastore_candidate: $steps.resolve-datastore.outputs.datastore
+    network_candidate: $steps.resolve-network.outputs.network
+    requirements: $steps.filter-ovf.outputs.requirements

@@ -2,9 +2,9 @@
 title: Implement authenticated vSphere OVF deployment preparation
 type: task
 priority: 1
-state: open
+state: in_progress
 created_at: 2026-10-27T18:30:28Z
-last_changed: 2026-10-27T19:18:57Z
+last_changed: 2026-10-27T19:46:22Z
 plan: plans/current/vsphere-workflows.md
 files:
     README.md: m
@@ -21,6 +21,7 @@ files:
     specs/vsphere/ovf-deployment-preparation.arazzo.yaml: c
     tests/scenarios/vsphere.ovf-deployment-preparation.yaml: c
     views/vsphere.ovf-deployment-preparation.summary.jq: c
+assignee: codex
 deps:
     - asl-8ed61
     - asl-785d1
@@ -50,3 +51,11 @@ Provider guide includes complete runnable configure + env-based auth command wit
 - Run python3 scripts/verify.py vsphere.ovf-deployment-preparation covering full metadata+requirements, optional omissions, empty requirement collections, wrong type/library, zero/duplicate/malformed target results, wrong-folder type, errors including OVF400/404/500 and logout failure; exact POST target wrapping/query/header assertions and useful jq output.
 - Run python3 -m unittest discover -s tests -p 'test_*.py' and python3 scripts/verify.py (whole corpus), configure helper + strict validation/dry-run of configured spec. No live calls.
 - Check official versioned content item/filter/folder/datastore/network contracts against companion; git diff --check and fresh independent exact-candidate ticket-code-review before push/closure.
+
+## Note (2026-10-27 19:46 UTC)
+Implementation complete for parent-owned exact-candidate review; keep in_progress per explicit handoff instruction. No push or closure performed.
+AC1 PASS: fixed login -> unique scoped DC/cluster -> cluster/root pool -> explicit verified OVF item -> explicit DC-scoped folder/datastore/network candidates -> exact OVF filter target wrapper -> logout. Full raw provenance/settings/requirements plus jq report; mapping and placement checks remain explicit.
+AC2 PASS: 120 real-CLI synthetic cases cover full/minimal/empty data, library/type/identity failures, actual string-container impostors, permissions at every work step, OVF400/404/500 and login/logout failures. Every request sequence asserts Basic only on login and session headers thereafter; OVF POST asserts Content-Type/query/body exactly. Failure cleanup remains nonzero; no deploy/license acceptance/retries.
+AC3 PASS: secure complete pickup guide preserves private getpass/env setup, redirect refusal, strict inputs, raw/jq and preview. All 15 shell blocks parse; documented OVF helper/discovery/show/strict validation/login preview/full CLI/raw/jq blocks verified with synthetic loopback credentials. All source/spec/manifest/provenance notices say contract-based/synthetic/live-unverified.
+Verification PASS: python3 scripts/verify.py vsphere.ovf-deployment-preparation (120); python3 -m unittest discover -s tests -p test_*.py (58); python3 scripts/verify.py (360); configured strict validation and first-login dry-run; official pinned8.0.3 operation/enum/optional-field checks; git diff --check. Corpus totals 12 workflows, 9 providers, 360 scenarios, 58 unit tests. No live vCenter/provider calls.
+Evidence: .artifacts/vsphere-execution/asl-ac49e/ contains immutable show-before.json (revision 457e73940ad27a793c40bc8d6ad18a6d381dfb9fe2ee588ecd60fce56f019a65), start.json (revision 7afc1cb4c219b6f5e8161b64d355adbfaf08d30187d968390d175e8086182b41), files-before.json, Git baseline, retained official pages/hash ledger, logs, guide probes and tested-content-sha256.json. Base [7e92ea4](https://github.com/strefethen/arazzo-spec-library/commit/7e92ea4f94ccca0ff2fb10ca8356a59998a49592). Requirements unchanged; no forecast expansion; shared session/helper/harness/sibling untouched; preexisting unrelated untracked inventory preserved. Parent must perform fresh independent ticket-code-review against the final base/head and contract before push/closure; live-vCenter compatibility remains unverified.

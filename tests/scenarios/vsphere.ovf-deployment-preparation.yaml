@@ -1,0 +1,4234 @@
+cases:
+- name: full-metadata-and-requirements
+  workflow: ovf-deployment-preparation
+  inputs: &id001
+    authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    datacenter_name: Lab DC
+    cluster_name: Compute A
+    item_id: item-201
+    expected_library_id: library-101
+    folder_id: group-v30
+    datastore_id: datastore-44
+    network_id: dvportgroup-55
+  requests:
+  - &id002
+    method: POST
+    path: /api/session
+    query: {}
+    headers:
+      Authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    absent_headers:
+    - vmware-api-session-id
+    response:
+      status: 201
+      body: synthetic-session-sentinel-42
+  - &id003
+    method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/datacenters.json
+  - &id004
+    method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/clusters.json
+  - &id005
+    method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/cluster.json
+  - &id011
+    method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/pool.json
+  - &id012
+    method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/item.json
+  - &id006
+    method: GET
+    path: /api/vcenter/folder
+    query:
+      folders: group-v30
+      datacenters: datacenter-21
+      type: VIRTUAL_MACHINE
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/folder.json
+  - &id013
+    method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/datastore.json
+  - &id007
+    method: GET
+    path: /api/vcenter/network
+    query:
+      networks: dvportgroup-55
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/network.json
+  - &id014
+    method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/requirements.json
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - &id008
+    method: DELETE
+    path: /api/session
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 204
+      body: null
+  expect:
+    kind: success
+    forbidden_output: &id009
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+    outputs:
+      item_id: item-201
+      item:
+        library_id: library-101
+        name: App appliance
+        type: ovf
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: true
+        size: 4294967296
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: Synthetic appliance metadata
+        security_compliance: true
+      datacenter: &id015
+        datacenter: datacenter-21
+        name: Lab DC
+      selected_cluster: &id016
+        cluster: domain-c7
+        name: Compute A
+        ha_enabled: true
+        drs_enabled: false
+      cluster_configuration:
+        name: Compute A
+        resource_pool: resgroup-73
+      resource_pool_id: resgroup-73
+      resource_pool:
+        name: Resources
+        resource_pools:
+        - resgroup-74
+        - resgroup-75
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: true
+          limit: -1
+          shares:
+            level: NORMAL
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: false
+          limit: 65536
+          shares:
+            level: CUSTOM
+            shares: 12000
+      folder: &id017
+        folder: group-v30
+        name: Applications
+        type: VIRTUAL_MACHINE
+      datastore_candidate: &id018
+        datastore: datastore-44
+        name: Shared VMFS
+        type: VMFS
+        capacity: 1099511627776
+        free_space: 549755813888
+      network_candidate: &id019
+        network: dvportgroup-55
+        name: App VLAN
+        type: DISTRIBUTED_PORTGROUP
+      requirements:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    view_contains:
+    - content=17; metadata=8; version=8
+    - cached=true
+    - Management
+    - Application
+    - System disks
+    - Synthetic EULA
+    - SyntheticExtension
+    - reservation=2400 MHz
+    - 549755813888 bytes
+    - Unresolved
+- name: optional-omissions-and-empty-eulas
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: []
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: &id010
+        library_id: library-101
+        name: App appliance
+        type: ovf
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: true
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: Synthetic appliance metadata
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datastore: datastore-44
+        name: Shared VMFS
+        type: VMFS
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        EULAs: []
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: success
+    forbidden_output: *id009
+    outputs:
+      item: *id010
+      requirements:
+        EULAs: []
+    view_contains:
+    - size=unknown
+    - No network section reported
+    - capacity=unknown
+    assert: (.outputs.requirements | has("networks") | not) and (.outputs.requirements | has("additional_params")
+      | not) and (.outputs.datastore_candidate | has("capacity") | not)
+- name: empty-requirement-arrays
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        EULAs: []
+        networks: []
+        storage_groups: []
+        additional_params: []
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: success
+    forbidden_output: *id009
+    outputs:
+      requirements:
+        EULAs: []
+        networks: []
+        storage_groups: []
+        additional_params: []
+    view_contains:
+    - 'Required network mapping names: []'
+    - 'EULAs (not accepted): []'
+- name: valid-item-cached
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: library-101
+        name: App appliance
+        type: ovf
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: false
+        size: 0
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: Synthetic appliance metadata
+        security_compliance: true
+  - *id006
+  - *id013
+  - *id007
+  - *id014
+  - *id008
+  expect:
+    kind: success
+    forbidden_output: *id009
+    outputs:
+      item:
+        cached: false
+- name: valid-item-description
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: library-101
+        name: App appliance
+        type: ovf
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: true
+        size: 4294967296
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: ''
+        security_compliance: true
+  - *id006
+  - *id013
+  - *id007
+  - *id014
+  - *id008
+  expect:
+    kind: success
+    forbidden_output: *id009
+    outputs:
+      item:
+        description: ''
+- name: invalid-item-type-vmtx
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: library-101
+        name: App appliance
+        type: vmtx
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: true
+        size: 4294967296
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: Synthetic appliance metadata
+        security_compliance: true
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-item-library_id-another-library
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: another-library
+        name: App appliance
+        type: ovf
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: true
+        size: 4294967296
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: Synthetic appliance metadata
+        security_compliance: true
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-item-library_id-None
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: null
+        name: App appliance
+        type: ovf
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: true
+        size: 4294967296
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: Synthetic appliance metadata
+        security_compliance: true
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-item-cached-true
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: library-101
+        name: App appliance
+        type: ovf
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: 'true'
+        size: 4294967296
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: Synthetic appliance metadata
+        security_compliance: true
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-item-name-17
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: library-101
+        name: 17
+        type: ovf
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: true
+        size: 4294967296
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: Synthetic appliance metadata
+        security_compliance: true
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datacenters-zero
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datacenters-duplicate
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - *id015
+      - *id015
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datacenters-object
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: *id015
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datacenters-string-array
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '[{"datacenter": "datacenter-21", "name": "Lab DC"}]'
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datacenters-null
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: null
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datacenters-identity-missing
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datacenter: null
+        name: Lab DC
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datacenters-identity-numeric
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datacenter: 42
+        name: Lab DC
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datacenters-identity-mismatched
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datacenter: datacenter-21
+        name: wrong-id
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: clusters-zero
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: clusters-duplicate
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - *id016
+      - *id016
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: clusters-object
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: *id016
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: clusters-string-array
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '[{"cluster": "domain-c7", "name": "Compute A", "ha_enabled": true, "drs_enabled": false}]'
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: clusters-null
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: null
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: clusters-identity-missing
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - cluster: null
+        name: Compute A
+        ha_enabled: true
+        drs_enabled: false
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: clusters-identity-numeric
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - cluster: 42
+        name: Compute A
+        ha_enabled: true
+        drs_enabled: false
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: clusters-identity-mismatched
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - cluster: domain-c7
+        name: wrong-id
+        ha_enabled: true
+        drs_enabled: false
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: folder-zero
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/folder
+    query:
+      folders: group-v30
+      datacenters: datacenter-21
+      type: VIRTUAL_MACHINE
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: folder-duplicate
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/folder
+    query:
+      folders: group-v30
+      datacenters: datacenter-21
+      type: VIRTUAL_MACHINE
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - *id017
+      - *id017
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: folder-object
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/folder
+    query:
+      folders: group-v30
+      datacenters: datacenter-21
+      type: VIRTUAL_MACHINE
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: *id017
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: folder-string-array
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/folder
+    query:
+      folders: group-v30
+      datacenters: datacenter-21
+      type: VIRTUAL_MACHINE
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '[{"folder": "group-v30", "name": "Applications", "type": "VIRTUAL_MACHINE"}]'
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: folder-null
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/folder
+    query:
+      folders: group-v30
+      datacenters: datacenter-21
+      type: VIRTUAL_MACHINE
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: null
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: folder-identity-missing
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/folder
+    query:
+      folders: group-v30
+      datacenters: datacenter-21
+      type: VIRTUAL_MACHINE
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - folder: null
+        name: Applications
+        type: VIRTUAL_MACHINE
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: folder-identity-numeric
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/folder
+    query:
+      folders: group-v30
+      datacenters: datacenter-21
+      type: VIRTUAL_MACHINE
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - folder: 42
+        name: Applications
+        type: VIRTUAL_MACHINE
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: folder-identity-mismatched
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/folder
+    query:
+      folders: group-v30
+      datacenters: datacenter-21
+      type: VIRTUAL_MACHINE
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - folder: wrong-id
+        name: Applications
+        type: VIRTUAL_MACHINE
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datastore-zero
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datastore-duplicate
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - *id018
+      - *id018
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datastore-object
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: *id018
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datastore-string-array
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '[{"datastore": "datastore-44", "name": "Shared VMFS", "type": "VMFS", "capacity": 1099511627776,
+        "free_space": 549755813888}]'
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datastore-null
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: null
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datastore-identity-missing
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datastore: null
+        name: Shared VMFS
+        type: VMFS
+        capacity: 1099511627776
+        free_space: 549755813888
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datastore-identity-numeric
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datastore: 42
+        name: Shared VMFS
+        type: VMFS
+        capacity: 1099511627776
+        free_space: 549755813888
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datastore-identity-mismatched
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datastore: wrong-id
+        name: Shared VMFS
+        type: VMFS
+        capacity: 1099511627776
+        free_space: 549755813888
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: network-zero
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - method: GET
+    path: /api/vcenter/network
+    query:
+      networks: dvportgroup-55
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: network-duplicate
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - method: GET
+    path: /api/vcenter/network
+    query:
+      networks: dvportgroup-55
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - *id019
+      - *id019
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: network-object
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - method: GET
+    path: /api/vcenter/network
+    query:
+      networks: dvportgroup-55
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: *id019
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: network-string-array
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - method: GET
+    path: /api/vcenter/network
+    query:
+      networks: dvportgroup-55
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '[{"network": "dvportgroup-55", "name": "App VLAN", "type": "DISTRIBUTED_PORTGROUP"}]'
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: network-null
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - method: GET
+    path: /api/vcenter/network
+    query:
+      networks: dvportgroup-55
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: null
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: network-identity-missing
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - method: GET
+    path: /api/vcenter/network
+    query:
+      networks: dvportgroup-55
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - network: null
+        name: App VLAN
+        type: DISTRIBUTED_PORTGROUP
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: network-identity-numeric
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - method: GET
+    path: /api/vcenter/network
+    query:
+      networks: dvportgroup-55
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - network: 42
+        name: App VLAN
+        type: DISTRIBUTED_PORTGROUP
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: network-identity-mismatched
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - method: GET
+    path: /api/vcenter/network
+    query:
+      networks: dvportgroup-55
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - network: wrong-id
+        name: App VLAN
+        type: DISTRIBUTED_PORTGROUP
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: cluster-string-object
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '{"name": "Compute A", "resource_pool": "resgroup-73"}'
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: cluster-array
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: cluster-null
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: null
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: pool-string-object
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '{"name": "Resources", "resource_pools": ["resgroup-74", "resgroup-75"], "cpu_allocation":
+        {"reservation": 2400, "expandable_reservation": true, "limit": -1, "shares": {"level": "NORMAL"}},
+        "memory_allocation": {"reservation": 4096, "expandable_reservation": false, "limit": 65536, "shares":
+        {"level": "CUSTOM", "shares": 12000}}}'
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: pool-array
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: pool-null
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: null
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: item-string-object
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '{"library_id": "library-101", "name": "App appliance", "type": "ovf", "content_version":
+        "17", "metadata_version": "8", "version": "8", "cached": true, "size": 4294967296, "creation_time":
+        "2026-01-01T00:00:00Z", "last_modified_time": "2026-10-20T12:00:00Z", "description": "Synthetic
+        appliance metadata", "security_compliance": true}'
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: item-array
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: item-null
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: null
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: requirements-string-object
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '{"name": "App appliance", "annotation": "Synthetic OVF requirement inspection", "EULAs":
+        ["Synthetic EULA: operator review required."], "networks": ["Management", "Application"], "storage_groups":
+        ["System disks", "Data disks"], "additional_params": [{"type": "SyntheticExtension", "custom_setting":
+        "operator must inspect this open parameter"}]}'
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: requirements-array
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: requirements-null
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: folder-type-HOST
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/folder
+    query:
+      folders: group-v30
+      datacenters: datacenter-21
+      type: VIRTUAL_MACHINE
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - folder: group-v30
+        name: Applications
+        type: HOST
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: folder-type-virtual_machine
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/folder
+    query:
+      folders: group-v30
+      datacenters: datacenter-21
+      type: VIRTUAL_MACHINE
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - folder: group-v30
+        name: Applications
+        type: virtual_machine
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: datastore-type-UNKNOWN
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datastore: datastore-44
+        name: Shared VMFS
+        type: UNKNOWN
+        capacity: 1099511627776
+        free_space: 549755813888
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: network-type-UNKNOWN
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - method: GET
+    path: /api/vcenter/network
+    query:
+      networks: dvportgroup-55
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - network: dvportgroup-55
+        name: App VLAN
+        type: UNKNOWN
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: EULAs-string-empty
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs: '[]'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: EULAs-string-populated
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs: '["Synthetic EULA: operator review required."]'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: EULAs-object
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs: {}
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: EULAs-null
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs: null
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: EULAs-malformed-later-entry
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - valid
+        - 23
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: networks-string-empty
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks: '[]'
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: networks-string-populated
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks: '["Management", "Application"]'
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: networks-object
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks: {}
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: networks-null
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks: null
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: networks-malformed-later-entry
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - valid
+        - 23
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: storage_groups-string-empty
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups: '[]'
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: storage_groups-string-populated
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups: '["System disks", "Data disks"]'
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: storage_groups-object
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups: {}
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: storage_groups-null
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups: null
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: storage_groups-malformed-later-entry
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - valid
+        - 23
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: additional_params-string-empty
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params: '[]'
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: additional_params-string-populated
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params: '[{"type": "SyntheticExtension", "custom_setting": "operator must inspect this
+          open parameter"}]'
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: additional_params-object
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params: {}
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: additional_params-null
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: missing-required-EULAs
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: SyntheticExtension
+          custom_setting: operator must inspect this open parameter
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: pool-string-child-array
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: '[]'
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: true
+          limit: -1
+          shares:
+            level: NORMAL
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: false
+          limit: 65536
+          shares:
+            level: CUSTOM
+            shares: 12000
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: pool-missing-name
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: null
+        resource_pools:
+        - resgroup-74
+        - resgroup-75
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: true
+          limit: -1
+          shares:
+            level: NORMAL
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: false
+          limit: 65536
+          shares:
+            level: CUSTOM
+            shares: 12000
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: cluster-numeric-pool-id
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Compute A
+        resource_pool: 42
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: cluster-mismatched-name
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: wrong
+        resource_pool: resgroup-73
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-datastore-capacity-None
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datastore: datastore-44
+        name: Shared VMFS
+        type: VMFS
+        capacity: null
+        free_space: 549755813888
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-datastore-capacity--1
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datastore: datastore-44
+        name: Shared VMFS
+        type: VMFS
+        capacity: -1
+        free_space: 549755813888
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-datastore-capacity-1.5
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datastore: datastore-44
+        name: Shared VMFS
+        type: VMFS
+        capacity: 1.5
+        free_space: 549755813888
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-datastore-capacity-12
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datastore: datastore-44
+        name: Shared VMFS
+        type: VMFS
+        capacity: '12'
+        free_space: 549755813888
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-datastore-free_space-None
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datastore: datastore-44
+        name: Shared VMFS
+        type: VMFS
+        capacity: 1099511627776
+        free_space: null
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-datastore-free_space--1
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datastore: datastore-44
+        name: Shared VMFS
+        type: VMFS
+        capacity: 1099511627776
+        free_space: -1
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-datastore-free_space-1.5
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datastore: datastore-44
+        name: Shared VMFS
+        type: VMFS
+        capacity: 1099511627776
+        free_space: 1.5
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-datastore-free_space-12
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datastore: datastore-44
+        name: Shared VMFS
+        type: VMFS
+        capacity: 1099511627776
+        free_space: '12'
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-item-size-None
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: library-101
+        name: App appliance
+        type: ovf
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: true
+        size: null
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: Synthetic appliance metadata
+        security_compliance: true
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-item-size--1
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: library-101
+        name: App appliance
+        type: ovf
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: true
+        size: -1
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: Synthetic appliance metadata
+        security_compliance: true
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-item-size-1.5
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: library-101
+        name: App appliance
+        type: ovf
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: true
+        size: 1.5
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: Synthetic appliance metadata
+        security_compliance: true
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: invalid-item-size-12
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        library_id: library-101
+        name: App appliance
+        type: ovf
+        content_version: '17'
+        metadata_version: '8'
+        version: '8'
+        cached: true
+        size: '12'
+        creation_time: '2026-01-01T00:00:00Z'
+        last_modified_time: '2026-10-20T12:00:00Z'
+        description: Synthetic appliance metadata
+        security_compliance: true
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: permission-denied-step-1
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: permission-denied-step-2
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: permission-denied-step-3
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: permission-denied-step-4
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: permission-denied-step-5
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: permission-denied-step-6
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/folder
+    query:
+      folders: group-v30
+      datacenters: datacenter-21
+      type: VIRTUAL_MACHINE
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: permission-denied-step-7
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: permission-denied-step-8
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - method: GET
+    path: /api/vcenter/network
+    query:
+      networks: dvportgroup-55
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: permission-denied-step-9
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: ovf-error-400
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 400
+      body:
+        error_type: SYNTHETIC_OVF_ERROR
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: ovf-error-404
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 404
+      body:
+        error_type: SYNTHETIC_OVF_ERROR
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: ovf-error-500
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 500
+      body:
+        error_type: SYNTHETIC_OVF_ERROR
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: item-not-found
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 404
+      body:
+        error_type: NOT_FOUND
+  - *id008
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: login-rejected
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - method: POST
+    path: /api/session
+    query: {}
+    headers:
+      Authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    absent_headers:
+    - vmware-api-session-id
+    response:
+      status: 401
+      body:
+        error_type: UNAUTHENTICATED
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: login-token-unexpected-status
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - method: POST
+    path: /api/session
+    query: {}
+    headers:
+      Authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    absent_headers:
+    - vmware-api-session-id
+    response:
+      status: 200
+      body: synthetic-session-sentinel-42
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: logout-failed
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - *id014
+  - method: DELETE
+    path: /api/session
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 401
+      body:
+        error_type: UNAUTHENTICATED
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: work-and-cleanup-failed
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/folder
+    query:
+      folders: group-v30
+      datacenters: datacenter-21
+      type: VIRTUAL_MACHINE
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - method: DELETE
+    path: /api/session
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 500
+      body:
+        error_type: SYNTHETIC_LOGOUT_ERROR
+  expect:
+    kind: error
+    forbidden_output: *id009
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+- name: returned-root-pool-wiring
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - method: POST
+    path: /api/session
+    query: {}
+    headers:
+      Authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    absent_headers:
+    - vmware-api-session-id
+    response:
+      status: 201
+      body: synthetic-session-sentinel-42
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/datacenters.json
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/clusters.json
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Compute A
+        resource_pool: resgroup-901
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-901
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/pool.json
+  - method: GET
+    path: /api/content/library/item/item-201
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/item.json
+  - method: GET
+    path: /api/vcenter/folder
+    query:
+      folders: group-v30
+      datacenters: datacenter-21
+      type: VIRTUAL_MACHINE
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/folder.json
+  - method: GET
+    path: /api/vcenter/datastore
+    query:
+      datastores: datastore-44
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/datastore.json
+  - method: GET
+    path: /api/vcenter/network
+    query:
+      networks: dvportgroup-55
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/network.json
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/ovf-deployment-preparation/requirements.json
+    body:
+      target:
+        resource_pool_id: resgroup-901
+        folder_id: group-v30
+  - method: DELETE
+    path: /api/session
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 204
+      body: null
+  expect:
+    kind: success
+    forbidden_output: *id009
+    outputs:
+      resource_pool_id: resgroup-901

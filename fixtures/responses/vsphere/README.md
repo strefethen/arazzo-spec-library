@@ -2,8 +2,8 @@
 
 **vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified.**
 
-Every JSON body under `vm-guest-diagnosis/` and
-`cluster-infrastructure-assessment/` is a hand-authored synthetic example,
+Every JSON body under `vm-guest-diagnosis/`,
+`cluster-infrastructure-assessment/` and `ovf-deployment-preparation/` is a hand-authored synthetic example,
 not a captured vCenter response. Names, IDs, UUIDs, documentation IP ranges and
 `.invalid` domains are fictional. Scenarios add synthetic auth/session sentinels,
 optional omissions, valid empty collections and deliberate malformed/error bodies.
@@ -88,4 +88,58 @@ cluster names, invalid pool references, permissions/not-found/provider-limit
 errors, login failure and both logout failure paths. They enforce Basic only
 on login and the exact session header thereafter, with synthetic sentinels
 forbidden in captured output. These are contract/wiring tests, not live proof.
+
+## OVF preparation contract
+
+**vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified.**
+The nine OVF JSON bodies are synthetic, including fictional library/item IDs,
+target candidates, mapping names, EULA text and an illustrative open parameter
+object. They are not a real appliance or an accepted license. Checked against
+official **8.0.3** sources on 2026-10-27:
+
+- Session, datacenter, cluster and resource-pool operations reuse the exact
+  contracts above; the OVF subset links each operation's official page. Pool
+  detail omits a mandatory ID, so its requested identity comes from cluster GET.
+- [Item GET](https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/content/api/content/library/item/library_item_id/get/)
+  documents `id` as absent on GET/list. Retain the explicit requested identity,
+  verify `library_id` and `type=ovf`, and expose name, `content_version`,
+  `metadata_version`, `version`, `cached`, creation/modification times and
+  description. Those fields are documented as always present for GET; `size`,
+  `last_sync_time`, `source_id` and certificate information may be absent.
+  Names need not be unique. Size is bytes and can be zero when uncached.
+- [Folder list](https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/folder/get/)
+  uses plural `folders`, `datacenters`, singular `type`; uppercase
+  [VIRTUAL_MACHINE](https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/data-structures/Folder_Type/)
+  is the required folder kind. Exact supplied ID plus returned datacenter scope
+  must yield one matching folder. The provider cap is 1000.
+- [Datastore list](https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/datastore/get/)
+  uses `datastores` and `datacenters`, with a 2500 hard cap.
+  [Summary](https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/data-structures/Datastore_Summary/)
+  requires datastore/name/type; capacity/free_space are optional bytes, periodically
+  updated. Supported types are VMFS, NFS, NFS41, CIFS, VSAN, VFFS and VVOL.
+- [Network list](https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/network/get/)
+  uses `networks` and `datacenters`, with a 1000 hard cap.
+  [Summary](https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/data-structures/Network_Summary/)
+  requires network/name/type; types are STANDARD_PORTGROUP,
+  DISTRIBUTED_PORTGROUP and OPAQUE_NETWORK. Neither list proves cluster access.
+- [OVF filter](https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/ovf/library-item/ovf_library_item_id__action=filter/post/)
+  is POST with `action=filter`, JSON `target` wrapper, required
+  `resource_pool_id` and optional `folder_id`/`host_id`. This workflow supplies
+  the returned pool and selected folder only. The
+  [target](https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/data-structures/Ovf_LibraryItem_DeploymentTarget/)
+  documents the VM-folder requirement and conditional automatic host selection.
+  Response `EULAs` is required (capitalization matters); `name`, `annotation`,
+  `networks`, `storage_groups`, `additional_params` are optional. Empty requirement
+  arrays are valid. Additional parameters are open objects preserved without
+  guessed subtype schemas; their complete validation remains operator work.
+
+Scenarios assert every path, exact query/body and per-step header, Basic only
+on login, retained request item identity, returned pool wiring, valid omissions
+and empty arrays. Bounded negative cases reject zero/duplicate/malformed identity
+results, JSON-string container impostors, wrong library/type/folder kind,
+permissions and OVF 400/404/500, with exact nonzero failure cleanup. Successful
+and failure logout errors and secret-safe login failures are also exercised.
+No ConfigTargets, deployment, license acceptance, live calls or retries occur.
+Datastore/network selections remain datacenter-scoped candidates, with mapping,
+placement, policy, capacity and compatibility checks explicitly unresolved.
 The report makes no storage/network, VM-to-host, placement or utilization claim.

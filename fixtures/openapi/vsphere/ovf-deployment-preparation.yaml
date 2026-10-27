@@ -1,0 +1,576 @@
+openapi: 3.0.3
+info:
+  title: vSphere OVF preparation subset
+  version: 8.0.3
+  description: vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified. Unwrapped
+    /api bodies. Get responses do not supply mandatory resource IDs; retain request identities. Optional
+    fields remain absent. Additional properties preserved; subset and runtime guards are not full response
+    validation.
+servers:
+- url: https://vcenter.invalid
+paths:
+  /api/vcenter/datacenter:
+    get:
+      operationId: listDatacenters
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/datacenter/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: &id001
+          type: string
+      - name: names
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id001
+      responses:
+        '200':
+          description: Versioned unwrapped response; collection caps are hard failure limits, not pagination.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Datacenter'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error, including exceeded collection cap
+        '503':
+          description: Service unavailable
+  /api/vcenter/cluster:
+    get:
+      operationId: listClusters
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/cluster/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: names
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id001
+      - name: datacenters
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id001
+      responses:
+        '200':
+          description: Versioned unwrapped response; collection caps are hard failure limits, not pagination.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ClusterSummary'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error, including exceeded collection cap
+        '503':
+          description: Service unavailable
+  /api/vcenter/cluster/{cluster}:
+    get:
+      operationId: getCluster
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/cluster/cluster/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: cluster
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '200':
+          description: Versioned unwrapped response; collection caps are hard failure limits, not pagination.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cluster'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error, including exceeded collection cap
+        '503':
+          description: Service unavailable
+  /api/vcenter/resource-pool/{resource_pool}:
+    get:
+      operationId: getResourcePool
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/resource-pool/resource_pool/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: resource_pool
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '200':
+          description: Versioned unwrapped response; collection caps are hard failure limits, not pagination.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResourcePool'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error, including exceeded collection cap
+        '503':
+          description: Service unavailable
+  /api/content/library/item/{library_item_id}:
+    get:
+      operationId: getLibraryItem
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/content/api/content/library/item/library_item_id/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: &id002
+          type: string
+      - name: library_item_id
+        in: path
+        required: true
+        schema: *id002
+      responses:
+        '200':
+          description: Documented unwrapped /api result; synthetic fixtures, live unverified.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LibraryItem'
+        '400':
+          description: Invalid argument or inaccessible/invalid OVF
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '500':
+          description: Provider failure or inventory hard cap
+  /api/vcenter/folder:
+    get:
+      operationId: listFolders
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/folder/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id002
+      - name: folders
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id002
+      - name: datacenters
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id002
+      - name: type
+        in: query
+        schema:
+          type: string
+          enum:
+          - VIRTUAL_MACHINE
+      responses:
+        '200':
+          description: Documented unwrapped /api result; synthetic fixtures, live unverified.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Folder'
+        '400':
+          description: Invalid argument or inaccessible/invalid OVF
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '500':
+          description: Provider failure or inventory hard cap
+  /api/vcenter/datastore:
+    get:
+      operationId: listDatastores
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/datastore/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id002
+      - name: datastores
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id002
+      - name: datacenters
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id002
+      responses:
+        '200':
+          description: Documented unwrapped /api result; synthetic fixtures, live unverified.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Datastore'
+        '400':
+          description: Invalid argument or inaccessible/invalid OVF
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '500':
+          description: Provider failure or inventory hard cap
+  /api/vcenter/network:
+    get:
+      operationId: listNetworks
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/network/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id002
+      - name: networks
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id002
+      - name: datacenters
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id002
+      responses:
+        '200':
+          description: Documented unwrapped /api result; synthetic fixtures, live unverified.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Network'
+        '400':
+          description: Invalid argument or inaccessible/invalid OVF
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '500':
+          description: Provider failure or inventory hard cap
+  /api/vcenter/ovf/library-item/{ovf_library_item_id}:
+    post:
+      operationId: filterOvf
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/ovf/library-item/ovf_library_item_id__action=filter/post/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id002
+      - name: ovf_library_item_id
+        in: path
+        required: true
+        schema: *id002
+      - name: action
+        in: query
+        required: true
+        schema:
+          type: string
+          enum:
+          - filter
+      responses:
+        '200':
+          description: Documented unwrapped /api result; synthetic fixtures, live unverified.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OvfSummary'
+        '400':
+          description: Invalid argument or inaccessible/invalid OVF
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Not found
+        '500':
+          description: Provider failure or inventory hard cap
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - target
+              properties:
+                target:
+                  type: object
+                  required:
+                  - resource_pool_id
+                  properties:
+                    resource_pool_id: *id002
+                    folder_id: *id002
+components:
+  schemas:
+    Datacenter:
+      type: object
+      required:
+      - datacenter
+      - name
+      properties:
+        datacenter: &id003
+          type: string
+        name: *id003
+    ClusterSummary:
+      type: object
+      required:
+      - cluster
+      - name
+      - ha_enabled
+      - drs_enabled
+      properties:
+        cluster: *id001
+        name: *id001
+        ha_enabled: &id004
+          type: boolean
+        drs_enabled: *id004
+    Cluster:
+      type: object
+      required:
+      - name
+      - resource_pool
+      properties:
+        name: *id001
+        resource_pool: *id001
+    Shares:
+      type: object
+      required:
+      - level
+      properties:
+        level:
+          type: string
+          enum:
+          - LOW
+          - NORMAL
+          - HIGH
+          - CUSTOM
+        shares: &id005
+          type: integer
+          format: int64
+    Allocation:
+      type: object
+      required:
+      - reservation
+      - expandable_reservation
+      - limit
+      - shares
+      properties:
+        reservation: *id005
+        expandable_reservation: *id004
+        limit: *id005
+        shares:
+          $ref: '#/components/schemas/Shares'
+    ResourcePool:
+      type: object
+      required:
+      - name
+      - resource_pools
+      properties:
+        name: *id001
+        resource_pools:
+          type: array
+          items: *id001
+        cpu_allocation:
+          $ref: '#/components/schemas/Allocation'
+        memory_allocation:
+          $ref: '#/components/schemas/Allocation'
+    LibraryItem:
+      type: object
+      required:
+      - library_id
+      - name
+      - content_version
+      - metadata_version
+      - version
+      - description
+      - creation_time
+      - last_modified_time
+      - cached
+      properties:
+        library_id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        content_version:
+          type: string
+        metadata_version:
+          type: string
+        version:
+          type: string
+        description:
+          type: string
+        creation_time:
+          type: string
+        last_modified_time:
+          type: string
+        last_sync_time:
+          type: string
+        source_id:
+          type: string
+        cached:
+          type: boolean
+        size: &id006
+          type: integer
+          format: int64
+        security_compliance:
+          type: boolean
+        certificate_verification_info:
+          type: object
+      description: GET omits id; retain requested identity. Require type ovf for this workflow. size,
+        last_sync_time, source_id and certificate metadata may be absent.
+    Folder:
+      type: object
+      required:
+      - folder
+      - name
+      - type
+      properties:
+        folder:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - DATACENTER
+          - DATASTORE
+          - HOST
+          - NETWORK
+          - VIRTUAL_MACHINE
+    Datastore:
+      type: object
+      required:
+      - datastore
+      - name
+      - type
+      properties:
+        datastore:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - VMFS
+          - NFS
+          - NFS41
+          - CIFS
+          - VSAN
+          - VFFS
+          - VVOL
+        capacity: *id006
+        free_space: *id006
+    Network:
+      type: object
+      required:
+      - network
+      - name
+      - type
+      properties:
+        network:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+          enum:
+          - STANDARD_PORTGROUP
+          - DISTRIBUTED_PORTGROUP
+          - OPAQUE_NETWORK
+    OvfSummary:
+      type: object
+      required:
+      - EULAs
+      properties:
+        name: *id002
+        annotation: *id002
+        EULAs:
+          type: array
+          items: *id002
+        networks:
+          type: array
+          items: *id002
+        storage_groups:
+          type: array
+          items: *id002
+        additional_params:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+      description: Preserve open additional_params objects without guessing subtype attributes. Optional
+        absence remains absent. No license acceptance or deployment.

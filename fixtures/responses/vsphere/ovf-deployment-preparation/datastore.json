@@ -1,0 +1,9 @@
+[
+  {
+    "datastore": "datastore-44",
+    "name": "Shared VMFS",
+    "type": "VMFS",
+    "capacity": 1099511627776,
+    "free_space": 549755813888
+  }
+]

@@ -1,0 +1,7 @@
+[
+  {
+    "network": "dvportgroup-55",
+    "name": "App VLAN",
+    "type": "DISTRIBUTED_PORTGROUP"
+  }
+]

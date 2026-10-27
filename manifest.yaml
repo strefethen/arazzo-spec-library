@@ -271,3 +271,33 @@ specs:
           --dry-run --strict-inputs --max-redirects 0 --step login --input authorization=synthetic-preview
           --input datacenter_name='Lab DC' --input cluster_name='Compute A'
         jq: views/vsphere.cluster-infrastructure-assessment.summary.jq
+  - id: vsphere.ovf-deployment-preparation
+    provider: vsphere
+    category: deployment-preparation
+    description: vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified. Inspect scoped
+      cluster/pool, verified OVF item, datacenter-scoped candidates and filter requirements. No deployment,
+      EULA acceptance or readiness proof.
+    path: specs/vsphere/ovf-deployment-preparation.arazzo.yaml
+    arazzo: 1.0.x
+    tier: dry-run
+    read_only: false
+    live_policy: manual-private-vcenter-session-side-effects
+    compatibility: arazzo-cli 0.8.2
+    openapi:
+    - fixtures/openapi/vsphere/session.yaml
+    - fixtures/openapi/vsphere/ovf-deployment-preparation.yaml
+    workflows:
+    - ovf-deployment-preparation
+    env:
+    - VSPHERE_AUTHORIZATION
+    tests: tests/scenarios/vsphere.ovf-deployment-preparation.yaml
+    examples:
+      quickstart:
+        description: Preview login only, without credentials or network calls. See provider guide for configured
+          full execution.
+        command: arazzo-cli --json run specs/vsphere/ovf-deployment-preparation.arazzo.yaml ovf-deployment-preparation
+          --dry-run --strict-inputs --max-redirects 0 --step login --input authorization=synthetic-preview
+          --input datacenter_name='Lab DC' --input cluster_name='Compute A' --input item_id=item-201 --input
+          expected_library_id=library-101 --input folder_id=group-v30 --input datastore_id=datastore-44
+          --input network_id=dvportgroup-55
+        jq: views/vsphere.ovf-deployment-preparation.summary.jq

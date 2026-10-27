@@ -1,0 +1,14 @@
+{
+  "library_id": "library-101",
+  "name": "App appliance",
+  "type": "ovf",
+  "content_version": "17",
+  "metadata_version": "8",
+  "version": "8",
+  "cached": true,
+  "size": 4294967296,
+  "creation_time": "2026-01-01T00:00:00Z",
+  "last_modified_time": "2026-10-20T12:00:00Z",
+  "description": "Synthetic appliance metadata",
+  "security_compliance": true
+}

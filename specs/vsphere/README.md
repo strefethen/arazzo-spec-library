@@ -7,9 +7,10 @@ and declared failures only. `vm-guest-diagnosis` correlates one uniquely scoped
 VM's configured hardware with Tools and all documented guest telemetry. It
 creates a temporary session, reads inventory/guest information, then deletes
 the session. `cluster-infrastructure-assessment` combines cluster configuration,
-root-pool allocations and cluster-filtered host/VM inventory. Both reports
-perform inventory reads plus session creation/deletion. OVF preparation remains
-a separate future slice.
+root-pool allocations and cluster-filtered host/VM inventory.
+`ovf-deployment-preparation` combines library-item provenance, cluster/root-pool
+settings, explicit target candidates and OVF requirements. All three reports
+create/delete sessions; OVF filter is an inspection POST, without deployment.
 
 ## VM selection and report
 
@@ -274,7 +275,7 @@ the full total unknown. Empty inventories have complete zero configured totals.
 None of these configured allocations measures utilization.
 
 Use the shared endpoint helper, credential setup and TLS/cleanup guidance
-above. The helper includes both registered vSphere workflows; if an older bundle
+above. The helper includes all three registered vSphere workflows; if an older bundle
 exists, choose a new output directory. Have the administrator confirm privileges
 for datacenter/cluster lists, cluster and resource-pool get, and scoped host/VM
 lists, including `System.Read` where required. Login alone proves no read access.
@@ -333,4 +334,133 @@ required/optional field definitions. Run its complete synthetic scenarios with:
 
 ```bash
 python3 scripts/verify.py vsphere.cluster-infrastructure-assessment
+```
+
+## OVF deployment preparation
+
+**vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified.**
+This report prepares operator review of one explicitly identified content-library
+OVF item. It does not deploy, accept EULAs, reserve capacity or prove deployment
+readiness. Native VM templates use a different API and are rejected here.
+
+Supply exact `datacenter_name` and `cluster_name`, an explicit `item_id` and
+`expected_library_id`, and explicit `folder_id`, `datastore_id`, `network_id`.
+Obtain those IDs from your administrator's authorized vCenter inventory/content
+library interface; item names need not be unique. This workflow verifies supplied
+IDs rather than selecting the first item with a similar name. CLI discovery below
+lists workflows and inputs, not private vCenter inventory. Do not use live
+single-step discovery: it can omit logout and expose an intermediate session.
+
+The fixed chain is login → unique named datacenter → unique named cluster in
+that datacenter → cluster detail → returned root-pool detail → explicit item GET
+→ exact expected-library and `ovf` type checks → explicit VM-folder, datastore
+and network candidates → OVF filter → logout. Each candidate query includes its
+supplied ID and the returned datacenter ID. Folder also uses singular
+`type=VIRTUAL_MACHINE` (uppercase), with an exact returned-type check. Datastore
+and network queries use plural `datastores`/`networks`; their documented types
+are checked. Lists require exactly one visible match and matching ID. The list
+caps (1000 folders/networks, 2500 datastores) are hard limits, not pagination.
+Zero, duplicate, malformed, mismatched or denied results stop further work,
+attempt failure logout and exit nonzero. No retries or substitute inventory.
+
+GET item omits `id`: raw output retains the exact requested `item_id`, alongside
+library, name/type, content/metadata/update versions, cached state, timestamps,
+description and optional size/source/security metadata. Size may be absent or
+zero for an uncached item. This is provenance/cache data, not a safety verdict.
+Cluster selection/HA/DRS, full cluster detail, requested pool ID and complete
+pool configuration/child IDs are retained. CPU reservations/limits use MHz;
+memory uses the provider's MB wording; `-1` means unlimited. Shares are relative
+and their count is relevant only for CUSTOM. These are configured allocations,
+not utilization or free capacity.
+
+POST `/api/vcenter/ovf/library-item/{item_id}?action=filter` sends exactly
+`{"target":{"resource_pool_id":<returned root pool>,"folder_id":<selected folder>}}`.
+It supplies no host, mappings, deployment specification or license acceptance.
+The report preserves capitalized required `EULAs`, optional `networks` and
+`storage_groups` mapping names, and open `additional_params` objects unmodified.
+Empty arrays remain valid; optional omissions remain absent and are described
+according to the provider's contract. Runtime guards require genuine objects
+and arrays; JSON-encoded strings do not substitute for containers. These are
+scoped checks, not complete validation of every optional field or polymorphic
+additional-parameter subtype.
+
+Datastore capacity/free bytes are optional, periodically updated and unreserved.
+Datacenter membership does **not** prove that this cluster/host can access a
+datastore or network. No ConfigTargets/EnvironmentBrowser request is made.
+The chosen network/datastore are candidates; this workflow does not invent
+proposed mappings or assert dynamic mapping coverage. Operator work remains:
+
+- Assign every required network/storage mapping and choose default storage;
+  inspect and supply suitable additional-parameter subtypes/values.
+- Review EULAs separately; this workflow never accepts them.
+- Confirm storage/network access, storage policies, sufficient capacity,
+  compatibility and host placement. No `host_id` is supplied; the documented
+  target contract's automatic host selection depends on a standalone host or
+  a DRS-enabled cluster. A filter success does not remove those placement checks.
+- Confirm TLS, authentication and privileges for every inventory, library-item
+  and OVF filter operation. Have the administrator check the selected pool/folder
+  access and documented `System.Read` requirements. Login proves no read access.
+
+Use the shared private `getpass`/environment setup above. The helper configures
+all registered companions; choose a new directory if an older bundle exists.
+Discovery, strict validation and the first-login preview make no vCenter calls:
+
+```bash
+python3 scripts/configure_vsphere.py \
+  --server https://vcenter.example.invalid \
+  --output-dir .artifacts/vsphere-ovf-configured
+arazzo-cli --json catalog specs/vsphere
+arazzo-cli --json show ovf-deployment-preparation --dir specs/vsphere
+arazzo-cli --json validate .artifacts/vsphere-ovf-configured/specs/vsphere/ovf-deployment-preparation.arazzo.yaml --strict
+arazzo-cli --json run .artifacts/vsphere-ovf-configured/specs/vsphere/ovf-deployment-preparation.arazzo.yaml ovf-deployment-preparation \
+  --dry-run --strict-inputs --max-redirects 0 --step login \
+  --input authorization=synthetic-preview \
+  --input datacenter_name='Lab DC' --input cluster_name='Compute A' \
+  --input item_id=item-201 --input expected_library_id=library-101 \
+  --input folder_id=group-v30 --input datastore_id=datastore-44 --input network_id=dvportgroup-55
+```
+
+Preview prints only the login plan; it cannot show template or target data.
+For an authorized full execution, configure a real HTTPS origin, privately set
+`VSPHERE_AUTHORIZATION` using the shared hidden-prompt setup, and replace all
+fictional names/IDs below with the administrator-confirmed inputs:
+
+```bash
+set -o pipefail
+umask 077
+: "${VSPHERE_AUTHORIZATION:?VSPHERE_AUTHORIZATION must contain a complete Basic header}"
+arazzo-cli --json run .artifacts/vsphere-ovf-configured/specs/vsphere/ovf-deployment-preparation.arazzo.yaml ovf-deployment-preparation \
+  --strict-inputs --max-redirects 0 \
+  --http-timeout 30s --execution-timeout 5m --max-response-size 10485760 \
+  --input 'authorization=${VSPHERE_AUTHORIZATION}' \
+  --input datacenter_name='Lab DC' --input cluster_name='Compute A' \
+  --input item_id=item-201 --input expected_library_id=library-101 \
+  --input folder_id=group-v30 --input datastore_id=datastore-44 --input network_id=dvportgroup-55 \
+  > .artifacts/vsphere-ovf-preparation.json && \
+  jq -er -f views/vsphere.ovf-deployment-preparation.summary.jq .artifacts/vsphere-ovf-preparation.json
+unset VSPHERE_AUTHORIZATION
+```
+
+Keep raw `.artifacts/vsphere-ovf-preparation.json` for agents. Inspect all fields:
+
+```bash
+jq -e '.outputs' .artifacts/vsphere-ovf-preparation.json
+```
+
+Basic belongs only on login, session headers only on later operations. Keep
+redirects disabled, omit traces/verbose output, and never run live `--step`.
+Trusted HTTPS is required; CLI 0.8.2 has no custom-CA flag. The helper only
+changes endpoints and never weakens TLS. The shared TLS limitations apply.
+Ordinary failures attempt logout and stay nonzero; successful work requires
+successful logout. Cancellation/whole-run timeout can skip cleanup, and failure
+cleanup replaces the original top-level error. If cleanup fails or is skipped,
+use the administrator-approved session revocation/expiry process. No real
+credentials or live vCenter calls were used for this implementation.
+
+The [OVF OpenAPI subset](../../fixtures/openapi/vsphere/ovf-deployment-preparation.yaml)
+links every exact official 8.0.3 operation; [fixture provenance](../../fixtures/responses/vsphere/README.md#ovf-preparation-contract)
+records required/optional fields and the inspection boundary. Verify offline:
+
+```bash
+python3 scripts/verify.py vsphere.ovf-deployment-preparation
 ```
