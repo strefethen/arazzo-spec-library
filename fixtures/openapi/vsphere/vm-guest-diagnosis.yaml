@@ -532,8 +532,6 @@ components:
               items: *id001
     Interface:
       type: object
-      required:
-      - mac_address
       properties:
         mac_address: *id001
         nic: *id001

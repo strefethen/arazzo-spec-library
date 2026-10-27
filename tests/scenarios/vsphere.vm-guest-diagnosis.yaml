@@ -280,6 +280,63 @@ cases:
     - 'Mapping: unknown'
     - configured allocation
     - live execution unverified
+- name: interface-without-mac-preserves-mappings
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/interfaces
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - nic: '4000'
+        ip:
+          ip_addresses:
+          - ip_address: 192.0.2.42
+            prefix_length: 24
+            origin: MANUAL
+            state: PREFERRED
+          dhcp:
+            ipv4_enabled: false
+            ipv6_enabled: false
+  - *id014
+  - *id015
+  - *id006
+  expect:
+    kind: success
+    outputs:
+      datacenter: *id008
+      selected_vm: *id009
+      guest_interfaces:
+      - nic: '4000'
+        ip:
+          ip_addresses:
+          - ip_address: 192.0.2.42
+            prefix_length: 24
+            origin: MANUAL
+            state: PREFERRED
+          dhcp:
+            ipv4_enabled: false
+            ipv6_enabled: false
+    assert: '(.outputs.guest_interfaces[0] | has("mac_address") | not) and (.outputs.guest_routes[0].interface_index == 0) and (.outputs.guest_filesystems["/"].mappings[0].disk == "2000")'
+    forbidden_output: *id007
+    view_contains:
+    - 'interface[0] MAC: unknown; Mapping: 4000 -> Network adapter 1; IP:'
+    - '192.0.2.42'
+    - 'Route 0.0.0.0/0 via 192.0.2.1; interface[0] -> 4000 -> Network adapter 1'
+    - '2000 -> Hard disk 1'
 - name: optional-unknown-and-empty-valid-collections
   workflow: vm-guest-diagnosis
   inputs: *id001
