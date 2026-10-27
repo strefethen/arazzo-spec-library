@@ -162,7 +162,9 @@ workflows:
       condition: ^\[
     - type: jsonpath
       context: $response.body
-      condition: $[?count($.resource_pools[?!match(@, ".+")]) == 0]
+      # Regex sees decoded string text. A slice selects array elements only, so
+      # its count must also equal the actual collection length (including zero).
+      condition: $[?length($.resource_pools) == count($.resource_pools[:]) && count($.resource_pools[?!match(@, ".+")]) == 0]
     - type: jsonpath
       context: $response.body
       condition: $[?!$.cpu_allocation || ($.cpu_allocation.reservation >= 0 && $.cpu_allocation.limit
@@ -210,9 +212,9 @@ workflows:
       stepId: logout-failed
     outputs:
       hosts: $response.body#
-    description: Explicit empty or universally valid inventory proceeds. The first object anchors whole-array
-      validation without evaluating the array predicate once per row. Any invalid or unevaluable collection
-      goes to failure cleanup.
+    description: Actual empty or universally valid arrays proceed. Empty-array acceptance requires typed
+      array indexing as well as the serialized shape; populated arrays require a JSONPath slice before
+      whole-array validation. Any invalid or unevaluable collection goes to failure cleanup.
     onSuccess:
     - name: accept-empty-inventory
       type: goto
@@ -221,13 +223,16 @@ workflows:
       - type: regex
         context: $response.body
         condition: ^\[\]$
+      # An empty array has no JSONPath child to select. Typed indexing returns
+      # null for its absent first element, but fails for a string or object.
+      - condition: ($response.body#)[0] == null
     - name: accept-all-valid-entries
       type: goto
       stepId: list-vms
       criteria:
       - type: jsonpath
         context: $response.body
-        condition: $[0][?count($[?!(match(@.host, ".+") && match(@.name, ".+") && (@.connection_state
+        condition: $[0:1][?count($[?!(match(@.host, ".+") && match(@.name, ".+") && (@.connection_state
           == "CONNECTED" || @.connection_state == "DISCONNECTED" || @.connection_state == "NOT_RESPONDING")
           && (!@.power_state || @.power_state == "POWERED_ON" || @.power_state == "POWERED_OFF" || @.power_state
           == "STANDBY"))]) == 0]
@@ -252,9 +257,9 @@ workflows:
       stepId: logout-failed
     outputs:
       vms: $response.body#
-    description: Explicit empty or universally valid inventory proceeds. The first object anchors whole-array
-      validation without evaluating the array predicate once per row. Any invalid or unevaluable collection
-      goes to failure cleanup.
+    description: Actual empty or universally valid arrays proceed. Empty-array acceptance requires typed
+      array indexing as well as the serialized shape; populated arrays require a JSONPath slice before
+      whole-array validation. Any invalid or unevaluable collection goes to failure cleanup.
     onSuccess:
     - name: reject-noninteger-configuration
       type: goto
@@ -268,13 +273,14 @@ workflows:
       - type: regex
         context: $response.body
         condition: ^\[\]$
+      - condition: ($response.body#)[0] == null
     - name: accept-all-valid-entries
       type: goto
       stepId: logout
       criteria:
       - type: jsonpath
         context: $response.body
-        condition: $[0][?count($[?!(match(@.vm, ".+") && match(@.name, ".+") && (@.power_state == "POWERED_ON"
+        condition: $[0:1][?count($[?!(match(@.vm, ".+") && match(@.name, ".+") && (@.power_state == "POWERED_ON"
           || @.power_state == "POWERED_OFF" || @.power_state == "SUSPENDED") && (!@.cpu_count || @.cpu_count
           >= 0) && (!@.memory_size_MiB || @.memory_size_MiB >= 0))]) == 0]
     - name: reject-invalid-or-unevaluable-inventory

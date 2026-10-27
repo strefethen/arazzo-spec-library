@@ -3408,3 +3408,642 @@ cases:
     forbidden_output:
     - SYNTHETIC-AUTH-SENTINEL
     - synthetic-session-sentinel-42
+- name: pool-children-empty-array-string
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: '[]'
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: true
+          limit: -1
+          shares:
+            level: NORMAL
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: false
+          limit: 65536
+          shares:
+            level: CUSTOM
+            shares: 12000
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: pool-children-populated-array-string
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools: '["resgroup-74", "resgroup-75"]'
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: true
+          limit: -1
+          shares:
+            level: NORMAL
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: false
+          limit: 65536
+          shares:
+            level: CUSTOM
+            shares: 12000
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: hosts-empty-array-string
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '[]'
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: hosts-populated-array-string
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '[{"host": "host-31", "name": "esx-a.example.invalid", "connection_state": "CONNECTED", "power_state":
+        "POWERED_ON"}, {"host": "host-32", "name": "esx-b.example.invalid", "connection_state": "DISCONNECTED"}]'
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-empty-array-string
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '[]'
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: vms-populated-array-string
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - *id019
+  - *id021
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '[{"vm": "vm-42", "name": "app-01", "power_state": "POWERED_ON", "cpu_count": 4, "memory_size_MiB":
+        8192}, {"vm": "vm-43", "name": "batch-01", "power_state": "POWERED_OFF", "cpu_count": 8, "memory_size_MiB":
+        16384}, {"vm": "vm-44", "name": "paused-01", "power_state": "SUSPENDED", "cpu_count": 2, "memory_size_MiB":
+        4096}]'
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cluster-detail-encoded-object-string
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '{"name": "Compute A", "resource_pool": "resgroup-73"}'
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: pool-encoded-object-string
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: '{"name": "Resources", "resource_pools": ["resgroup-74", "resgroup-75"], "cpu_allocation":
+        {"reservation": 2400, "expandable_reservation": true, "limit": -1, "shares": {"level": "NORMAL"}},
+        "memory_allocation": {"reservation": 4096, "expandable_reservation": false, "limit": 65536, "shares":
+        {"level": "CUSTOM", "shares": 12000}}}'
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cpu_allocation-encoded-object-string
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools:
+        - resgroup-74
+        - resgroup-75
+        cpu_allocation: '{"reservation": 2400, "expandable_reservation": true, "limit": -1, "shares":
+          {"level": "NORMAL"}}'
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: false
+          limit: 65536
+          shares:
+            level: CUSTOM
+            shares: 12000
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: cpu_allocation-shares-encoded-object-string
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools:
+        - resgroup-74
+        - resgroup-75
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: true
+          limit: -1
+          shares: '{"level": "NORMAL"}'
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: false
+          limit: 65536
+          shares:
+            level: CUSTOM
+            shares: 12000
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: memory_allocation-encoded-object-string
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools:
+        - resgroup-74
+        - resgroup-75
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: true
+          limit: -1
+          shares:
+            level: NORMAL
+        memory_allocation: '{"reservation": 4096, "expandable_reservation": false, "limit": 65536, "shares":
+          {"level": "CUSTOM", "shares": 12000}}'
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: memory_allocation-shares-encoded-object-string
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - *id002
+  - *id010
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools:
+        - resgroup-74
+        - resgroup-75
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: true
+          limit: -1
+          shares:
+            level: NORMAL
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: false
+          limit: 65536
+          shares: '{"level": "CUSTOM", "shares": 12000}'
+  - *id003
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id004
+- name: permitted-unknown-fields-preserved
+  workflow: cluster-infrastructure-assessment
+  inputs: *id001
+  requests:
+  - method: POST
+    path: /api/session
+    query: {}
+    headers:
+      Authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    absent_headers:
+    - vmware-api-session-id
+    response:
+      status: 201
+      body: synthetic-session-sentinel-42
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datacenter: datacenter-21
+        name: Lab DC
+        future_metadata:
+          labels: []
+          source: synthetic
+  - method: GET
+    path: /api/vcenter/cluster
+    query:
+      names: Compute A
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - cluster: domain-c7
+        name: Compute A
+        ha_enabled: true
+        drs_enabled: false
+        future_metadata:
+          labels: []
+          source: synthetic
+  - method: GET
+    path: /api/vcenter/cluster/domain-c7
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Compute A
+        resource_pool: resgroup-73
+        future_metadata:
+          labels: []
+          source: synthetic
+  - method: GET
+    path: /api/vcenter/resource-pool/resgroup-73
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: Resources
+        resource_pools:
+        - resgroup-74
+        - resgroup-75
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: true
+          limit: -1
+          shares:
+            level: NORMAL
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: false
+          limit: 65536
+          shares:
+            level: CUSTOM
+            shares: 12000
+        future_metadata:
+          labels: []
+          source: synthetic
+  - method: GET
+    path: /api/vcenter/host
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - host: host-31
+        name: esx-a.example.invalid
+        connection_state: CONNECTED
+        power_state: POWERED_ON
+        future_metadata:
+          labels: []
+          source: synthetic
+      - host: host-32
+        name: esx-b.example.invalid
+        connection_state: DISCONNECTED
+        future_metadata:
+          labels: []
+          source: synthetic
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      clusters: domain-c7
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - vm: vm-42
+        name: app-01
+        power_state: POWERED_ON
+        cpu_count: 4
+        memory_size_MiB: 8192
+        future_metadata:
+          labels: []
+          source: synthetic
+      - vm: vm-43
+        name: batch-01
+        power_state: POWERED_OFF
+        cpu_count: 8
+        memory_size_MiB: 16384
+        future_metadata:
+          labels: []
+          source: synthetic
+      - vm: vm-44
+        name: paused-01
+        power_state: SUSPENDED
+        cpu_count: 2
+        memory_size_MiB: 4096
+        future_metadata:
+          labels: []
+          source: synthetic
+  - method: DELETE
+    path: /api/session
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 204
+      body: null
+  expect:
+    kind: success
+    outputs:
+      datacenter:
+        datacenter: datacenter-21
+        name: Lab DC
+        future_metadata:
+          labels: []
+          source: synthetic
+      selected_cluster:
+        cluster: domain-c7
+        name: Compute A
+        ha_enabled: true
+        drs_enabled: false
+        future_metadata:
+          labels: []
+          source: synthetic
+      cluster_configuration:
+        name: Compute A
+        resource_pool: resgroup-73
+        future_metadata:
+          labels: []
+          source: synthetic
+      resource_pool_id: resgroup-73
+      resource_pool:
+        name: Resources
+        resource_pools:
+        - resgroup-74
+        - resgroup-75
+        cpu_allocation:
+          reservation: 2400
+          expandable_reservation: true
+          limit: -1
+          shares:
+            level: NORMAL
+        memory_allocation:
+          reservation: 4096
+          expandable_reservation: false
+          limit: 65536
+          shares:
+            level: CUSTOM
+            shares: 12000
+        future_metadata:
+          labels: []
+          source: synthetic
+      hosts:
+      - host: host-31
+        name: esx-a.example.invalid
+        connection_state: CONNECTED
+        power_state: POWERED_ON
+        future_metadata:
+          labels: []
+          source: synthetic
+      - host: host-32
+        name: esx-b.example.invalid
+        connection_state: DISCONNECTED
+        future_metadata:
+          labels: []
+          source: synthetic
+      vms:
+      - vm: vm-42
+        name: app-01
+        power_state: POWERED_ON
+        cpu_count: 4
+        memory_size_MiB: 8192
+        future_metadata:
+          labels: []
+          source: synthetic
+      - vm: vm-43
+        name: batch-01
+        power_state: POWERED_OFF
+        cpu_count: 8
+        memory_size_MiB: 16384
+        future_metadata:
+          labels: []
+          source: synthetic
+      - vm: vm-44
+        name: paused-01
+        power_state: SUSPENDED
+        cpu_count: 2
+        memory_size_MiB: 4096
+        future_metadata:
+          labels: []
+          source: synthetic
+    forbidden_output: *id004
+    view_contains:
+    - 'HA enabled: true; DRS enabled: false'
+    - resgroup-73, requested identity
+    - 'Child resource pools: 2'
+    - 'Host connection DISCONNECTED: 1'
+    - power=unknown
+    - 'VM power SUSPENDED: 1'
+    - 'Configured CPU: 14 vCPUs known across 3/3 VMs'
+    - 'Configured memory: 28672 MiB'
+    - reservation=2400 MHz
+    - unlimited (-1)
+    - shares=unknown
+    - shares=12000
