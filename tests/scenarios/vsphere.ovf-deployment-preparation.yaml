@@ -4609,3 +4609,1735 @@ cases:
     forbidden_output:
     - SYNTHETIC-AUTH-SENTINEL
     - synthetic-session-sentinel-42
+- name: additional-params-stringified-object-first
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - '{"type":"FutureExtension"}'
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-stringified-object-later
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - '{"type":"FutureExtension"}'
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-stringified-array-first
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - '[{"type":"FutureExtension"}]'
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-stringified-array-later
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - '[{"type":"FutureExtension"}]'
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-empty-object-without-type-first
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - {}
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-empty-object-without-type-later
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - {}
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-unknown-properties-without-type-first
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - unknown_extension:
+            nested: []
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-unknown-properties-without-type-later
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - unknown_extension:
+            nested: []
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-empty-array-first
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - []
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-empty-array-later
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - []
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-nested-array-first
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - - type: FutureExtension
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-nested-array-later
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - - type: FutureExtension
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-number-first
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - 23
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-number-later
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - 23
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-null-first
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - null
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-null-later
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-boolean-first
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - false
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-boolean-later
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - false
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-type-object-first
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: {}
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-type-object-later
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - type: {}
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-type-array-first
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: []
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-type-array-later
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - type: []
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-type-null-first
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: null
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-type-null-later
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - type: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-type-number-first
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: 23
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-type-number-later
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - type: 23
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-type-boolean-first
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: false
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-type-boolean-later
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - type: false
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+- name: additional-params-open-typed-unknown-nested-properties
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - type: Unlisted.Extension
+          arbitrary:
+            nested:
+            - false
+            - {}
+            - []
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: success
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+    outputs:
+      item_id: item-201
+      requirements:
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - type: Unlisted.Extension
+          arbitrary:
+            nested:
+            - false
+            - {}
+            - []
+    view_contains:
+    - Filter inspection does not deploy
+    - EULAs (not accepted)
+    - 'Additional parameters (unmodified; inspect complete objects): [{"type":"FutureExtension","unknown_extension":{"nested":[[],{"type":null}],"scalar":null}},{"arbitrary":{"nested":[false,{},[]]},"type":"Unlisted.Extension"}]'
+- name: additional-params-empty-string-type
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: ''
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: success
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+    outputs:
+      item_id: item-201
+      requirements:
+        additional_params:
+        - type: ''
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+    view_contains:
+    - Filter inspection does not deploy
+    - EULAs (not accepted)
+    - 'Additional parameters (unmodified; inspect complete objects): [{"type":""},{"type":"FutureExtension","unknown_extension":{"nested":[[],{"type":null}],"scalar":null}}]'
+- name: additional-params-multiline-control-string-type
+  workflow: ovf-deployment-preparation
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id011
+  - *id012
+  - *id006
+  - *id013
+  - *id007
+  - method: POST
+    path: /api/vcenter/ovf/library-item/item-201
+    query:
+      action: filter
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+      Content-Type: application/json
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: App appliance
+        annotation: Synthetic OVF requirement inspection
+        EULAs:
+        - 'Synthetic EULA: operator review required.'
+        networks:
+        - Management
+        - Application
+        storage_groups:
+        - System disks
+        - Data disks
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - type: "Future\nExtension\r\n\t\0"
+          unknown:
+            type: null
+    body:
+      target:
+        resource_pool_id: resgroup-73
+        folder_id: group-v30
+  - *id008
+  expect:
+    kind: success
+    forbidden_output:
+    - SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+    outputs:
+      item_id: item-201
+      requirements:
+        additional_params:
+        - type: FutureExtension
+          unknown_extension:
+            nested:
+            - []
+            - type: null
+            scalar: null
+        - type: "Future\nExtension\r\n\t\0"
+          unknown:
+            type: null
+    view_contains:
+    - Filter inspection does not deploy
+    - EULAs (not accepted)
+    - 'Additional parameters (unmodified; inspect complete objects): [{"type":"FutureExtension","unknown_extension":{"nested":[[],{"type":null}],"scalar":null}},{"type":"Future\nExtension\r\n\t\u0000","unknown":{"type":null}}]'

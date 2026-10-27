@@ -378,8 +378,13 @@ POST `/api/vcenter/ovf/library-item/{item_id}?action=filter` sends exactly
 It supplies no host, mappings, deployment specification or license acceptance.
 The report preserves capitalized required `EULAs`, optional `networks` and
 `storage_groups` mapping names, and open `additional_params` objects unmodified.
-Empty arrays remain valid; optional omissions remain absent and are described
-according to the provider's contract. Runtime guards require genuine objects
+Each additional-parameter response object must include a string `type`: the
+[pinned OvfParams information-response contract](https://vmware.github.io/vsphere-automation-sdk-java/vsphere/8.0.3.0/vcenter-bindings/com/vmware/vcenter/ovf/OvfParams.html#getType--)
+guarantees its presence. Any string type and unknown nested subtype properties
+are preserved; no subtype whitelist or nonempty-string restriction is added.
+An empty object without `type` is malformed. Empty arrays remain valid; optional
+omissions remain absent and are described according to the provider's contract.
+Runtime guards check every additional-parameter element and require genuine objects
 and arrays; JSON-encoded strings do not substitute for containers. These are
 scoped checks, not complete validation of every optional field or polymorphic
 additional-parameter subtype.

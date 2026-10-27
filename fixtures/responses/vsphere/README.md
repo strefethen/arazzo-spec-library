@@ -130,8 +130,15 @@ official **8.0.3** sources on 2026-10-27:
   documents the VM-folder requirement and conditional automatic host selection.
   Response `EULAs` is required (capitalization matters); `name`, `annotation`,
   `networks`, `storage_groups`, `additional_params` are optional. Empty requirement
-  arrays are valid. Additional parameters are open objects preserved without
-  guessed subtype schemas; their complete validation remains operator work.
+  arrays are valid. Each additional-parameter response object requires string
+  `type`: pinned [SDK8.0.3.0 OvfParams.getType/setType](https://vmware.github.io/vsphere-automation-sdk-java/vsphere/8.0.3.0/vcenter-bindings/com/vmware/vcenter/ovf/OvfParams.html#getType--)
+  guarantees its presence in information responses; the filter contract says
+  returned elements include all OvfParams attributes. The
+  [legacy official structure](https://developer.broadcom.com/xapis/vcloud-suite-api/latest/structures/com/vmware/vcenter/ovf/ovf_params-structure.html)
+  also marks `type` as string required for Create/Read. Verified 2026-10-27.
+  Arbitrary type strings (including empty/multiline) and unknown nested properties
+  are preserved without guessed subtype schemas. An empty object is a malformed
+  response, not a valid open extension; complete subtype validation remains operator work.
 
 Scenarios assert every path, exact query/body and per-step header, Basic only
 on login, retained request item identity, returned pool wiring, valid omissions
@@ -139,6 +146,10 @@ and empty arrays. Bounded negative cases reject zero/duplicate/malformed identit
 results, JSON-string container impostors, wrong library/type/folder kind,
 permissions and OVF 400/404/500, with exact nonzero failure cleanup. Successful
 and failure logout errors and secret-safe login failures are also exercised.
+The OVF suite has 156 scenarios, including 28 first/later malformed-element
+cases for the required string `type` invariant and three open-subtype successes
+for unknown nested properties, empty type strings and multiline/control strings.
+The prior description/EULA/annotation multiline regressions remain intact.
 No ConfigTargets, deployment, license acceptance, live calls or retries occur.
 Datastore/network selections remain datacenter-scoped candidates, with mapping,
 placement, policy, capacity and compatibility checks explicitly unresolved.

@@ -389,7 +389,10 @@ workflows:
         == ($response.body#/additional_params)[0])
     - type: jsonpath
       context: $response.body
-      condition: $[?!$.additional_params || (length($.additional_params) == count($.additional_params[:]))]
+      # OvfParams.type is always present in information responses (SDK 8.0.3.0 getType).
+      # Any string type and unknown subtype fields remain valid, including empty/multiline strings.
+      condition: $[?!$.additional_params || (length($.additional_params) == count($.additional_params[:])
+        && count($.additional_params[?!search(@.type, "")]) == 0)]
     onFailure:
     - name: cleanup-after-failure
       type: goto

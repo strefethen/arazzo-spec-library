@@ -571,6 +571,16 @@ components:
           type: array
           items:
             type: object
+            required:
+            - type
+            properties:
+              type:
+                type: string
+                description: Always present when retrieving OVF package information; subtype identifier,
+                  without a local enum or minimum length.
             additionalProperties: true
-      description: Preserve open additional_params objects without guessing subtype attributes. Optional
-        absence remains absent. No license acceptance or deployment.
+            externalDocs:
+              url: https://vmware.github.io/vsphere-automation-sdk-java/vsphere/8.0.3.0/vcenter-bindings/com/vmware/vcenter/ovf/OvfParams.html#getType--
+      description: Each additional_params response object includes the documented OvfParams string type.
+        Preserve arbitrary subtype identifiers and unknown properties without guessing subtype attributes.
+        Optional absence remains absent and empty arrays are valid. No license acceptance or deployment.
