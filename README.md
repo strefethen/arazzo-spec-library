@@ -1,12 +1,33 @@
 # arazzo-spec-library
 
+[![Offline Corpus Verification](https://github.com/strefethen/arazzo-spec-library/actions/workflows/verify.yml/badge.svg)](https://github.com/strefethen/arazzo-spec-library/actions/workflows/verify.yml)
+
 A curated, executable corpus of useful real-world Arazzo API workflows.
 
-This repository exists to collect known-good Arazzo specs, reusable companion
-fixtures, and deliberately invalid edge cases that can be validated by tooling.
-It is intentionally separate from `arazzo-cli`: the CLI repository should stay
-focused on runtime and product code, while this repository can grow as ecosystem
-material, examples, conformance data, and documentation.
+Run these specifications with **[arazzo-cli](https://github.com/strefethen/arazzo-cli)**,
+the workflow executor, MCP server, and VS Code debugger. This repository owns
+the reusable API workflows, local OpenAPI companions, response fixtures, and
+readable output views; the CLI repository owns the execution engine and tooling.
+
+## Available Workflows
+
+The current corpus contains **9 workflows across 8 providers**. Every workflow
+has complete offline fixture tests; that is separate from live-provider proof.
+
+| Provider | Workflow | Live Use |
+|---|---|---|
+| [NWS](specs/nws/README.md) | Address -> coordinates -> grid -> forecast and all active alerts; coordinates-only alternative | Public APIs; canonical reference; observe geocoding policy |
+| [GitHub](specs/github/README.md) | Public repository -> releases -> recent issues and PRs | Anonymous read-only; live smoke passed |
+| [PyPI](specs/pypi/README.md) | Project -> exact release -> files, hashes, yanked flags, advisory metadata | Public read-only; live smoke passed; no package installation |
+| [Docker Hub](specs/dockerhub/README.md) | Repository -> bounded tag page -> image platforms and digests | Public read-only; live smoke passed; no image pull |
+| [Crossref](specs/crossref/README.md) | DOI -> depositing member -> bounded cursor page of related works | Public read-only; live smoke passed |
+| [Open Library](specs/openlibrary/README.md) | Book search -> selected work -> bounded edition page | Fixture-tested; real contact identity and rate budget required before live use |
+| [crates.io](specs/crates/README.md) | Crate -> registry default version -> features and direct dependency requirements | Fixture-tested; live use blocked until client request pacing is available |
+| [Socket.dev](specs/socket/README.md) | Quota check -> organization-scoped PURL risk metadata | Manual approval and quota required; no live verification calls |
+
+Provider READMEs document inputs, limits, copy-paste commands, and dated live
+observations. Package metadata and an absence of advisory records are **not a
+security verdict**.
 
 ## Goals
 
@@ -29,14 +50,17 @@ material, examples, conformance data, and documentation.
 
 ```text
 .
+├── .github/workflows/     # Offline corpus verification CI.
 ├── fixtures/
-│   ├── openapi/       # Companion OpenAPI documents used by specs.
-│   └── responses/     # Static response fixtures for hermetic examples.
-├── docs/              # Fullstack-starter-compatible Markdown doc set.
-├── invalid/           # Specs that should fail validation for clear reasons.
-├── manifest.yaml      # Machine-readable index of specs and verification tiers.
-├── specs/             # Curated valid specs, grouped by provider or pattern.
-└── views/             # Reusable jq projections for readable command output.
+│   ├── openapi/           # Companion OpenAPI documents used by specs.
+│   └── responses/         # Static response fixtures for offline verification.
+├── docs/                  # Fullstack-starter-compatible Markdown doc set.
+├── manifest.yaml          # Machine-readable index of specs and verification tiers.
+├── requirements-dev.txt   # Pinned contributor dependency.
+├── scripts/               # Manifest-driven verifier and loopback fixture server.
+├── specs/                 # Curated valid specs, grouped by provider or pattern.
+├── tests/                 # Request/output scenarios and verifier regression tests.
+└── views/                 # Reusable jq projections for readable command output.
 ```
 
 Add new top-level directories under `specs/` only when they represent a durable
@@ -44,8 +68,21 @@ provider, protocol pattern, or reusable workflow category.
 
 ## Canonical Quickstart
 
-Run these commands from the repository root with `arazzo-cli` 0.8.2+ and jq
-installed. The executable is named `arazzo-cli`, not `arazzo`.
+Install [arazzo-cli](https://github.com/strefethen/arazzo-cli#quick-start) or use
+its [release binaries](https://github.com/strefethen/arazzo-cli/releases), and
+install jq. Ensure the executable is on your `PATH` as `arazzo-cli`, not
+`arazzo`. This corpus and CI are currently verified with CLI **0.8.2**.
+
+```bash
+git clone https://github.com/strefethen/arazzo-spec-library.git
+cd arazzo-spec-library
+arazzo-cli --version
+jq --version
+```
+
+Run all commands below from this repository's root so the spec and view paths
+resolve consistently. Python is only needed for contributor verification, not
+for running live workflows.
 
 `nws.address-forecast` is the canonical reference workflow. It starts from
 Apple's corporate address, geocodes it, resolves the NWS gridpoint, fetches the
@@ -83,7 +120,7 @@ Point your agent at [AGENTS.md](AGENTS.md), then ask a concrete question:
 - "Show me the forecast and active alerts for Apple Headquarters."
 - "Inspect the latest release files for a Python package without installing it."
 - "Show the image platforms and digests behind a public Docker tag."
-- "Find a book and show which work matched and a few editions."
+- "Preview the book-to-editions workflow and explain its live-use prerequisites."
 
 Discover available workflows and inspect one before running:
 
@@ -105,6 +142,8 @@ with `safe_load`; there is no custom YAML or Arazzo expression parser. Install
 contributor dependencies before going offline, for example in a local venv.
 
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 python3 -m pip install --only-binary=:all: -r requirements-dev.txt
 python3 -m unittest discover -s tests -p 'test_*.py'
 python3 scripts/verify.py
@@ -118,6 +157,10 @@ It never executes shell commands from the manifest or falls back to a live API.
 See [the scenario contract](tests/README.md). Offline fixture proof is not a
 claim of live provider compatibility. Socket receives **zero live test calls**.
 The GitHub Actions workflow installs tools, then runs the same offline checks.
+The current baseline is **59 passing workflow scenarios and 27 verifier unit
+tests**. See [CI results](https://github.com/strefethen/arazzo-spec-library/actions/workflows/verify.yml)
+for the latest run. Dependency installation uses the network; the checks
+themselves do not call live provider APIs.
 
 ## Spec Acceptance Bar
 
@@ -143,7 +186,7 @@ Every accepted spec should pass the strongest practical verification tier:
   provider policy and requires credentials only where the provider needs them.
 
 Live specs must fail closed when credentials or required environment variables
-are absent. Default CI must not call external APIs.
+are absent. Default verification must not call live provider APIs.
 
 ## Manifest
 
@@ -191,16 +234,19 @@ being described as accepted; validation alone is insufficient.
 - Prefer small, reviewable additions: one provider or workflow family at a time.
 - Include companion OpenAPI files or fixtures needed for local verification.
 - Do not require network access for default checks.
-- Label live examples clearly and gate them behind explicit environment
-  variables.
+- Label live examples clearly, document provider policy, and gate credentials
+  or quota-sensitive operations explicitly. Public read-only examples need no
+  API token unless their provider requires one.
 - Add invalid examples only when the failure mode is intentional and documented.
 - Keep examples generic enough to teach Arazzo behavior beyond a single private
   system.
 
 ## Relationship to arazzo-cli
 
-`arazzo-cli` should keep only the examples and fixtures needed to test the tool
-itself. This repository can grow more broadly:
+[arazzo-cli](https://github.com/strefethen/arazzo-cli) provides validation,
+execution, tracing/replay, MCP integration, and a
+[VS Code debugger](https://github.com/strefethen/arazzo-cli#vs-code-debugger).
+Its own examples and fixtures test that tool. This library can grow more broadly:
 
 - real provider examples
 - conformance cases
