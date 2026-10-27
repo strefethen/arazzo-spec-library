@@ -2,9 +2,10 @@
 title: Implement authenticated vSphere VM and guest diagnosis
 type: task
 priority: 1
-state: in_progress
+resolution: completed
+close_reason: '[12c8a87](https://github.com/strefethen/arazzo-spec-library/commit/12c8a87e75d42dfa2156b3cf65afa2905b04dc86) authenticated multi-resource VM diagnosis with verified offline scenarios'
 created_at: 2026-10-27T18:30:28Z
-last_changed: 2026-10-27T18:43:05Z
+last_changed: 2026-10-27T18:58:36Z
 plan: plans/current/vsphere-workflows.md
 files:
     README.md: m
@@ -22,6 +23,13 @@ files:
     tests/scenarios/vsphere.vm-guest-diagnosis.yaml: c
     tests/test_vsphere_auth.py: c
     views/vsphere.vm-guest-diagnosis.summary.jq: c
+changes:
+    - at: 2026-10-27T18:58:36.346936Z
+      action: close
+      from: in_progress
+      to: closed
+      resolution: completed
+      reason: '[12c8a87](https://github.com/strefethen/arazzo-spec-library/commit/12c8a87e75d42dfa2156b3cf65afa2905b04dc86) authenticated multi-resource VM diagnosis with verified offline scenarios'
 assignee: codex
 deps:
     - asl-b4622
@@ -53,3 +61,18 @@ Provider README documents setup, copy/paste env guard and single-quoted credenti
 - Run python3 -m unittest discover -s tests -p 'test_*.py', including real CLI redirect target-not-contacted, env credential expansion and sentinel redaction/export probes.
 - Run python3 scripts/verify.py for whole corpus, plus configure helper from repo root with synthetic HTTPS origin then CLI strict validation and first-login dry-run of configured spec; no live calls.
 - Run git diff --check; independently check official pinned schemas and README commands. Fresh independent ticket-code-review must pass exact final candidate before push/closure.
+
+### Evidence
+AC1 PASS: complete authenticated scoped VM/configuration/Tools/guest resource chain and correlated summary with raw structures.
+AC2 PASS:44 ordered scenarios cover valid omissions, empty collections, scoped unique identity failures, auth/403/404/503/provider caps and logout failures.
+AC3 PASS: real-CLI env credential, no Basic downstream, scalar login preview suppression, redirect target-not-contacted and sentinel stdout/stderr/export probes.
+AC4 PASS: manifest/catalog/show, configured strict validation/login dry-run, executable pickup guide, versioned official provenance and prominent live-unverified notices.
+All testing obligations PASS:58 unit tests;103 full corpus scenarios including44 focused; configured strict validation and first-login dry-run; guide commands; pinned sources; diff checks. Independently rerun by reviewer. No live calls.
+Immutable contract show024aaac321652e9abca4566b392255ab4b27b759cdbcf6f77726126145b17f53/start2c1f7fb120a92f660de0e79a5681035b12c8e320ac0bc4c19f46e9e4a3d1079f in.artifacts/vsphere-execution/asl-8ed61/. Original evidence.json plus mac-remediation/evidence.json map every obligation. Contract unchanged before this evidence-only append.
+Fresh T3 vsphere-vm-review-2 (gpt-6-astra/high, no inherited history) PASS cumulative b549394334d78bccf27c4779a25a3d9bb17decb4..12c8a87e75d42dfa2156b3cf65afa2905b04dc86. Prior P2 optional-MAC requirement corrected; raw absence/unknown and mappings tested. Real-vCenter behavior remains unverified.
+
+## Note (2026-10-27 18:58 UTC)
+[12c8a87](https://github.com/strefethen/arazzo-spec-library/commit/12c8a87e75d42dfa2156b3cf65afa2905b04dc86) pushed after independent PASS; complete VM diagnosis offline proof.
+
+## Note (2026-10-27 18:58 UTC) — Closed
+[12c8a87](https://github.com/strefethen/arazzo-spec-library/commit/12c8a87e75d42dfa2156b3cf65afa2905b04dc86) authenticated multi-resource VM diagnosis with verified offline scenarios
