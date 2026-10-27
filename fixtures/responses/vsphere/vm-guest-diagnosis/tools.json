@@ -1,0 +1,9 @@
+{
+  "auto_update_supported": false,
+  "upgrade_policy": "MANUAL",
+  "run_state": "RUNNING",
+  "version": "12.4.0",
+  "version_number": 12384,
+  "version_status": "UNMANAGED",
+  "install_type": "OPEN_VM_TOOLS"
+}

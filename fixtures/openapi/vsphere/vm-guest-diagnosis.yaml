@@ -1,0 +1,595 @@
+openapi: 3.0.3
+info:
+  title: vSphere scoped VM and guest diagnosis subset
+  version: 8.0.3
+  description: vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified. Device maps
+    are keyed by device IDs; filesystem is a path-keyed map (confirmed by the pinned 8.0.3.0 SDK). Subset
+    schemas preserve additional properties, and are not a full response validator.
+servers:
+- url: https://vcenter.invalid
+paths:
+  /api/vcenter/datacenter:
+    get:
+      operationId: listDatacenters
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/datacenter/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: &id001
+          type: string
+      - name: names
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id001
+      responses:
+        '200':
+          description: Versioned API response; no /rest value wrapper.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Datacenter'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error; collection queries fail if provider hard result cap is exceeded
+        '503':
+          description: Service unavailable; guest APIs can have no Tools data
+  /api/vcenter/vm:
+    get:
+      operationId: listVms
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/vm/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: names
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id001
+      - name: datacenters
+        in: query
+        style: form
+        explode: true
+        schema:
+          type: array
+          items: *id001
+      responses:
+        '200':
+          description: Versioned API response; no /rest value wrapper.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VmSummary'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error; collection queries fail if provider hard result cap is exceeded
+        '503':
+          description: Service unavailable; guest APIs can have no Tools data
+  /api/vcenter/vm/{vm}:
+    get:
+      operationId: getVm
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/vm/vm/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: vm
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '200':
+          description: Versioned API response; no /rest value wrapper.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Config'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error; collection queries fail if provider hard result cap is exceeded
+        '503':
+          description: Service unavailable; guest APIs can have no Tools data
+  /api/vcenter/vm/{vm}/tools:
+    get:
+      operationId: getTools
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/vm/vm/tools/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: vm
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '200':
+          description: Versioned API response; no /rest value wrapper.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tools'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error; collection queries fail if provider hard result cap is exceeded
+        '503':
+          description: Service unavailable; guest APIs can have no Tools data
+  /api/vcenter/vm/{vm}/guest/identity:
+    get:
+      operationId: getGuestIdentity
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/vm/vm/guest/identity/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: vm
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '200':
+          description: Versioned API response; no /rest value wrapper.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuestIdentity'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error; collection queries fail if provider hard result cap is exceeded
+        '503':
+          description: Service unavailable; guest APIs can have no Tools data
+  /api/vcenter/vm/{vm}/guest/networking:
+    get:
+      operationId: getGuestNetworking
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/vm/vm/guest/networking/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: vm
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '200':
+          description: Versioned API response; no /rest value wrapper.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Networking'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error; collection queries fail if provider hard result cap is exceeded
+        '503':
+          description: Service unavailable; guest APIs can have no Tools data
+  /api/vcenter/vm/{vm}/guest/networking/interfaces:
+    get:
+      operationId: listGuestInterfaces
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/vm/vm/guest/networking/interfaces/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: vm
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '200':
+          description: Versioned API response; no /rest value wrapper.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Interface'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error; collection queries fail if provider hard result cap is exceeded
+        '503':
+          description: Service unavailable; guest APIs can have no Tools data
+  /api/vcenter/vm/{vm}/guest/networking/routes:
+    get:
+      operationId: listGuestRoutes
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/vm/vm/guest/networking/routes/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: vm
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '200':
+          description: Versioned API response; no /rest value wrapper.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Route'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error; collection queries fail if provider hard result cap is exceeded
+        '503':
+          description: Service unavailable; guest APIs can have no Tools data
+  /api/vcenter/vm/{vm}/guest/local-filesystem:
+    get:
+      operationId: getGuestFilesystems
+      externalDocs:
+        url: https://developer.broadcom.com/xapis/vsphere-automation-api/8.0.3/vcenter/api/vcenter/vm/vm/guest/local-filesystem/get/
+      parameters:
+      - name: vmware-api-session-id
+        in: header
+        required: true
+        schema: *id001
+      - name: vm
+        in: path
+        required: true
+        schema: *id001
+      responses:
+        '200':
+          description: Versioned API response; no /rest value wrapper.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: '#/components/schemas/Filesystem'
+        '401':
+          description: Unauthenticated
+        '403':
+          description: Unauthorized
+        '404':
+          description: Resource not found
+        '500':
+          description: Provider error; collection queries fail if provider hard result cap is exceeded
+        '503':
+          description: Service unavailable; guest APIs can have no Tools data
+components:
+  schemas:
+    Datacenter:
+      type: object
+      required:
+      - datacenter
+      - name
+      properties:
+        datacenter: *id001
+        name: *id001
+    VmSummary:
+      type: object
+      required:
+      - vm
+      - name
+      - power_state
+      - cpu_count
+      - memory_size_MiB
+      properties:
+        vm: *id001
+        name: *id001
+        power_state: *id001
+        cpu_count: &id002
+          type: integer
+          format: int64
+        memory_size_MiB: *id002
+    Disk:
+      type: object
+      required:
+      - label
+      - type
+      - capacity
+      - backing
+      properties:
+        label: *id001
+        type: *id001
+        capacity: *id002
+        backing:
+          type: object
+          properties:
+            type: *id001
+            vmdk_file: *id001
+        scsi:
+          type: object
+          properties:
+            bus: *id002
+            unit: *id002
+    Nic:
+      type: object
+      required:
+      - label
+      - type
+      - backing
+      - state
+      - start_connected
+      - allow_guest_control
+      properties:
+        label: *id001
+        type: *id001
+        mac_address: *id001
+        backing:
+          type: object
+          properties:
+            type: *id001
+            network: *id001
+            network_name: *id001
+        state: *id001
+        start_connected: &id003
+          type: boolean
+        allow_guest_control: *id003
+    Config:
+      type: object
+      required:
+      - name
+      - guest_OS
+      - power_state
+      - cpu
+      - memory
+      - disks
+      - nics
+      properties:
+        name: *id001
+        guest_OS: *id001
+        power_state: *id001
+        identity:
+          type: object
+          properties:
+            name: *id001
+            bios_uuid: *id001
+            instance_uuid: *id001
+        cpu:
+          type: object
+          required:
+          - count
+          - cores_per_socket
+          - hot_add_enabled
+          - hot_remove_enabled
+          properties:
+            count: *id002
+            cores_per_socket: *id002
+            hot_add_enabled: *id003
+            hot_remove_enabled: *id003
+        memory:
+          type: object
+          required:
+          - size_MiB
+          - hot_add_enabled
+          properties:
+            size_MiB: *id002
+            hot_add_enabled: *id003
+        hardware:
+          type: object
+          properties: {}
+        boot:
+          type: object
+          properties: {}
+        boot_devices:
+          type: array
+          items:
+            type: object
+            properties: {}
+        disks:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Disk'
+        nics:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Nic'
+        cdroms:
+          type: object
+          additionalProperties:
+            type: object
+            properties: {}
+        floppies:
+          type: object
+          additionalProperties:
+            type: object
+            properties: {}
+        parallel_ports:
+          type: object
+          additionalProperties:
+            type: object
+            properties: {}
+        serial_ports:
+          type: object
+          additionalProperties:
+            type: object
+            properties: {}
+        sata_adapters:
+          type: object
+          additionalProperties:
+            type: object
+            properties: {}
+        scsi_adapters:
+          type: object
+          additionalProperties:
+            type: object
+            properties: {}
+        nvme_adapters:
+          type: object
+          additionalProperties:
+            type: object
+            properties: {}
+    Tools:
+      type: object
+      required:
+      - auto_update_supported
+      - upgrade_policy
+      - run_state
+      properties:
+        auto_update_supported: *id003
+        upgrade_policy: *id001
+        run_state: *id001
+        version: *id001
+        version_number: *id002
+        version_status: *id001
+        install_type: *id001
+        install_attempt_count: *id002
+        error:
+          type: object
+          properties: {}
+    GuestIdentity:
+      type: object
+      required:
+      - name
+      - family
+      - full_name
+      - host_name
+      properties:
+        name: *id001
+        family: *id001
+        full_name:
+          type: object
+          properties:
+            id: *id001
+            default_message: *id001
+            args:
+              type: array
+              items: *id001
+        host_name: *id001
+        ip_address: *id001
+    Networking:
+      type: object
+      properties:
+        dns_values:
+          type: object
+          properties:
+            host_name: *id001
+            domain_name: *id001
+        dns:
+          type: object
+          properties:
+            ip_addresses:
+              type: array
+              items: *id001
+            search_domains:
+              type: array
+              items: *id001
+    Interface:
+      type: object
+      required:
+      - mac_address
+      properties:
+        mac_address: *id001
+        nic: *id001
+        dns_values:
+          type: object
+          properties: {}
+        dns:
+          type: object
+          properties: {}
+        wins_servers:
+          type: array
+          items: *id001
+        ip:
+          type: object
+          properties:
+            ip_addresses:
+              type: array
+              items:
+                type: object
+                required:
+                - ip_address
+                - prefix_length
+                properties:
+                  ip_address: *id001
+                  prefix_length: *id002
+                  origin: *id001
+                  state: *id001
+            dhcp:
+              type: object
+              properties:
+                ipv4_enabled: *id003
+                ipv6_enabled: *id003
+    Route:
+      type: object
+      required:
+      - network
+      - prefix_length
+      properties:
+        network: *id001
+        prefix_length: *id002
+        gateway_address: *id001
+        interface_index: *id002
+    Filesystem:
+      type: object
+      required:
+      - capacity
+      - free_space
+      properties:
+        capacity: *id002
+        free_space: *id002
+        filesystem: *id001
+        mappings:
+          type: array
+          items:
+            type: object
+            required:
+            - disk
+            properties:
+              disk: *id001

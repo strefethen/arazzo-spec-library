@@ -2,9 +2,9 @@
 title: Implement authenticated vSphere VM and guest diagnosis
 type: task
 priority: 1
-state: open
+state: in_progress
 created_at: 2026-10-27T18:30:28Z
-last_changed: 2026-10-27T18:30:34Z
+last_changed: 2026-10-27T18:43:05Z
 plan: plans/current/vsphere-workflows.md
 files:
     README.md: m
@@ -22,6 +22,7 @@ files:
     tests/scenarios/vsphere.vm-guest-diagnosis.yaml: c
     tests/test_vsphere_auth.py: c
     views/vsphere.vm-guest-diagnosis.summary.jq: c
+assignee: codex
 deps:
     - asl-b4622
 ---

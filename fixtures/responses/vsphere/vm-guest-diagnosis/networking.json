@@ -1,0 +1,14 @@
+{
+  "dns_values": {
+    "host_name": "app-01",
+    "domain_name": "lab.invalid"
+  },
+  "dns": {
+    "ip_addresses": [
+      "192.0.2.53"
+    ],
+    "search_domains": [
+      "lab.invalid"
+    ]
+  }
+}

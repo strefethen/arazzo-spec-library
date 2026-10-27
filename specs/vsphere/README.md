@@ -1,17 +1,46 @@
-# vSphere workflow foundation
+# vSphere VM and guest diagnosis
 
 **vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified.**
 No real vCenter has verified authentication, TLS trust, privileges, response
 compatibility or operational usefulness. Synthetic tests prove request wiring
-and declared failures only. This slice supplies shared session contracts and
-endpoint configuration. No vSphere workflows are registered yet; VM diagnosis,
-cluster assessment and OVF preparation commands will arrive with their slices.
-Do not interpret this foundation as a runnable diagnostic workflow.
+and declared failures only. `vm-guest-diagnosis` correlates one uniquely scoped
+VM's configured hardware with Tools and all documented guest telemetry. It
+creates a temporary session, reads inventory/guest information, then deletes
+the session. It performs no VM changes. Cluster assessment and OVF preparation
+are separate future slices.
+
+## Selection and report
+
+Provide an exact datacenter name and an exact VM name. The workflow requires
+exactly one visible datacenter match, then exactly one VM match filtered by
+that returned datacenter ID and VM name. Zero or multiple matches, object-shaped
+responses, missing IDs and mismatched names fail before the next work request.
+Uniqueness is relative to the account's visible inventory, not proof of global
+uniqueness. Datacenter and VM result caps (1000 and 4000 respectively) are hard
+provider limits, not pagination; a provider limit error fails the run.
+
+The fixed sequence is login → datacenter → scoped VM → VM configuration →
+Tools → guest identity → guest networking → ordered interfaces → routes →
+local filesystems → logout. Every work operation must succeed. HTTP 503 for
+Tools/guest data is an error, including unavailable or not-yet-reported data.
+There is no partial/degraded report or automatic retry.
+
+Raw outputs retain selected identities and full configuration, Tools, guest
+identity/networking, interfaces, routes and filesystem structures. Configuration
+uses `guest_OS`, `memory.size_MiB`, and device-ID-keyed `nics`/`disks` maps;
+the VM list instead uses `memory_size_MiB`. The jq summary links guest `nic`
+IDs to configured NICs, route `interface_index` to the ordered interfaces array,
+and filesystem `mappings[].disk` to configured disks. It does not guess missing
+mappings or assume one filesystem per disk. Unknown optional fields remain
+absent in raw structures and display as unknown; empty reported collections
+remain empty. Virtual disk allocation, guest filesystem capacity/free space and
+CPU/memory configuration measure different things. None establishes runtime
+utilization, storage backing accessibility or deployment capacity.
 
 ## Endpoint configuration
 
 Run from the repository root with Python 3.10+ and PyYAML 6.0.3 installed.
-Once vSphere workflows are registered, create a new local bundle:
+Create a new local bundle:
 
 ```bash
 python3 scripts/configure_vsphere.py \
@@ -21,8 +50,8 @@ python3 scripts/configure_vsphere.py \
 
 Use your deployment's HTTPS origin and optional port. Userinfo, URL paths
 (except a root slash), queries, fragments and placeholders are rejected.
-The `.invalid` value above is deliberately unusable. The helper currently
-fails without creating a bundle because no vSphere workflows are registered.
+The `.invalid` value above is deliberately unusable. Replace it with an origin
+you are authorized to inspect before a deliberate live run.
 
 The helper reads only registered vSphere specifications and their registered
 local companions. It preserves repository-relative layout, copies Arazzo
@@ -46,17 +75,37 @@ JSON string. Later operations, including DELETE `/api/session`, use
 `vmware-api-session-id`; deletion returns HTTP 204 without a body. These
 authentication side effects create and delete temporary sessions.
 
-Obtain the complete `Basic ...` Authorization value through your normal
-private credential process and export it as `VSPHERE_AUTHORIZATION`. Base64
-is not encryption. Never place credentials in endpoint URLs, files, workflow
-outputs, shell history or Git. Before a future authenticated invocation, use
-the shell missing-value guard:
+Construct the complete `Basic ...` header locally with Python's hidden terminal
+prompts. Run this in your own interactive Bash/zsh terminal, with shell tracing
+disabled. The header is captured directly into the environment; neither the
+username/password nor the completed header is entered into history or command
+arguments. This documentation/test work uses only synthetic credentials; do not
+provide real credentials to an agent.
+
+```bash
+set +x
+VSPHERE_AUTHORIZATION="$(python3 -c '
+import base64, getpass
+user = getpass.getpass("vCenter username (hidden): ")
+password = getpass.getpass("vCenter password (hidden): ")
+if not user or ":" in user or not password:
+    raise SystemExit("Nonempty username without colon and password required")
+print("Basic " + base64.b64encode((user + ":" + password).encode("utf-8")).decode("ascii"))
+')"
+export VSPHERE_AUTHORIZATION
+: "${VSPHERE_AUTHORIZATION:?VSPHERE_AUTHORIZATION must contain a complete Basic header}"
+```
+
+Base64 is not encryption. Never echo the variable, enable shell tracing, or put
+credentials in URLs, files, workflow outputs or Git. Environment variables are
+accessible to processes with appropriate local privileges. Before **each**
+authenticated invocation, keep the missing-value guard:
 
 ```bash
 : "${VSPHERE_AUTHORIZATION:?VSPHERE_AUTHORIZATION must contain a complete Basic header}"
 ```
 
-Future workflow commands must pass the complete env reference as the
+Workflow commands must pass the complete env reference as the
 single-quoted argument `--input 'authorization=${VSPHERE_AUTHORIZATION}'`.
 This lets CLI environment expansion resolve the value without putting the
 expanded secret in the command arguments. Do not configure a global
@@ -67,8 +116,7 @@ Every authenticated invocation must use `--strict-inputs --max-redirects 0`.
 CLI 0.8.2 does not reliably strip the session header on cross-host redirects;
 a redirect must fail without contacting its target. Do not enable trace
 capture: traces can include the scalar session response. Do not use live
-single-step commands, which can skip logout. There is intentionally no live
-run command in this foundation guide.
+single-step commands, which can skip logout. Preview uses synthetic input only.
 
 Use trusted HTTPS with hostname validation. CLI 0.8.2 has no custom-CA option
 or runtime server override. The configuration helper solves endpoint selection
@@ -76,12 +124,62 @@ only. It does not install a CA or repair certificate trust. An operator who
 explicitly chooses `--insecure-host <hostname>` disables certificate verification
 for that host; this is not a trust-store fix and is outside normal pickup.
 Do not silently weaken TLS. Have the vCenter administrator confirm account
-permissions for each eventual workflow's scoped inventory and guest APIs;
+permissions for this workflow's datacenter/VM inventory, VM configuration,
+Tools and guest-information APIs (including System.Read where required);
 successful authentication alone does not establish sufficient privileges.
+
+## Discover, preview and full execution
+
+Use CLI 0.8.2 and jq from the repository root. Discovery and preview need no
+credentials and make no vCenter calls:
+
+```bash
+arazzo-cli --json catalog specs/vsphere
+arazzo-cli --json show vm-guest-diagnosis --dir specs/vsphere
+arazzo-cli --json validate .artifacts/vsphere-configured/specs/vsphere/vm-guest-diagnosis.arazzo.yaml --strict
+arazzo-cli --json run .artifacts/vsphere-configured/specs/vsphere/vm-guest-diagnosis.arazzo.yaml vm-guest-diagnosis \
+  --dry-run --strict-inputs --max-redirects 0 --step login \
+  --input authorization=synthetic-preview \
+  --input datacenter_name='Lab DC' --input vm_name=app-01
+```
+
+Preview prints only the first login request plan. It does not resolve the VM,
+retrieve telemetry, authenticate, or prove trust/permissions.
+
+After configuring a real origin, privately setting the header, and obtaining
+permission to inspect that deployment, execute the **whole** workflow. Change
+the two nonsecret names to the account-visible exact names. This command
+captures raw agent-readable JSON in an ignored local artifact and prints the
+summary only after the CLI succeeds:
+
+```bash
+set -o pipefail
+umask 077
+: "${VSPHERE_AUTHORIZATION:?VSPHERE_AUTHORIZATION must contain a complete Basic header}"
+arazzo-cli --json run .artifacts/vsphere-configured/specs/vsphere/vm-guest-diagnosis.arazzo.yaml vm-guest-diagnosis \
+  --strict-inputs --max-redirects 0 \
+  --input 'authorization=${VSPHERE_AUTHORIZATION}' \
+  --input datacenter_name='Lab DC' --input vm_name=app-01 \
+  > .artifacts/vsphere-vm-diagnosis.json && \
+  jq -er -f views/vsphere.vm-guest-diagnosis.summary.jq .artifacts/vsphere-vm-diagnosis.json
+```
+
+Agents consume `.artifacts/vsphere-vm-diagnosis.json` directly; the jq view is
+presentation, not alternate selection logic. It refuses an error envelope.
+For an approved export, add `--export-run .artifacts/vsphere-vm-run.json` to the
+same full invocation. Synthetic tests check stdout, stderr and this export
+surface for both Basic and session sentinels. This is not a guarantee of general
+secret redaction for arbitrary provider bodies. Inventory/guest data can itself
+be sensitive; inspect before sharing. Do not add `--trace` or `--verbose` to the
+normal command. Clear credentials after use:
+
+```bash
+unset VSPHERE_AUTHORIZATION
+```
 
 ## Failure and cleanup limits
 
-The workflow slices must end explicitly on login failure, preventing an
+The workflow ends explicitly on login failure, preventing an
 unexpected token-shaped response from appearing in ordinary error previews.
 After successful login, ordinary request failures attempt a separate logout
 path that still ends nonzero. Success also requires logout. The CLI has no
@@ -98,3 +196,21 @@ Never rerun login steps alone to diagnose a live session. Inventory reads and
 OVF requirement inspection do not authorize provisioning, EULA acceptance or
 infrastructure changes. See the [contract assessment](../../plans/assessments/vsphere-contracts-2026-10-27.md)
 for the research and evidence boundary.
+
+## Sources and offline proof
+
+The local [VM/guest OpenAPI subset](../../fixtures/openapi/vsphere/vm-guest-diagnosis.yaml)
+links each operation to the exact official 8.0.3 page. The
+[fixture provenance](../../fixtures/responses/vsphere/README.md) records wire
+shapes and the pinned SDK source used to disambiguate filesystem maps and
+optional fields. Subset schemas and runtime shape/identity guards do not claim
+full JSON Schema response validation.
+
+```bash
+python3 scripts/verify.py vsphere.vm-guest-diagnosis
+python3 -m unittest discover -s tests -p 'test_vsphere_auth.py'
+```
+
+No live compatibility is established by those commands. A real deployment still
+needs to confirm TLS, Basic authentication, least-privilege account access,
+version/response compatibility and usefulness of its reported telemetry.

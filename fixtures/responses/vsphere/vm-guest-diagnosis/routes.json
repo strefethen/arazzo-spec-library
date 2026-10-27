@@ -1,0 +1,12 @@
+[
+  {
+    "network": "0.0.0.0",
+    "prefix_length": 0,
+    "gateway_address": "192.0.2.1",
+    "interface_index": 0
+  },
+  {
+    "network": "198.51.100.0",
+    "prefix_length": 24
+  }
+]

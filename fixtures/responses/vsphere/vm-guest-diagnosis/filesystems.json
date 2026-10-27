@@ -1,0 +1,17 @@
+{
+  "/": {
+    "capacity": 64424509440,
+    "free_space": 32212254720,
+    "filesystem": "ext4",
+    "mappings": [
+      {
+        "disk": "2000"
+      }
+    ]
+  },
+  "/run": {
+    "capacity": 1073741824,
+    "free_space": 1000000000,
+    "filesystem": "tmpfs"
+  }
+}

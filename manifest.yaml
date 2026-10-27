@@ -216,3 +216,30 @@ specs:
         description: Preview only; live execution needs conformant request pacing.
         command: arazzo-cli --json run specs/crates/release-dependencies.arazzo.yaml release-dependencies --dry-run --strict-inputs --step get-crate --input crate=itoa --input user_agent="corpus-fixture/1.0 (fixtures@example.invalid)"
         jq: views/crates.release-dependencies.summary.jq
+  - id: vsphere.vm-guest-diagnosis
+    provider: vsphere
+    category: infrastructure-diagnosis
+    description: vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified. Correlate
+      uniquely scoped VM configuration and guest telemetry with integrated session cleanup.
+    path: specs/vsphere/vm-guest-diagnosis.arazzo.yaml
+    arazzo: 1.0.x
+    tier: dry-run
+    read_only: false
+    live_policy: manual-private-vcenter-session-side-effects
+    compatibility: arazzo-cli 0.8.2
+    openapi:
+    - fixtures/openapi/vsphere/session.yaml
+    - fixtures/openapi/vsphere/vm-guest-diagnosis.yaml
+    workflows:
+    - vm-guest-diagnosis
+    env:
+    - VSPHERE_AUTHORIZATION
+    tests: tests/scenarios/vsphere.vm-guest-diagnosis.yaml
+    examples:
+      quickstart:
+        description: Preview login only, without credentials or network calls. See provider guide for configured
+          full execution.
+        command: arazzo-cli --json run specs/vsphere/vm-guest-diagnosis.arazzo.yaml vm-guest-diagnosis --dry-run
+          --strict-inputs --max-redirects 0 --step login --input authorization=synthetic-preview --input
+          datacenter_name='Lab DC' --input vm_name=app-01
+        jq: views/vsphere.vm-guest-diagnosis.summary.jq

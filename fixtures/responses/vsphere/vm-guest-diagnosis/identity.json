@@ -1,0 +1,11 @@
+{
+  "name": "UBUNTU_64",
+  "family": "LINUX",
+  "full_name": {
+    "id": "fixture.os",
+    "default_message": "Ubuntu Linux (64-bit)",
+    "args": []
+  },
+  "host_name": "app-01.lab.invalid",
+  "ip_address": "192.0.2.42"
+}

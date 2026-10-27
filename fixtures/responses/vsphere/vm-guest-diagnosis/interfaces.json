@@ -1,0 +1,23 @@
+[
+  {
+    "mac_address": "00:50:56:aa:bb:42",
+    "nic": "4000",
+    "ip": {
+      "ip_addresses": [
+        {
+          "ip_address": "192.0.2.42",
+          "prefix_length": 24,
+          "origin": "MANUAL",
+          "state": "PREFERRED"
+        }
+      ],
+      "dhcp": {
+        "ipv4_enabled": false,
+        "ipv6_enabled": false
+      }
+    }
+  },
+  {
+    "mac_address": "00:00:00:00:00:00"
+  }
+]

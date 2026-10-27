@@ -1,0 +1,1427 @@
+# Synthetic 8.0.3 contract fixtures; no live captures. Aliases preserve exact request expectations.
+cases:
+- name: complete-mapped-telemetry
+  workflow: vm-guest-diagnosis
+  inputs: &id001
+    authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    datacenter_name: Lab DC
+    vm_name: app-01
+  requests:
+  - &id002
+    method: POST
+    path: /api/session
+    query: {}
+    headers:
+      Authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    absent_headers:
+    - vmware-api-session-id
+    response:
+      status: 201
+      body: synthetic-session-sentinel-42
+  - &id003
+    method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/vm-guest-diagnosis/datacenters.json
+  - &id004
+    method: GET
+    path: /api/vcenter/vm
+    query:
+      names: app-01
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/vm-guest-diagnosis/vms.json
+  - &id005
+    method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/vm-guest-diagnosis/config.json
+  - &id010
+    method: GET
+    path: /api/vcenter/vm/vm-42/tools
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/vm-guest-diagnosis/tools.json
+  - &id011
+    method: GET
+    path: /api/vcenter/vm/vm-42/guest/identity
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/vm-guest-diagnosis/identity.json
+  - &id012
+    method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/vm-guest-diagnosis/networking.json
+  - &id013
+    method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/interfaces
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/vm-guest-diagnosis/interfaces.json
+  - &id014
+    method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/routes
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/vm-guest-diagnosis/routes.json
+  - &id015
+    method: GET
+    path: /api/vcenter/vm/vm-42/guest/local-filesystem
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      fixture: fixtures/responses/vsphere/vm-guest-diagnosis/filesystems.json
+  - &id006
+    method: DELETE
+    path: /api/session
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 204
+      body: null
+  expect:
+    kind: success
+    outputs:
+      datacenter: &id008
+        datacenter: datacenter-21
+        name: Lab DC
+      selected_vm: &id009
+        vm: vm-42
+        name: app-01
+        power_state: POWERED_ON
+        cpu_count: 4
+        memory_size_MiB: 8192
+      configuration:
+        name: app-01
+        guest_OS: UBUNTU_64
+        power_state: POWERED_ON
+        identity:
+          name: app-01
+          bios_uuid: 00000000-0000-0000-0000-000000000042
+          instance_uuid: 11111111-1111-1111-1111-111111111142
+        hardware:
+          version: VMX_20
+          upgrade_policy: NEVER
+        boot:
+          type: EFI
+          delay: 0
+          retry: false
+          retry_delay: 10000
+          enter_setup_mode: false
+        boot_devices: []
+        cpu:
+          count: 4
+          cores_per_socket: 2
+          hot_add_enabled: false
+          hot_remove_enabled: false
+        memory:
+          size_MiB: 8192
+          hot_add_enabled: false
+        disks:
+          '2000':
+            label: Hard disk 1
+            type: SCSI
+            scsi:
+              bus: 0
+              unit: 0
+            backing:
+              type: VMDK_FILE
+              vmdk_file: '[lab-store] app-01/root.vmdk'
+            capacity: 68719476736
+        nics:
+          '4000':
+            label: Network adapter 1
+            type: VMXNET3
+            mac_type: ASSIGNED
+            mac_address: 00:50:56:aa:bb:42
+            wake_on_lan_enabled: true
+            backing:
+              type: STANDARD_PORTGROUP
+              network: network-9
+              network_name: Lab LAN
+            state: CONNECTED
+            start_connected: true
+            allow_guest_control: true
+        cdroms: {}
+        floppies: {}
+        parallel_ports: {}
+        serial_ports: {}
+        sata_adapters: {}
+        scsi_adapters:
+          '1000':
+            label: SCSI controller 0
+            type: PVSCSI
+            scsi:
+              bus: 0
+              unit: 7
+            sharing: NONE
+        nvme_adapters: {}
+      tools:
+        auto_update_supported: false
+        upgrade_policy: MANUAL
+        run_state: RUNNING
+        version: 12.4.0
+        version_number: 12384
+        version_status: UNMANAGED
+        install_type: OPEN_VM_TOOLS
+      guest_identity:
+        name: UBUNTU_64
+        family: LINUX
+        full_name:
+          id: fixture.os
+          default_message: Ubuntu Linux (64-bit)
+          args: []
+        host_name: app-01.lab.invalid
+        ip_address: 192.0.2.42
+      guest_networking:
+        dns_values:
+          host_name: app-01
+          domain_name: lab.invalid
+        dns:
+          ip_addresses:
+          - 192.0.2.53
+          search_domains:
+          - lab.invalid
+      guest_interfaces:
+      - mac_address: 00:50:56:aa:bb:42
+        nic: '4000'
+        ip:
+          ip_addresses:
+          - ip_address: 192.0.2.42
+            prefix_length: 24
+            origin: MANUAL
+            state: PREFERRED
+          dhcp:
+            ipv4_enabled: false
+            ipv6_enabled: false
+      - mac_address: 00:00:00:00:00:00
+      guest_routes:
+      - network: 0.0.0.0
+        prefix_length: 0
+        gateway_address: 192.0.2.1
+        interface_index: 0
+      - network: 198.51.100.0
+        prefix_length: 24
+      guest_filesystems:
+        /:
+          capacity: 64424509440
+          free_space: 32212254720
+          filesystem: ext4
+          mappings:
+          - disk: '2000'
+        /run:
+          capacity: 1073741824
+          free_space: 1000000000
+          filesystem: tmpfs
+    forbidden_output: &id007
+    - Basic SYNTHETIC-AUTH-SENTINEL
+    - synthetic-session-sentinel-42
+    view_contains:
+    - 'Datacenter: Lab DC (datacenter-21)'
+    - 'VM: app-01 (vm-42)'
+    - 'Configured CPU: 4'
+    - 8192 MiB
+    - 'Tools: RUNNING'
+    - 4000 -> Network adapter 1
+    - interface[0]
+    - 2000 -> Hard disk 1
+    - 'Mapping: unknown'
+    - configured allocation
+    - live execution unverified
+- name: optional-unknown-and-empty-valid-collections
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - &id018
+    method: GET
+    path: /api/vcenter/vm/vm-42/tools
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        auto_update_supported: false
+        upgrade_policy: MANUAL
+        run_state: RUNNING
+  - &id019
+    method: GET
+    path: /api/vcenter/vm/vm-42/guest/identity
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: UBUNTU_64
+        family: LINUX
+        full_name:
+          id: fixture.os
+          default_message: Ubuntu
+          args: []
+        host_name: app-01.lab.invalid
+  - &id020
+    method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: {}
+  - &id021
+    method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/interfaces
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - &id022
+    method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/routes
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/local-filesystem
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        /:
+          capacity: 1000
+          free_space: 0
+  - *id006
+  expect:
+    kind: success
+    outputs:
+      tools:
+        auto_update_supported: false
+      guest_networking: {}
+      guest_interfaces: []
+      guest_routes: []
+      guest_filesystems:
+        /:
+          capacity: 1000
+          free_space: 0
+    forbidden_output: *id007
+    view_contains:
+    - 'Tools version: unknown'
+    - 'DNS: unknown'
+    - 'Guest interfaces: 0'
+    - 'Guest routes: 0'
+    - 'primary IP: unknown'
+    - 'Filesystem /: unknown'
+    - 'free: 0 bytes'
+    - 'Mapping: unknown'
+- name: datacenter-zero
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: datacenter-duplicate
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - *id008
+      - *id008
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: datacenter-object-shaped
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        '0': *id008
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: datacenter-missing-id
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - name: Lab DC
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: datacenter-empty-id
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datacenter: ''
+        name: Lab DC
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: datacenter-wrong-name
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datacenter: datacenter-21
+        name: wrong
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: vm-zero
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      names: app-01
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: vm-duplicate
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      names: app-01
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - *id009
+      - *id009
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: vm-object-shaped
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      names: app-01
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        '0': *id009
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: vm-missing-id
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      names: app-01
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - name: app-01
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: vm-empty-id
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      names: app-01
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - vm: ''
+        name: app-01
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: vm-wrong-name
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      names: app-01
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - vm: vm-42
+        name: wrong
+        power_state: POWERED_ON
+        cpu_count: 4
+        memory_size_MiB: 8192
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: auth401-no-inventory
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - method: POST
+    path: /api/session
+    query: {}
+    headers:
+      Authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    absent_headers:
+    - vmware-api-session-id
+    response:
+      status: 401
+      body:
+        error_type: UNAUTHENTICATED
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: unexpected-login-status-no-token-preview
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - method: POST
+    path: /api/session
+    query: {}
+    headers:
+      Authorization: Basic SYNTHETIC-AUTH-SENTINEL
+    absent_headers:
+    - vmware-api-session-id
+    response:
+      status: 200
+      body: synthetic-session-sentinel-42
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: datacenter-provider-limit
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 500
+      body:
+        error_type: UNABLE_TO_ALLOCATE_RESOURCE
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: vm-provider-limit
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      names: app-01
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 500
+      body:
+        error_type: UNABLE_TO_ALLOCATE_RESOURCE
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: work-1-forbidden
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: work-2-forbidden
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      names: app-01
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: work-3-forbidden
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: work-4-forbidden
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - method: GET
+    path: /api/vcenter/vm/vm-42/tools
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: work-5-forbidden
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/identity
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: work-6-forbidden
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: work-7-forbidden
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/interfaces
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: work-8-forbidden
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/routes
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: work-9-forbidden
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - *id013
+  - *id014
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/local-filesystem
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 403
+      body:
+        error_type: UNAUTHORIZED
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: config-not-found
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 404
+      body:
+        error_type: NOT_FOUND
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: tools-no-data503
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - &id016
+    method: GET
+    path: /api/vcenter/vm/vm-42/tools
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 503
+      body:
+        error_type: SERVICE_UNAVAILABLE
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: guest-no-data503
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/identity
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 503
+      body:
+        error_type: SERVICE_UNAVAILABLE
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: config-malformed
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - method: GET
+    path: /api/vcenter/vm/vm-42
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        name: app-01
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: tools-malformed
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - method: GET
+    path: /api/vcenter/vm/vm-42/tools
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: {}
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: identity-malformed
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/identity
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: {}
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: networking-array-invalid
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: interfaces-object-invalid
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/interfaces
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: {}
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: routes-object-invalid
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - *id013
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/routes
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: {}
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: filesystems-array-invalid
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - *id013
+  - *id014
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/local-filesystem
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: []
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: normal-logout-failure
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - *id013
+  - *id014
+  - *id015
+  - &id017
+    method: DELETE
+    path: /api/session
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 503
+      body:
+        error_type: SERVICE_UNAVAILABLE
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: failure-cleanup-failure
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id016
+  - *id017
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: datacenter-nonstring-id
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - method: GET
+    path: /api/vcenter/datacenter
+    query:
+      names: Lab DC
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - datacenter: 42
+        name: Lab DC
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: vm-nonstring-id
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - method: GET
+    path: /api/vcenter/vm
+    query:
+      names: app-01
+      datacenters: datacenter-21
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - vm: 42
+        name: app-01
+  - *id006
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output: *id007
+- name: empty-filesystem-map
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id018
+  - *id019
+  - *id020
+  - *id021
+  - *id022
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/local-filesystem
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body: {}
+  - *id006
+  expect:
+    kind: success
+    outputs:
+      tools:
+        auto_update_supported: false
+      guest_networking: {}
+      guest_interfaces: []
+      guest_routes: []
+      guest_filesystems: {}
+    forbidden_output: *id007
+    view_contains:
+    - 'Guest filesystems: 0'
+- name: unresolved-reported-mappings-are-not-guessed
+  workflow: vm-guest-diagnosis
+  inputs: *id001
+  requests:
+  - *id002
+  - *id003
+  - *id004
+  - *id005
+  - *id010
+  - *id011
+  - *id012
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/interfaces
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - mac_address: 00:50:56:aa:bb:43
+        nic: missing-nic
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/networking/routes
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+      - network: 0.0.0.0
+        prefix_length: 0
+        interface_index: 7
+  - method: GET
+    path: /api/vcenter/vm/vm-42/guest/local-filesystem
+    query: {}
+    headers:
+      vmware-api-session-id: synthetic-session-sentinel-42
+    absent_headers:
+    - Authorization
+    response:
+      status: 200
+      body:
+        /:
+          capacity: 1000
+          free_space: 0
+          mappings:
+          - disk: missing-disk
+  - *id006
+  expect:
+    kind: success
+    outputs:
+      selected_vm:
+        vm: vm-42
+      guest_interfaces:
+      - mac_address: 00:50:56:aa:bb:43
+        nic: missing-nic
+    forbidden_output: *id007
+    view_contains:
+    - missing-nic -> unknown configured NIC
+    - interface[7] unavailable
+    - missing-disk -> unknown configured disk

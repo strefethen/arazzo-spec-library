@@ -11,7 +11,7 @@ readable output views; the CLI repository owns the execution engine and tooling.
 
 ## Available Workflows
 
-The current corpus contains **9 workflows across 8 providers**. Every workflow
+The current corpus contains **10 workflows across 9 providers**. Every workflow
 has complete offline fixture tests; that is separate from live-provider proof.
 
 | Provider | Workflow | Live Use |
@@ -24,6 +24,7 @@ has complete offline fixture tests; that is separate from live-provider proof.
 | [Open Library](specs/openlibrary/README.md) | Book search -> selected work -> bounded edition page | Fixture-tested; real contact identity and rate budget required before live use |
 | [crates.io](specs/crates/README.md) | Crate -> registry default version -> features and direct dependency requirements | Fixture-tested; live use blocked until client request pacing is available |
 | [Socket.dev](specs/socket/README.md) | Quota check -> organization-scoped PURL risk metadata | Manual approval and quota required; no live verification calls |
+| [vSphere](specs/vsphere/README.md) | Login -> unique scoped VM -> configuration, Tools and guest diagnosis -> logout | vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified. Private endpoint/credentials required; session side effects |
 
 Provider READMEs document inputs, limits, copy-paste commands, and dated live
 observations. Package metadata and an absence of advisory records are **not a

@@ -1,0 +1,323 @@
+arazzo: 1.0.0
+info:
+  title: vSphere scoped VM configuration and guest diagnosis
+  version: 1.0.0
+  description: vSphere 8.0 U3 contract-based; synthetic fixtures; live execution unverified. Fixed complete
+    chain with session creation/deletion, unique visible named datacenter and scoped VM, configured hardware
+    and all guest telemetry. Requires all reads and successful logout; ordinary work failures attempt
+    logout and remain failures. No finally guarantee on cancellation; cleanup replaces the original top-level
+    error. Hard provider caps are not pagination.
+sourceDescriptions:
+- name: session
+  url: ../../fixtures/openapi/vsphere/session.yaml
+  type: openapi
+- name: vcenter
+  url: ../../fixtures/openapi/vsphere/vm-guest-diagnosis.yaml
+  type: openapi
+components:
+  parameters:
+    session:
+      name: vmware-api-session-id
+      in: header
+      value: $steps.login.outputs.session_token
+workflows:
+- workflowId: vm-guest-diagnosis
+  summary: Correlate scoped VM configuration with Tools and guest telemetry; require logout.
+  inputs:
+    type: object
+    required:
+    - authorization
+    - datacenter_name
+    - vm_name
+    properties:
+      authorization:
+        type: string
+        minLength: 1
+        writeOnly: true
+        format: password
+      datacenter_name:
+        type: string
+        minLength: 1
+      vm_name:
+        type: string
+        minLength: 1
+  steps:
+  - stepId: login
+    operationId: $sourceDescriptions.session.createSession
+    parameters:
+    - name: Authorization
+      in: header
+      value: $inputs.authorization
+    successCriteria:
+    - condition: $statusCode == 201
+    - condition: '!($response.body# == null)'
+    - type: regex
+      context: $response.body
+      condition: ^.+$
+    onFailure:
+    - name: login-failed-without-body-preview
+      type: end
+    outputs:
+      session_token: $response.body#
+  - stepId: resolve-datacenter
+    operationId: $sourceDescriptions.vcenter.listDatacenters
+    parameters:
+    - &id001
+      reference: $components.parameters.session
+    - name: names
+      in: query
+      value: $inputs.datacenter_name
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: jsonpath
+      context: $response.body
+      condition: $[?length($) == 1 && count($[0]) == 1]
+    - type: regex
+      context: $response.body#/0/datacenter
+      condition: ^\S.*$
+    - condition: '!($response.body#/0/datacenter == null)'
+    - type: regex
+      context: $response.body#/0/name
+      condition: ^\S.*$
+    - condition: '!($response.body#/0/name == null)'
+    - condition: $response.body#/0/name == $inputs.datacenter_name
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match(@.datacenter, ".+") && match(@.name, ".+")]
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      datacenter: $response.body#/0
+      datacenter_id: $response.body#/0/datacenter
+  - stepId: resolve-vm
+    operationId: $sourceDescriptions.vcenter.listVms
+    parameters:
+    - *id001
+    - name: names
+      in: query
+      value: $inputs.vm_name
+    - name: datacenters
+      in: query
+      value: $steps.resolve-datacenter.outputs.datacenter_id
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: jsonpath
+      context: $response.body
+      condition: $[?length($) == 1 && count($[0]) == 1]
+    - type: regex
+      context: $response.body#/0/vm
+      condition: ^\S.*$
+    - condition: '!($response.body#/0/vm == null)'
+    - type: regex
+      context: $response.body#/0/name
+      condition: ^\S.*$
+    - condition: '!($response.body#/0/name == null)'
+    - condition: $response.body#/0/name == $inputs.vm_name
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match(@.vm, ".+") && match(@.name, ".+")]
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      selected_vm: $response.body#/0
+      vm_id: $response.body#/0/vm
+      vm_name: $response.body#/0/name
+  - stepId: get-config
+    operationId: $sourceDescriptions.vcenter.getVm
+    parameters:
+    - *id001
+    - &id002
+      name: vm
+      in: path
+      value: $steps.resolve-vm.outputs.vm_id
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body
+      condition: ^\{
+    - type: regex
+      context: $response.body#/name
+      condition: ^\S.*$
+    - condition: '!($response.body#/name == null)'
+    - condition: $response.body#/name == $steps.resolve-vm.outputs.vm_name
+    - type: regex
+      context: $response.body#/guest_OS
+      condition: ^\S.*$
+    - condition: '!($response.body#/guest_OS == null)'
+    - type: regex
+      context: $response.body#/power_state
+      condition: ^\S.*$
+    - condition: '!($response.body#/power_state == null)'
+    - condition: $response.body#/cpu/count > 0
+    - condition: $response.body#/memory/size_MiB > 0
+    - type: regex
+      context: $response.body#/nics
+      condition: ^\{
+    - type: regex
+      context: $response.body#/disks
+      condition: ^\{
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      configuration: $response.body#
+  - stepId: get-tools
+    operationId: $sourceDescriptions.vcenter.getTools
+    parameters:
+    - *id001
+    - *id002
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body
+      condition: ^\{
+    - type: regex
+      context: $response.body#/run_state
+      condition: ^\S.*$
+    - condition: '!($response.body#/run_state == null)'
+    - type: regex
+      context: $response.body#/upgrade_policy
+      condition: ^\S.*$
+    - condition: '!($response.body#/upgrade_policy == null)'
+    - condition: '!($response.body#/auto_update_supported == null)'
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      tools: $response.body#
+  - stepId: get-guest-identity
+    operationId: $sourceDescriptions.vcenter.getGuestIdentity
+    parameters:
+    - *id001
+    - *id002
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body
+      condition: ^\{
+    - type: regex
+      context: $response.body#/name
+      condition: ^\S.*$
+    - condition: '!($response.body#/name == null)'
+    - type: regex
+      context: $response.body#/family
+      condition: ^\S.*$
+    - condition: '!($response.body#/family == null)'
+    - type: regex
+      context: $response.body#/full_name
+      condition: ^\{
+    - condition: '!($response.body#/host_name == null)'
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      guest_identity: $response.body#
+  - stepId: get-guest-networking
+    operationId: $sourceDescriptions.vcenter.getGuestNetworking
+    parameters:
+    - *id001
+    - *id002
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body
+      condition: ^\{
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      guest_networking: $response.body#
+  - stepId: get-guest-interfaces
+    operationId: $sourceDescriptions.vcenter.listGuestInterfaces
+    parameters:
+    - *id001
+    - *id002
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body
+      condition: ^\[
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      guest_interfaces: $response.body#
+  - stepId: get-guest-routes
+    operationId: $sourceDescriptions.vcenter.listGuestRoutes
+    parameters:
+    - *id001
+    - *id002
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body
+      condition: ^\[
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      guest_routes: $response.body#
+  - stepId: get-guest-filesystems
+    operationId: $sourceDescriptions.vcenter.getGuestFilesystems
+    parameters:
+    - *id001
+    - *id002
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body
+      condition: ^\{
+    onFailure:
+    - name: cleanup-after-failure
+      type: goto
+      stepId: logout-failed
+    outputs:
+      guest_filesystems: $response.body#
+  - stepId: logout
+    description: Explicit end avoids falling into failure cleanup.
+    operationId: $sourceDescriptions.session.deleteSession
+    parameters:
+    - *id001
+    successCriteria:
+    - condition: $statusCode == 204
+    onSuccess:
+    - name: end
+      type: end
+    onFailure:
+    - name: end-failed
+      type: end
+  - stepId: logout-failed
+    description: Deliberately fails after cleanup to preserve nonzero outcome; original top-level error
+      is replaced.
+    operationId: $sourceDescriptions.session.deleteSession
+    parameters:
+    - *id001
+    successCriteria:
+    - condition: $statusCode == 204
+    - condition: 'false'
+    onSuccess:
+    - name: end
+      type: end
+    onFailure:
+    - name: end-failed
+      type: end
+  outputs:
+    datacenter: $steps.resolve-datacenter.outputs.datacenter
+    selected_vm: $steps.resolve-vm.outputs.selected_vm
+    configuration: $steps.get-config.outputs.configuration
+    tools: $steps.get-tools.outputs.tools
+    guest_identity: $steps.get-guest-identity.outputs.guest_identity
+    guest_networking: $steps.get-guest-networking.outputs.guest_networking
+    guest_interfaces: $steps.get-guest-interfaces.outputs.guest_interfaces
+    guest_routes: $steps.get-guest-routes.outputs.guest_routes
+    guest_filesystems: $steps.get-guest-filesystems.outputs.guest_filesystems
