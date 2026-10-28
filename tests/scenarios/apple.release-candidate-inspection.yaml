@@ -5835,6 +5835,7 @@ cases:
   requests: []
   expect:
     kind: error
+    assert: '(.kind == "error") and (has("outputs") | not)'
     code: RUNTIME_INPUT_VALIDATION
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
@@ -5847,6 +5848,7 @@ cases:
   requests: []
   expect:
     kind: error
+    assert: '(.kind == "error") and (has("outputs") | not)'
     code: RUNTIME_INPUT_VALIDATION
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
@@ -5858,6 +5860,7 @@ cases:
   requests: []
   expect:
     kind: error
+    assert: '(.kind == "error") and (has("outputs") | not)'
     code: RUNTIME_INPUT_VALIDATION
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
@@ -5870,6 +5873,7 @@ cases:
   requests: []
   expect:
     kind: error
+    assert: '(.kind == "error") and (has("outputs") | not)'
     code: RUNTIME_INPUT_VALIDATION
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
@@ -5881,6 +5885,7 @@ cases:
   requests: []
   expect:
     kind: error
+    assert: '(.kind == "error") and (has("outputs") | not)'
     code: RUNTIME_INPUT_VALIDATION
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
@@ -5893,6 +5898,7 @@ cases:
   requests: []
   expect:
     kind: error
+    assert: '(.kind == "error") and (has("outputs") | not)'
     code: RUNTIME_INPUT_VALIDATION
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
