@@ -1,5 +1,37 @@
 version: 1
 specs:
+  - id: apple.release-candidate-inspection
+    provider: apple
+    category: release-inspection
+    description: Resolve one exact iOS marketing version and inspect only its attached App Store Connect build.
+    path: specs/apple/release-candidate-inspection.arazzo.yaml
+    arazzo: "1.0.0"
+    tier: dry-run
+    read_only: true
+    live_policy: manual-authenticated-read-only
+    compatibility: arazzo-cli 0.8.2+
+    openapi: [fixtures/openapi/apple/app-store-connect.yaml]
+    workflows: [release-candidate-inspection]
+    env: [APP_STORE_CONNECT_AUTHORIZATION]
+    tests: tests/scenarios/apple.release-candidate-inspection.yaml
+    examples:
+      quickstart:
+        description: Preview only the first capped app lookup with synthetic inputs; no Apple request is sent.
+        command: >-
+          arazzo-cli --json run specs/apple/release-candidate-inspection.arazzo.yaml
+          release-candidate-inspection --dry-run --strict-inputs --max-redirects 0
+          --step resolve-app --input authorization='Bearer SYNTHETIC-APPLE-PREVIEW'
+          --input bundle_id=com.example.corpus --input marketing_version=1.2.3
+        jq: views/apple.release-candidate-inspection.summary.jq
+    verification:
+      default:
+        - arazzo-cli --json catalog specs/apple
+        - arazzo-cli --json show release-candidate-inspection --dir specs/apple
+        - arazzo-cli --json validate specs/apple/release-candidate-inspection.arazzo.yaml --strict
+        - arazzo-cli --json run specs/apple/release-candidate-inspection.arazzo.yaml release-candidate-inspection --dry-run --strict-inputs --max-redirects 0 --step resolve-app --input authorization='Bearer SYNTHETIC-APPLE-PREVIEW' --input bundle_id=com.example.corpus --input marketing_version=1.2.3
+        - python3 scripts/verify.py apple.release-candidate-inspection
+        - python3 -m unittest discover -s tests -p 'test_*.py'
+        - python3 scripts/verify.py
   - id: nws.address-forecast
     provider: nws
     category: weather

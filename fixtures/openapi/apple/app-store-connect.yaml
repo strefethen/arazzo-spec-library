@@ -1,0 +1,276 @@
+openapi: 3.0.0
+info:
+  title: App Store Connect API release candidate inspection subset
+  version: 4.5.1
+  description: >-
+    Local four-GET subset of Apple's published App Store Connect OpenAPI document.
+    Upstream archive SHA-256 is 7518d3a94a8bd701ac25c1c601b95b8f53aad92091affb15a2a9d331713dac1a.
+servers:
+  - url: https://api.appstoreconnect.apple.com
+security:
+  - bearerAuth: []
+paths:
+  /v1/apps:
+    get:
+      operationId: apps_getCollection
+      summary: List apps filtered by bundle identifier
+      parameters:
+        - name: filter[bundleId]
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items: { type: string }
+        - name: limit
+          in: query
+          required: false
+          style: form
+          schema: { type: integer, maximum: 200 }
+        - name: fields[apps]
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [accessibilityUrl, name, bundleId, sku, primaryLocale, isOrEverWasMadeForKids, subscriptionStatusUrl, subscriptionStatusUrlVersion, subscriptionStatusUrlForSandbox, subscriptionStatusUrlVersionForSandbox, contentRightsDeclaration, streamlinedPurchasingEnabled, accessibilityDeclarations, appEncryptionDeclarations, appStoreIcon, ciProduct, betaTesters, betaGroups, appStoreVersions, appTags, preReleaseVersions, betaAppLocalizations, builds, betaLicenseAgreement, betaAppReviewDetail, appInfos, appClips, appPricePoints, endUserLicenseAgreement, appPriceSchedule, appAvailabilityV2, inAppPurchases, subscriptionGroups, gameCenterEnabledVersions, performanceOverviews, perfPowerMetrics, appCustomProductPages, inAppPurchasesV2, promotedPurchases, appEvents, reviewSubmissions, subscriptionGracePeriod, customerReviews, customerReviewSummarizations, gameCenterDetail, appStoreVersionExperimentsV2, alternativeDistributionKey, analyticsReportRequests, marketplaceSearchDetail, buildUploads, backgroundAssets, assetLibrary, betaFeedbackScreenshotSubmissions, betaFeedbackCrashSubmissions, searchKeywords, webhooks, androidToIosAppMappingDetails]
+      responses:
+        '200':
+          description: A bounded page of apps
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AppsResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /v1/apps/{id}/appStoreVersions:
+    get:
+      operationId: apps_appStoreVersions_getToManyRelated
+      summary: List app store versions filtered by platform and marketing version
+      parameters:
+        - name: id
+          in: path
+          required: true
+          style: simple
+          schema: { type: string }
+        - name: filter[platform]
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items: { type: string, enum: [IOS, MAC_OS, TV_OS, VISION_OS] }
+        - name: filter[versionString]
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema: { type: array, items: { type: string } }
+        - name: limit
+          in: query
+          required: false
+          style: form
+          schema: { type: integer, maximum: 200 }
+        - name: fields[appStoreVersions]
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [platform, versionString, appStoreState, appVersionState, copyright, reviewType, releaseType, earliestReleaseDate, usesIdfa, downloadable, createdDate, app, appStoreVersionLocalizations, build, appStoreVersionPhasedRelease, gameCenterAppVersion, routingAppCoverage, appStoreReviewDetail, appStoreVersionSubmission, appClipDefaultExperience, appStoreVersionExperiments, appStoreVersionExperimentsV2, customerReviews, alternativeDistributionPackage]
+      responses:
+        '200':
+          description: A bounded page of app store versions
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AppStoreVersionsResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /v1/appStoreVersions/{id}/relationships/build:
+    get:
+      operationId: appStoreVersions_build_getToOneRelationship
+      summary: Get the build identifier attached to an app store version
+      parameters:
+        - name: id
+          in: path
+          required: true
+          style: simple
+          schema: { type: string }
+      responses:
+        '200':
+          description: The attached build relationship identifier
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AppStoreVersionBuildLinkageResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /v1/builds/{id}:
+    get:
+      operationId: builds_getInstance
+      summary: Read the attached build details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          style: simple
+          schema: { type: string }
+        - name: fields[builds]
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: string
+              enum: [version, uploadedDate, expirationDate, expired, minOsVersion, lsMinimumSystemVersion, computedMinMacOsVersion, computedMinVisionOsVersion, iconAssetToken, processingState, buildAudienceType, usesNonExemptEncryption, preReleaseVersion, individualTesters, betaGroups, betaBuildLocalizations, appEncryptionDeclaration, betaAppReviewSubmission, app, buildBetaDetail, appStoreVersion, icons, buildBundles, buildUpload, perfPowerMetrics, diagnosticSignatures]
+      responses:
+        '200':
+          description: The requested build
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BuildResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Externally supplied App Store Connect signed JWT.
+  responses:
+    Unauthorized:
+      description: Authentication is missing or invalid
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorsResponse' } } }
+    Forbidden:
+      description: Caller is not authorized for the requested resource
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorsResponse' } } }
+    NotFound:
+      description: Requested resource was not found
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorsResponse' } } }
+    TooManyRequests:
+      description: Request quota was exceeded; this workflow does not retry
+      content: { application/json: { schema: { $ref: '#/components/schemas/ErrorsResponse' } } }
+  schemas:
+    AppsResponse:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/App' } }
+        links: { $ref: '#/components/schemas/PagedDocumentLinks' }
+        meta: { $ref: '#/components/schemas/PagingInformation' }
+      required: [data, links]
+    App:
+      type: object
+      properties:
+        type: { type: string, enum: [apps] }
+        id: { type: string }
+        attributes:
+          type: object
+          properties:
+            name: { type: string }
+            bundleId: { type: string }
+      required: [type, id]
+    AppStoreVersionsResponse:
+      type: object
+      properties:
+        data: { type: array, items: { $ref: '#/components/schemas/AppStoreVersion' } }
+        links: { $ref: '#/components/schemas/PagedDocumentLinks' }
+        meta: { $ref: '#/components/schemas/PagingInformation' }
+      required: [data, links]
+    AppStoreVersion:
+      type: object
+      properties:
+        type: { type: string, enum: [appStoreVersions] }
+        id: { type: string }
+        attributes:
+          type: object
+          properties:
+            platform: { $ref: '#/components/schemas/Platform' }
+            versionString: { type: string }
+            appStoreState: { type: string, deprecated: true }
+            appVersionState: { $ref: '#/components/schemas/AppVersionState' }
+            releaseType: { type: string, enum: [MANUAL, AFTER_APPROVAL, SCHEDULED] }
+      required: [type, id]
+    AppStoreVersionBuildLinkageResponse:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/BuildLinkage' }
+        links: { $ref: '#/components/schemas/DocumentLinks' }
+      required: [data, links]
+    BuildLinkage:
+      type: object
+      properties:
+        type: { type: string, enum: [builds] }
+        id: { type: string }
+      required: [type, id]
+    BuildResponse:
+      type: object
+      properties:
+        data: { $ref: '#/components/schemas/Build' }
+        links: { $ref: '#/components/schemas/DocumentLinks' }
+      required: [data, links]
+    Build:
+      type: object
+      properties:
+        type: { type: string, enum: [builds] }
+        id: { type: string }
+        attributes:
+          type: object
+          properties:
+            version: { type: string }
+            uploadedDate: { type: string, format: date-time }
+            expirationDate: { type: string, format: date-time }
+            expired: { type: boolean }
+            processingState: { $ref: '#/components/schemas/BuildProcessingState' }
+            usesNonExemptEncryption: { type: boolean }
+      required: [type, id]
+    Platform:
+      type: string
+      enum: [IOS, MAC_OS, TV_OS, VISION_OS]
+    AppVersionState:
+      type: string
+      enum: [ACCEPTED, DEVELOPER_REJECTED, IN_REVIEW, INVALID_BINARY, METADATA_REJECTED, PENDING_APPLE_RELEASE, PENDING_DEVELOPER_RELEASE, PREPARE_FOR_SUBMISSION, PROCESSING_FOR_DISTRIBUTION, READY_FOR_DISTRIBUTION, READY_FOR_REVIEW, REJECTED, REPLACED_WITH_NEW_VERSION, WAITING_FOR_EXPORT_COMPLIANCE, WAITING_FOR_REVIEW]
+    BuildProcessingState:
+      type: string
+      enum: [PROCESSING, FAILED, INVALID, VALID]
+    PagedDocumentLinks:
+      type: object
+      properties:
+        self: { type: string, format: uri-reference }
+        next: { type: string, format: uri-reference, nullable: true }
+      required: [self]
+    DocumentLinks:
+      type: object
+      properties:
+        self: { type: string, format: uri-reference }
+      required: [self]
+    PagingInformation:
+      type: object
+      properties:
+        paging:
+          type: object
+          properties:
+            total: { type: integer }
+            limit: { type: integer }
+            nextCursor: { type: string, nullable: true }
+          required: [limit]
+      required: [paging]
+    ErrorsResponse:
+      type: object
+      properties:
+        errors: { type: array, items: { type: object } }

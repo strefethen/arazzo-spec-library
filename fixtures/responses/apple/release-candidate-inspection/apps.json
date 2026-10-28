@@ -1,0 +1,13 @@
+{
+  "data": [
+    {
+      "type": "apps",
+      "id": "app-101",
+      "attributes": {
+        "name": "Corpus Sample",
+        "bundleId": "com.example.corpus"
+      }
+    }
+  ],
+  "links": { "self": "https://api.appstoreconnect.apple.com/v1/apps" }
+}

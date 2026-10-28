@@ -1,0 +1,224 @@
+arazzo: 1.0.0
+info:
+  title: App Store Connect release candidate inspection
+  summary: Resolve one exact iOS marketing version and inspect only its attached build.
+  version: 1.0.0
+  description: >-
+    Four sequential authenticated GETs inspect app identity, exact iOS marketing
+    version, its attached build relationship, and that build. Pages are capped
+    at two and never traversed. This is a point-in-time inspection and does not
+    establish submission readiness.
+sourceDescriptions:
+  - name: apple
+    url: ../../fixtures/openapi/apple/app-store-connect.yaml
+    type: openapi
+components:
+  parameters:
+    acceptJson:
+      name: Accept
+      in: header
+      value: application/json
+    authorization:
+      name: Authorization
+      in: header
+      value: $inputs.authorization
+  failureActions:
+    stop:
+      name: stop-without-fallback
+      type: end
+workflows:
+  - workflowId: release-candidate-inspection
+    summary: Inspect the exact build attached to one exact iOS marketing version.
+    description: >-
+      Selects by exact, case-sensitive bundle ID and marketing version, caps
+      each selection page at two, rejects any continuation indicator, then
+      reads only the attached build. No retries, returned-URL requests, writes,
+      uploads, submission checks, or readiness decisions are performed.
+    inputs:
+      type: object
+      properties:
+        authorization:
+          type: string
+          format: password
+          writeOnly: true
+          description: Externally supplied complete Bearer JWT header value.
+        bundle_id:
+          type: string
+          minLength: 1
+          pattern: '^[^,]+$'
+          description: One exact case-sensitive bundle identifier, without commas.
+        marketing_version:
+          type: string
+          minLength: 1
+          pattern: '^[^,]+$'
+          description: One exact case-sensitive iOS marketing version, without commas.
+      required: [authorization, bundle_id, marketing_version]
+    steps:
+      - stepId: resolve-app
+        description: Make the first and only bundle-ID lookup, capped at two records.
+        operationId: $sourceDescriptions.apple.apps_getCollection
+        parameters:
+          - reference: $components.parameters.acceptJson
+          - reference: $components.parameters.authorization
+          - name: filter[bundleId]
+            in: query
+            value: $inputs.bundle_id
+          - name: limit
+            in: query
+            value: 2
+          - name: fields[apps]
+            in: query
+            value: name,bundleId
+        successCriteria:
+          - condition: $statusCode == 200
+          - type: regex
+            context: $inputs.bundle_id
+            condition: '^\S(?:[^,]*\S)?$'
+          - type: regex
+            context: $inputs.marketing_version
+            condition: '^\S(?:[^,]*\S)?$'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?length($.data) == 1 && count($.data[:]) == 1 && count($.data[0].*) >= 3]'
+          - condition: $response.body#/data/0/type == 'apps'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?match($.data[0].id, ".+")]'
+          - condition: '!($response.body#/data/0/attributes == null)'
+          - condition: $response.body#/data/0/attributes/bundleId == $inputs.bundle_id
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?count($.data[0].attributes.name) == 0 || match($.data[0].attributes.name, ".+")]'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?match($.links.self, ".+") && (count($.links.next) == 0 || $.links.next == null)]'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?!$.meta || ($.meta.paging.limit >= 1 && $.meta.paging.limit <= 2 && (count($.meta.paging.total) == 0 || $.meta.paging.total == 1) && (count($.meta.paging.nextCursor) == 0 || $.meta.paging.nextCursor == null))]'
+        onFailure:
+          - reference: $components.failureActions.stop
+        outputs:
+          selected_app: $response.body#/data/0
+          app_id: $response.body#/data/0/id
+
+      - stepId: resolve-version
+        description: Select one exact iOS marketing version under the resolved app ID.
+        operationId: $sourceDescriptions.apple.apps_appStoreVersions_getToManyRelated
+        parameters:
+          - reference: $components.parameters.acceptJson
+          - reference: $components.parameters.authorization
+          - name: id
+            in: path
+            value: $steps.resolve-app.outputs.app_id
+          - name: filter[platform]
+            in: query
+            value: IOS
+          - name: filter[versionString]
+            in: query
+            value: $inputs.marketing_version
+          - name: limit
+            in: query
+            value: 2
+          - name: fields[appStoreVersions]
+            in: query
+            value: platform,versionString,appVersionState,releaseType
+        successCriteria:
+          - condition: $statusCode == 200
+          - type: regex
+            context: $inputs.marketing_version
+            condition: '^\S(?:[^,]*\S)?$'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?length($.data) == 1 && count($.data[:]) == 1 && count($.data[0].*) >= 3]'
+          - condition: $response.body#/data/0/type == 'appStoreVersions'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?match($.data[0].id, ".+")]'
+          - condition: '!($response.body#/data/0/attributes == null)'
+          - condition: $response.body#/data/0/attributes/platform == 'IOS'
+          - condition: $response.body#/data/0/attributes/versionString == $inputs.marketing_version
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?$.data[0].attributes.appVersionState == "ACCEPTED" || $.data[0].attributes.appVersionState == "DEVELOPER_REJECTED" || $.data[0].attributes.appVersionState == "IN_REVIEW" || $.data[0].attributes.appVersionState == "INVALID_BINARY" || $.data[0].attributes.appVersionState == "METADATA_REJECTED" || $.data[0].attributes.appVersionState == "PENDING_APPLE_RELEASE" || $.data[0].attributes.appVersionState == "PENDING_DEVELOPER_RELEASE" || $.data[0].attributes.appVersionState == "PREPARE_FOR_SUBMISSION" || $.data[0].attributes.appVersionState == "PROCESSING_FOR_DISTRIBUTION" || $.data[0].attributes.appVersionState == "READY_FOR_DISTRIBUTION" || $.data[0].attributes.appVersionState == "READY_FOR_REVIEW" || $.data[0].attributes.appVersionState == "REJECTED" || $.data[0].attributes.appVersionState == "REPLACED_WITH_NEW_VERSION" || $.data[0].attributes.appVersionState == "WAITING_FOR_EXPORT_COMPLIANCE" || $.data[0].attributes.appVersionState == "WAITING_FOR_REVIEW"]'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?count($.data[0].attributes.releaseType) == 0 || $.data[0].attributes.releaseType == "MANUAL" || $.data[0].attributes.releaseType == "AFTER_APPROVAL" || $.data[0].attributes.releaseType == "SCHEDULED"]'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?match($.links.self, ".+") && (count($.links.next) == 0 || $.links.next == null)]'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?!$.meta || ($.meta.paging.limit >= 1 && $.meta.paging.limit <= 2 && (count($.meta.paging.total) == 0 || $.meta.paging.total == 1) && (count($.meta.paging.nextCursor) == 0 || $.meta.paging.nextCursor == null))]'
+        onFailure:
+          - reference: $components.failureActions.stop
+        outputs:
+          selected_version: $response.body#/data/0
+          version_id: $response.body#/data/0/id
+
+      - stepId: resolve-attached-build
+        description: Resolve the build ID exclusively from the selected version's relationship.
+        operationId: $sourceDescriptions.apple.appStoreVersions_build_getToOneRelationship
+        parameters:
+          - reference: $components.parameters.acceptJson
+          - reference: $components.parameters.authorization
+          - name: id
+            in: path
+            value: $steps.resolve-version.outputs.version_id
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/data/type == 'builds'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?match($.data.id, ".+")]'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?match($.links.self, ".+")]'
+        onFailure:
+          - reference: $components.failureActions.stop
+        outputs:
+          attached_build_id: $response.body#/data/id
+
+      - stepId: inspect-build
+        description: Read the attached build by the relationship-provided ID.
+        operationId: $sourceDescriptions.apple.builds_getInstance
+        parameters:
+          - reference: $components.parameters.acceptJson
+          - reference: $components.parameters.authorization
+          - name: id
+            in: path
+            value: $steps.resolve-attached-build.outputs.attached_build_id
+          - name: fields[builds]
+            in: query
+            value: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+        successCriteria:
+          - condition: $statusCode == 200
+          - condition: $response.body#/data/type == 'builds'
+          - condition: $response.body#/data/id == $steps.resolve-attached-build.outputs.attached_build_id
+          - condition: '!($response.body#/data/attributes == null)'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?match($.data.attributes.version, ".+")]'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?$.data.attributes.processingState == "PROCESSING" || $.data.attributes.processingState == "FAILED" || $.data.attributes.processingState == "INVALID" || $.data.attributes.processingState == "VALID"]'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?count($.data.attributes.expired) == 0 || $.data.attributes.expired == true || $.data.attributes.expired == false]'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?count($.data.attributes.usesNonExemptEncryption) == 0 || $.data.attributes.usesNonExemptEncryption == true || $.data.attributes.usesNonExemptEncryption == false]'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?count($.data.attributes.uploadedDate) == 0 || match($.data.attributes.uploadedDate, ".+")]'
+          - type: jsonpath
+            context: $response.body
+            condition: '$[?count($.data.attributes.expirationDate) == 0 || match($.data.attributes.expirationDate, ".+")]'
+        onFailure:
+          - reference: $components.failureActions.stop
+        outputs:
+          build: $response.body#/data
+    outputs:
+      selected_app: $steps.resolve-app.outputs.selected_app
+      selected_version: $steps.resolve-version.outputs.selected_version
+      attached_build_id: $steps.resolve-attached-build.outputs.attached_build_id
+      build: $steps.inspect-build.outputs.build

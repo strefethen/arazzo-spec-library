@@ -1,0 +1,15 @@
+{
+  "data": [
+    {
+      "type": "appStoreVersions",
+      "id": "version-201",
+      "attributes": {
+        "platform": "IOS",
+        "versionString": "1.2.3",
+        "appVersionState": "PROCESSING_FOR_DISTRIBUTION",
+        "releaseType": "AFTER_APPROVAL"
+      }
+    }
+  ],
+  "links": { "self": "https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions" }
+}

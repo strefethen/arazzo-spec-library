@@ -1,0 +1,6158 @@
+cases:
+- name: happy-path-linked-build-is-not-marketing-version
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build.json
+  expect:
+    kind: success
+    outputs:
+      selected_app: &id001
+        type: apps
+        id: app-101
+        attributes:
+          name: Corpus Sample
+          bundleId: com.example.corpus
+      selected_version: &id004
+        type: appStoreVersions
+        id: version-201
+        attributes:
+          platform: IOS
+          versionString: 1.2.3
+          appVersionState: PROCESSING_FOR_DISTRIBUTION
+          releaseType: AFTER_APPROVAL
+      attached_build_id: build-301
+      build: &id003
+        type: builds
+        id: build-301
+        attributes:
+          version: '42'
+          uploadedDate: '2026-10-20T12:00:00Z'
+          expirationDate: '2027-10-20T12:00:00Z'
+          expired: false
+          processingState: VALID
+          usesNonExemptEncryption: false
+    view_contains:
+    - 'App: com.example.corpus (app-101)'
+    - 'Version: iOS 1.2.3 (version-201); state PROCESSING_FOR_DISTRIBUTION'
+    - 'Attached build: build-301; build number 42; processing VALID'
+    - 'Expired: false'
+    - 'Uses non-exempt encryption: false'
+    - does not establish App Store submission readiness
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-zero-results
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: []
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-two-results
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-over-limit-results
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-object-instead-of-array
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          '0':
+            type: apps
+            id: app-101
+            attributes:
+              name: Corpus Sample
+              bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-stringified-array
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: '[{"type":"apps","id":"x"}]'
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-stringified-object
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: '{"type":"apps","id":"x"}'
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-null-data
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: null
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-missing-data
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-scalar-selected-item
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - not-an-object
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-array-selected-item
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - - type: apps
+            id: app-101
+            attributes:
+              name: Corpus Sample
+              bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-missing-id
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-empty-id
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: ''
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-nonstring-id
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: 17
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-wrong-resource-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: builds
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-missing-attributes
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-wrong-attributes-container
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes: '{"bundleId":"com.example.corpus"}'
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-missing-self-link
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links: {}
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-empty-self-link
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: ''
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-nonstring-self-link
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: 12
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-missing-links
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-malformed-links
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links: not-an-object
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-next-hostile-url
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+          next: https://attacker.invalid/collect
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-next-empty-string
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+          next: ''
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-next-wrong-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+          next: 7
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-meta-total-two
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+        meta:
+          paging:
+            limit: 2
+            total: 2
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-meta-total-wrong-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+        meta:
+          paging:
+            limit: 2
+            total: '1'
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-meta-cursor
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+        meta:
+          paging:
+            limit: 2
+            total: 1
+            nextCursor: cursor-secret-free
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-malformed-meta
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+        meta: bad
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-malformed-paging
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+        meta:
+          paging: bad
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-missing-paging-limit
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+        meta:
+          paging:
+            total: 1
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-invalid-limit-zero
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+        meta:
+          paging:
+            limit: 0
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-invalid-limit-over-cap
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+        meta:
+          paging:
+            limit: 3
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-missing-bundle-id
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-empty-bundle-id
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: ''
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-wrong-exact-bundle-id
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.other
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-nonstring-bundle-id
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: 13
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-optional-name-wrong-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: 13
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-zero-results
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: []
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-two-results
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-over-limit-results
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-object-instead-of-array
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          '0':
+            type: appStoreVersions
+            id: version-201
+            attributes:
+              platform: IOS
+              versionString: 1.2.3
+              appVersionState: PROCESSING_FOR_DISTRIBUTION
+              releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-stringified-array
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: '[{"type":"apps","id":"x"}]'
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-stringified-object
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: '{"type":"apps","id":"x"}'
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-null-data
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: null
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-missing-data
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-scalar-selected-item
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - not-an-object
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-array-selected-item
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - - type: appStoreVersions
+            id: version-201
+            attributes:
+              platform: IOS
+              versionString: 1.2.3
+              appVersionState: PROCESSING_FOR_DISTRIBUTION
+              releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-missing-id
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-empty-id
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: ''
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-nonstring-id
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: 17
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-wrong-resource-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: builds
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-missing-attributes
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-wrong-attributes-container
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes: '{"bundleId":"com.example.corpus"}'
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-missing-self-link
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links: {}
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-empty-self-link
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: ''
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-nonstring-self-link
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: 12
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-missing-links
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-malformed-links
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links: not-an-object
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-next-hostile-url
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+          next: https://attacker.invalid/collect
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-next-empty-string
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+          next: ''
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-next-wrong-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+          next: 7
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-meta-total-two
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+        meta:
+          paging:
+            limit: 2
+            total: 2
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-meta-total-wrong-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+        meta:
+          paging:
+            limit: 2
+            total: '1'
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-meta-cursor
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+        meta:
+          paging:
+            limit: 2
+            total: 1
+            nextCursor: cursor-secret-free
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-malformed-meta
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+        meta: bad
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-malformed-paging
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+        meta:
+          paging: bad
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-missing-paging-limit
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+        meta:
+          paging:
+            total: 1
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-invalid-limit-zero
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+        meta:
+          paging:
+            limit: 0
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-invalid-limit-over-cap
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+        meta:
+          paging:
+            limit: 3
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-missing-platform
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-wrong-platform
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: MAC_OS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-missing-version-string
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-wrong-exact-version
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.4
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-nonstring-version
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 123
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-missing-app-version-state
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-invalid-app-version-state
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: READY_FOR_SALE
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-optional-release-type-invalid
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: SOMEDAY
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: optional-page-metadata-valid
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+        meta:
+          paging:
+            limit: 2
+            total: 1
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - &id002
+          type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: READY_FOR_DISTRIBUTION
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+        meta:
+          paging:
+            limit: 2
+            total: 1
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: build-301
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/appStoreVersions/version-201/relationships/build
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build.json
+  expect:
+    kind: success
+    outputs:
+      selected_app: *id001
+      selected_version: *id002
+      attached_build_id: build-301
+      build: *id003
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+    view_contains:
+    - READY_FOR_DISTRIBUTION
+- name: build-state-processing-expired-false
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: &id005
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: false
+            processingState: PROCESSING
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: success
+    outputs:
+      selected_app: *id001
+      selected_version: *id004
+      attached_build_id: build-301
+      build: *id005
+    view_contains:
+    - processing PROCESSING
+    - 'Expired: false'
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-state-processing-expired-true
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: &id006
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: true
+            processingState: PROCESSING
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: success
+    outputs:
+      selected_app: *id001
+      selected_version: *id004
+      attached_build_id: build-301
+      build: *id006
+    view_contains:
+    - processing PROCESSING
+    - 'Expired: true'
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-state-failed-expired-false
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: &id007
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: false
+            processingState: FAILED
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: success
+    outputs:
+      selected_app: *id001
+      selected_version: *id004
+      attached_build_id: build-301
+      build: *id007
+    view_contains:
+    - processing FAILED
+    - 'Expired: false'
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-state-failed-expired-true
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: &id008
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: true
+            processingState: FAILED
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: success
+    outputs:
+      selected_app: *id001
+      selected_version: *id004
+      attached_build_id: build-301
+      build: *id008
+    view_contains:
+    - processing FAILED
+    - 'Expired: true'
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-state-invalid-expired-false
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: &id009
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: false
+            processingState: INVALID
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: success
+    outputs:
+      selected_app: *id001
+      selected_version: *id004
+      attached_build_id: build-301
+      build: *id009
+    view_contains:
+    - processing INVALID
+    - 'Expired: false'
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-state-invalid-expired-true
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: &id010
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: true
+            processingState: INVALID
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: success
+    outputs:
+      selected_app: *id001
+      selected_version: *id004
+      attached_build_id: build-301
+      build: *id010
+    view_contains:
+    - processing INVALID
+    - 'Expired: true'
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-state-valid-expired-false
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: &id011
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: false
+            processingState: VALID
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: success
+    outputs:
+      selected_app: *id001
+      selected_version: *id004
+      attached_build_id: build-301
+      build: *id011
+    view_contains:
+    - processing VALID
+    - 'Expired: false'
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-state-valid-expired-true
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: &id012
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: true
+            processingState: VALID
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: success
+    outputs:
+      selected_app: *id001
+      selected_version: *id004
+      attached_build_id: build-301
+      build: *id012
+    view_contains:
+    - processing VALID
+    - 'Expired: true'
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-optional-fields-absent-remain-unknown
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: &id013
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            processingState: VALID
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: success
+    outputs:
+      selected_app: *id001
+      selected_version: *id004
+      attached_build_id: build-301
+      build: *id013
+    view_contains:
+    - 'Expired: unknown'
+    - 'uploaded: unknown'
+    - 'expires: unknown'
+    - 'Uses non-exempt encryption: unknown'
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: linkage-null-data
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data: null
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/appStoreVersions/version-201/relationships/build
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: linkage-missing-data
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/appStoreVersions/version-201/relationships/build
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: linkage-wrong-shape
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: builds
+          id: build-301
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/appStoreVersions/version-201/relationships/build
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: linkage-wrong-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: apps
+          id: build-301
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/appStoreVersions/version-201/relationships/build
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: linkage-empty-id
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: ''
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/appStoreVersions/version-201/relationships/build
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: linkage-nonstring-id
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: 99
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/appStoreVersions/version-201/relationships/build
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: linkage-missing-id
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/appStoreVersions/version-201/relationships/build
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: linkage-missing-links
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: build-301
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: linkage-http-404-no-build-inspection
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 404
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-mismatched-id
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: build-other
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: false
+            processingState: VALID
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-wrong-resource-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: apps
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: false
+            processingState: VALID
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-missing-attributes
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: build-301
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-missing-build-number
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: build-301
+          attributes:
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: false
+            processingState: VALID
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-empty-build-number
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: build-301
+          attributes:
+            version: ''
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: false
+            processingState: VALID
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-nonstring-build-number
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: build-301
+          attributes:
+            version: 42
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: false
+            processingState: VALID
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-missing-processing-state
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: false
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-invalid-processing-state
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: false
+            processingState: READY
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-expired-wrong-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: 'false'
+            processingState: VALID
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-encryption-wrong-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: false
+            processingState: VALID
+            usesNonExemptEncryption: 0
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-uploaded-date-wrong-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: 20261020
+            expirationDate: '2027-10-20T12:00:00Z'
+            expired: false
+            processingState: VALID
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: build-expiration-date-wrong-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+          type: builds
+          id: build-301
+          attributes:
+            version: '42'
+            uploadedDate: '2026-10-20T12:00:00Z'
+            expirationDate: false
+            expired: false
+            processingState: VALID
+            usesNonExemptEncryption: false
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds/build-301
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-404-app-no-retry-or-later-work
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 404
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-429-app-no-retry-or-later-work
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 429
+      body: null
+      headers:
+        Retry-After: '0'
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-500-app-no-retry-or-later-work
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 500
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-404-version-no-retry-or-later-work
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 404
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-429-version-no-retry-or-later-work
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 429
+      body: null
+      headers:
+        Retry-After: '0'
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-500-version-no-retry-or-later-work
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 500
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-404-linkage-no-retry-or-later-work
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 404
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-429-linkage-no-retry-or-later-work
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 429
+      body: null
+      headers:
+        Retry-After: '0'
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-500-linkage-no-retry-or-later-work
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 500
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-404-build-no-retry-or-later-work
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 404
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-429-build-no-retry-or-later-work
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 429
+      body: null
+      headers:
+        Retry-After: '0'
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-500-build-no-retry-or-later-work
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 500
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-401-app-resolution
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 401
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-403-app-resolution
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 403
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: input-authorization-missing
+  workflow: release-candidate-inspection
+  inputs:
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests: []
+  expect:
+    kind: error
+    code: RUNTIME_INPUT_VALIDATION
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: input-authorization-wrong-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: 23
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests: []
+  expect:
+    kind: error
+    code: RUNTIME_INPUT_VALIDATION
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: input-bundle_id-missing
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    marketing_version: 1.2.3
+  requests: []
+  expect:
+    kind: error
+    code: RUNTIME_INPUT_VALIDATION
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: input-bundle_id-wrong-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: 23
+    marketing_version: 1.2.3
+  requests: []
+  expect:
+    kind: error
+    code: RUNTIME_INPUT_VALIDATION
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: input-marketing_version-missing
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+  requests: []
+  expect:
+    kind: error
+    code: RUNTIME_INPUT_VALIDATION
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: input-marketing_version-wrong-type
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 23
+  requests: []
+  expect:
+    kind: error
+    code: RUNTIME_INPUT_VALIDATION
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: input-bundle_id-bounded-invalid-string-129
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: ''
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: ''
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body: &id014
+        data:
+        - *id001
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: input-bundle_id-bounded-invalid-string-130
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus,com.example.other
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus,com.example.other
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body: *id014
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: input-marketing_version-bounded-invalid-string-131
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: ''
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body: *id014
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: input-marketing_version-bounded-invalid-string-132
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3,1.2.4
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body: *id014
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-401-version-resolution
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 401
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-401-attached-linkage
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 401
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-401-build-inspection
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 401
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-403-version-resolution
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 403
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-403-attached-linkage
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 403
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: http-403-build-inspection
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/versions.json
+  - method: GET
+    path: /v1/appStoreVersions/version-201/relationships/build
+    query: {}
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/build-linkage.json
+  - method: GET
+    path: /v1/builds/build-301
+    query:
+      fields[builds]: version,uploadedDate,expirationDate,expired,processingState,usesNonExemptEncryption
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 403
+      body: null
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL

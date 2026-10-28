@@ -1,0 +1,4 @@
+{
+  "data": { "type": "builds", "id": "build-301" },
+  "links": { "self": "https://api.appstoreconnect.apple.com/v1/appStoreVersions/version-201/relationships/build" }
+}
