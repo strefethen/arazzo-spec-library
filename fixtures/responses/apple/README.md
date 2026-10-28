@@ -6,7 +6,9 @@ captures and do not establish live account visibility, authorization, or
 provider behavior.
 
 The local four-operation subset was checked against Apple's App Store Connect
-OpenAPI archive, version 4.5.1, SHA-256
+OpenAPI archive, version 4.5.1. The archive SHA-256 is
+`7b826ae9ca3e45b0e7df2643cbb811c9930632640944db11a8af4586fab9db46`; the
+extracted `openapi.oas.json` SHA-256 is
 `7518d3a94a8bd701ac25c1c601b95b8f53aad92091affb15a2a9d331713dac1a`:
 
 - <https://developer.apple.com/sample-code/app-store-connect/app-store-connect-openapi-specification.zip>

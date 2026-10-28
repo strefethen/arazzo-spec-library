@@ -78,6 +78,8 @@ cases:
           expired: false
           processingState: VALID
           usesNonExemptEncryption: false
+    assert: >-
+      .outputs == {"selected_app":{"type":"apps","id":"app-101","attributes":{"name":"Corpus Sample","bundleId":"com.example.corpus"}},"selected_version":{"type":"appStoreVersions","id":"version-201","attributes":{"platform":"IOS","versionString":"1.2.3","appVersionState":"PROCESSING_FOR_DISTRIBUTION","releaseType":"AFTER_APPROVAL"}},"attached_build_id":"build-301","build":{"type":"builds","id":"build-301","attributes":{"version":"42","uploadedDate":"2026-10-20T12:00:00Z","expirationDate":"2027-10-20T12:00:00Z","expired":false,"processingState":"VALID","usesNonExemptEncryption":false}}}
     view_contains:
     - 'App: com.example.corpus (app-101)'
     - 'Version: iOS 1.2.3 (version-201); state PROCESSING_FOR_DISTRIBUTION'
@@ -112,6 +114,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-two-results
@@ -149,6 +152,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-over-limit-results
@@ -191,6 +195,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-object-instead-of-array
@@ -224,6 +229,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-stringified-array
@@ -251,6 +257,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-stringified-object
@@ -278,6 +285,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-null-data
@@ -305,6 +313,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-missing-data
@@ -331,6 +340,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-scalar-selected-item
@@ -359,6 +369,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-array-selected-item
@@ -391,6 +402,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-missing-id
@@ -422,6 +434,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-empty-id
@@ -454,6 +467,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-nonstring-id
@@ -486,6 +500,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-wrong-resource-type
@@ -518,6 +533,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-missing-attributes
@@ -547,6 +563,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-wrong-attributes-container
@@ -577,6 +594,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-missing-self-link
@@ -608,6 +626,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-empty-self-link
@@ -640,6 +659,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-nonstring-self-link
@@ -672,6 +692,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-missing-links
@@ -702,6 +723,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-malformed-links
@@ -733,6 +755,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-next-hostile-url
@@ -766,6 +789,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-next-empty-string
@@ -799,6 +823,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-next-wrong-type
@@ -832,6 +857,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-meta-total-two
@@ -868,6 +894,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-meta-total-wrong-type
@@ -904,6 +931,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-meta-cursor
@@ -941,6 +969,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-malformed-meta
@@ -974,6 +1003,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-malformed-paging
@@ -1008,6 +1038,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-missing-paging-limit
@@ -1043,6 +1074,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-invalid-limit-zero
@@ -1078,6 +1110,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-invalid-limit-over-cap
@@ -1113,6 +1146,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-missing-bundle-id
@@ -1144,6 +1178,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-empty-bundle-id
@@ -1176,6 +1211,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-wrong-exact-bundle-id
@@ -1208,6 +1244,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-nonstring-bundle-id
@@ -1240,6 +1277,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: app-optional-name-wrong-type
@@ -1272,6 +1310,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-zero-results
@@ -1312,6 +1351,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-two-results
@@ -1366,6 +1406,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-over-limit-results
@@ -1427,6 +1468,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-object-instead-of-array
@@ -1475,6 +1517,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-stringified-array
@@ -1515,6 +1558,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-stringified-object
@@ -1555,6 +1599,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-null-data
@@ -1595,6 +1640,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-missing-data
@@ -1634,6 +1680,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-scalar-selected-item
@@ -1675,6 +1722,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-array-selected-item
@@ -1722,6 +1770,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-missing-id
@@ -1768,6 +1817,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-empty-id
@@ -1815,6 +1865,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-nonstring-id
@@ -1862,6 +1913,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-wrong-resource-type
@@ -1909,6 +1961,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-missing-attributes
@@ -1951,6 +2004,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-wrong-attributes-container
@@ -1994,6 +2048,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-missing-self-link
@@ -2040,6 +2095,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-empty-self-link
@@ -2087,6 +2143,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-nonstring-self-link
@@ -2134,6 +2191,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-missing-links
@@ -2179,6 +2237,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-malformed-links
@@ -2225,6 +2284,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-next-hostile-url
@@ -2273,6 +2333,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-next-empty-string
@@ -2321,6 +2382,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-next-wrong-type
@@ -2369,6 +2431,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-meta-total-two
@@ -2420,6 +2483,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-meta-total-wrong-type
@@ -2471,6 +2535,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-meta-cursor
@@ -2523,6 +2588,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-malformed-meta
@@ -2571,6 +2637,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-malformed-paging
@@ -2620,6 +2687,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-missing-paging-limit
@@ -2670,6 +2738,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-invalid-limit-zero
@@ -2720,6 +2789,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-invalid-limit-over-cap
@@ -2770,6 +2840,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-missing-platform
@@ -2816,6 +2887,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-wrong-platform
@@ -2863,6 +2935,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-missing-version-string
@@ -2909,6 +2982,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-wrong-exact-version
@@ -2956,6 +3030,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-nonstring-version
@@ -3003,6 +3078,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-missing-app-version-state
@@ -3049,6 +3125,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-invalid-app-version-state
@@ -3096,6 +3173,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: version-optional-release-type-invalid
@@ -3143,6 +3221,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: optional-page-metadata-valid
@@ -3904,6 +3983,10 @@ cases:
       selected_version: *id004
       attached_build_id: build-301
       build: *id013
+    assert: >-
+      (.outputs.build.attributes | (has("uploadedDate") | not) and
+       (has("expirationDate") | not) and (has("expired") | not) and
+       (has("usesNonExemptEncryption") | not))
     view_contains:
     - 'Expired: unknown'
     - 'uploaded: unknown'
@@ -3958,6 +4041,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: linkage-missing-data
@@ -4006,6 +4090,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: linkage-wrong-shape
@@ -4057,6 +4142,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: linkage-wrong-type
@@ -4108,6 +4194,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: linkage-empty-id
@@ -4159,6 +4246,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: linkage-nonstring-id
@@ -4210,6 +4298,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: linkage-missing-id
@@ -4260,6 +4349,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: linkage-missing-links
@@ -4309,6 +4399,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: linkage-http-404-no-build-inspection
@@ -4355,6 +4446,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: build-mismatched-id
@@ -4423,6 +4515,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: build-wrong-resource-type
@@ -4491,6 +4584,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: build-missing-attributes
@@ -4552,6 +4646,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: build-missing-build-number
@@ -4619,6 +4714,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: build-empty-build-number
@@ -4687,6 +4783,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: build-nonstring-build-number
@@ -4755,6 +4852,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: build-missing-processing-state
@@ -4822,6 +4920,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: build-invalid-processing-state
@@ -4890,6 +4989,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: build-expired-wrong-type
@@ -4958,6 +5058,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: build-encryption-wrong-type
@@ -5026,6 +5127,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: build-uploaded-date-wrong-type
@@ -5094,6 +5196,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: build-expiration-date-wrong-type
@@ -5162,6 +5265,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-404-app-no-retry-or-later-work
@@ -5186,6 +5290,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-429-app-no-retry-or-later-work
@@ -5212,6 +5317,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-500-app-no-retry-or-later-work
@@ -5236,6 +5342,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-404-version-no-retry-or-later-work
@@ -5273,6 +5380,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-429-version-no-retry-or-later-work
@@ -5312,6 +5420,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-500-version-no-retry-or-later-work
@@ -5349,6 +5458,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-404-linkage-no-retry-or-later-work
@@ -5395,6 +5505,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-429-linkage-no-retry-or-later-work
@@ -5443,6 +5554,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-500-linkage-no-retry-or-later-work
@@ -5489,6 +5601,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-404-build-no-retry-or-later-work
@@ -5545,6 +5658,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-429-build-no-retry-or-later-work
@@ -5603,6 +5717,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-500-build-no-retry-or-later-work
@@ -5659,6 +5774,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-401-app-resolution
@@ -5683,6 +5799,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-403-app-resolution
@@ -5707,6 +5824,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: input-authorization-missing
@@ -5804,6 +5922,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: input-bundle_id-bounded-invalid-string-130
@@ -5828,6 +5947,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: input-marketing_version-bounded-invalid-string-131
@@ -5852,6 +5972,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: input-marketing_version-bounded-invalid-string-132
@@ -5876,6 +5997,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-401-version-resolution
@@ -5913,6 +6035,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-401-attached-linkage
@@ -5959,6 +6082,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-401-build-inspection
@@ -6015,6 +6139,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-403-version-resolution
@@ -6052,6 +6177,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-403-attached-linkage
@@ -6098,6 +6224,7 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL
 - name: http-403-build-inspection
@@ -6154,5 +6281,246 @@ cases:
   expect:
     kind: error
     code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: '(.kind == "error") and (has("outputs") | not)'
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+
+- name: bundle-comma-only-rejected-before-downstream
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: ','
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: ','
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: (.kind == "error") and (has("outputs") | not)
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: bundle-leading-comma-rejected-before-downstream
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: ',1.2.3'
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: ',1.2.3'
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: (.kind == "error") and (has("outputs") | not)
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: bundle-trailing-comma-rejected-before-downstream
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: 1.2.3,
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: 1.2.3,
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: (.kind == "error") and (has("outputs") | not)
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-comma-only-rejected-before-downstream
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: ','
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: (.kind == "error") and (has("outputs") | not)
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-leading-comma-rejected-before-downstream
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: ',1.2.3'
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: (.kind == "error") and (has("outputs") | not)
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-trailing-comma-rejected-before-downstream
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3,
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: (.kind == "error") and (has("outputs") | not)
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: app-fractional-pagination-limit-rejected
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: apps
+          id: app-101
+          attributes:
+            name: Corpus Sample
+            bundleId: com.example.corpus
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps
+        meta:
+          paging:
+            limit: 1.5
+            total: 1
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: (.kind == "error") and (has("outputs") | not)
+    forbidden_output:
+    - Bearer SYNTHETIC-APPLE-SENTINEL
+- name: version-fractional-pagination-limit-rejected
+  workflow: release-candidate-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: 1.2.3
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/release-candidate-inspection/apps.json
+  - method: GET
+    path: /v1/apps/app-101/appStoreVersions
+    query:
+      filter[platform]: IOS
+      filter[versionString]: 1.2.3
+      limit: '2'
+      fields[appStoreVersions]: platform,versionString,appVersionState,releaseType
+    headers:
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-APPLE-SENTINEL
+    response:
+      status: 200
+      body:
+        data:
+        - type: appStoreVersions
+          id: version-201
+          attributes:
+            platform: IOS
+            versionString: 1.2.3
+            appVersionState: PROCESSING_FOR_DISTRIBUTION
+            releaseType: AFTER_APPROVAL
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/apps/app-101/appStoreVersions
+        meta:
+          paging:
+            limit: 1.5
+            total: 1
+  expect:
+    kind: error
+    code: RUNTIME_SUCCESS_CRITERIA_FAILED
+    assert: (.kind == "error") and (has("outputs") | not)
     forbidden_output:
     - Bearer SYNTHETIC-APPLE-SENTINEL

@@ -6,6 +6,9 @@ build relationship, and reads only the attached build. It makes at most four
 sequential `GET` requests to the fixed `https://api.appstoreconnect.apple.com`
 origin. App and version lookups each request at most two records, reject
 duplicates and every continuation marker, and never follow a page cursor.
+Selection inputs are checked before downstream work: malformed values may cause
+the first capped app lookup, but cannot trigger a version, linkage, or build
+request.
 
 This is a point-in-time inspection, not an atomic snapshot. Uniqueness is only
 within the caller's token-visible filtered page. Build processing state,

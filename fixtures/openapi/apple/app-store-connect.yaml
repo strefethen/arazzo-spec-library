@@ -4,7 +4,7 @@ info:
   version: 4.5.1
   description: >-
     Local four-GET subset of Apple's published App Store Connect OpenAPI document.
-    Upstream archive SHA-256 is 7518d3a94a8bd701ac25c1c601b95b8f53aad92091affb15a2a9d331713dac1a.
+    Extracted openapi.oas.json SHA-256 is 7518d3a94a8bd701ac25c1c601b95b8f53aad92091affb15a2a9d331713dac1a.
 servers:
   - url: https://api.appstoreconnect.apple.com
 security:
@@ -202,7 +202,7 @@ components:
           properties:
             platform: { $ref: '#/components/schemas/Platform' }
             versionString: { type: string }
-            appStoreState: { type: string, deprecated: true }
+            appStoreState: { $ref: '#/components/schemas/AppStoreVersionState', deprecated: true }
             appVersionState: { $ref: '#/components/schemas/AppVersionState' }
             releaseType: { type: string, enum: [MANUAL, AFTER_APPROVAL, SCHEDULED] }
       required: [type, id]
@@ -245,6 +245,9 @@ components:
     AppVersionState:
       type: string
       enum: [ACCEPTED, DEVELOPER_REJECTED, IN_REVIEW, INVALID_BINARY, METADATA_REJECTED, PENDING_APPLE_RELEASE, PENDING_DEVELOPER_RELEASE, PREPARE_FOR_SUBMISSION, PROCESSING_FOR_DISTRIBUTION, READY_FOR_DISTRIBUTION, READY_FOR_REVIEW, REJECTED, REPLACED_WITH_NEW_VERSION, WAITING_FOR_EXPORT_COMPLIANCE, WAITING_FOR_REVIEW]
+    AppStoreVersionState:
+      type: string
+      enum: [ACCEPTED, DEVELOPER_REMOVED_FROM_SALE, DEVELOPER_REJECTED, IN_REVIEW, INVALID_BINARY, METADATA_REJECTED, PENDING_APPLE_RELEASE, PENDING_CONTRACT, PENDING_DEVELOPER_RELEASE, PREPARE_FOR_SUBMISSION, PREORDER_READY_FOR_SALE, PROCESSING_FOR_APP_STORE, READY_FOR_REVIEW, READY_FOR_SALE, REJECTED, REMOVED_FROM_SALE, WAITING_FOR_EXPORT_COMPLIANCE, WAITING_FOR_REVIEW, REPLACED_WITH_NEW_VERSION, NOT_APPLICABLE]
     BuildProcessingState:
       type: string
       enum: [PROCESSING, FAILED, INVALID, VALID]
@@ -252,7 +255,7 @@ components:
       type: object
       properties:
         self: { type: string, format: uri-reference }
-        next: { type: string, format: uri-reference, nullable: true }
+        next: { type: string, format: uri-reference }
       required: [self]
     DocumentLinks:
       type: object
@@ -267,7 +270,7 @@ components:
           properties:
             total: { type: integer }
             limit: { type: integer }
-            nextCursor: { type: string, nullable: true }
+            nextCursor: { type: string }
           required: [limit]
       required: [paging]
     ErrorsResponse:

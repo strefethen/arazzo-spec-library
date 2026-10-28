@@ -73,10 +73,10 @@ workflows:
           - condition: $statusCode == 200
           - type: regex
             context: $inputs.bundle_id
-            condition: '^\S(?:[^,]*\S)?$'
+            condition: '^[^,\s](?:[^,]*[^,\s])?$'
           - type: regex
             context: $inputs.marketing_version
-            condition: '^\S(?:[^,]*\S)?$'
+            condition: '^[^,\s](?:[^,]*[^,\s])?$'
           - type: jsonpath
             context: $response.body
             condition: '$[?length($.data) == 1 && count($.data[:]) == 1 && count($.data[0].*) >= 3]'
@@ -94,7 +94,7 @@ workflows:
             condition: '$[?match($.links.self, ".+") && (count($.links.next) == 0 || $.links.next == null)]'
           - type: jsonpath
             context: $response.body
-            condition: '$[?!$.meta || ($.meta.paging.limit >= 1 && $.meta.paging.limit <= 2 && (count($.meta.paging.total) == 0 || $.meta.paging.total == 1) && (count($.meta.paging.nextCursor) == 0 || $.meta.paging.nextCursor == null))]'
+            condition: '$[?!$.meta || ($.meta.paging.limit == 1 || $.meta.paging.limit == 2) && (count($.meta.paging.total) == 0 || $.meta.paging.total == 1) && (count($.meta.paging.nextCursor) == 0 || $.meta.paging.nextCursor == null)]'
         onFailure:
           - reference: $components.failureActions.stop
         outputs:
@@ -126,7 +126,7 @@ workflows:
           - condition: $statusCode == 200
           - type: regex
             context: $inputs.marketing_version
-            condition: '^\S(?:[^,]*\S)?$'
+            condition: '^[^,\s](?:[^,]*[^,\s])?$'
           - type: jsonpath
             context: $response.body
             condition: '$[?length($.data) == 1 && count($.data[:]) == 1 && count($.data[0].*) >= 3]'
@@ -148,7 +148,7 @@ workflows:
             condition: '$[?match($.links.self, ".+") && (count($.links.next) == 0 || $.links.next == null)]'
           - type: jsonpath
             context: $response.body
-            condition: '$[?!$.meta || ($.meta.paging.limit >= 1 && $.meta.paging.limit <= 2 && (count($.meta.paging.total) == 0 || $.meta.paging.total == 1) && (count($.meta.paging.nextCursor) == 0 || $.meta.paging.nextCursor == null))]'
+            condition: '$[?!$.meta || ($.meta.paging.limit == 1 || $.meta.paging.limit == 2) && (count($.meta.paging.total) == 0 || $.meta.paging.total == 1) && (count($.meta.paging.nextCursor) == 0 || $.meta.paging.nextCursor == null)]'
         onFailure:
           - reference: $components.failureActions.stop
         outputs:
