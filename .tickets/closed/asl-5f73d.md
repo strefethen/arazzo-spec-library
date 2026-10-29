@@ -2,9 +2,10 @@
 title: Add apple.release-candidate-inspection with exact version and attached-build selection
 type: task
 priority: 2
-state: open
+resolution: completed
+close_reason: '[13bb86b](https://github.com/strefethen/arazzo-spec-library/commit/13bb86b741553cc2bc0f4b7f91aa686deb652bea) add independently reviewed bounded Apple release inspection'
 created_at: 2026-10-28T22:59:11Z
-last_changed: 2026-10-28T22:59:25Z
+last_changed: 2026-10-29T00:01:45Z
 plan: investigation
 tags:
     - apple
@@ -32,6 +33,14 @@ files:
     tests/test_vsphere_auth.py: r
     views/apple.release-candidate-inspection.summary.jq: c
     views/vsphere.cluster-infrastructure-assessment.summary.jq: r
+changes:
+    - at: 2026-10-29T00:01:45.18608Z
+      action: close
+      from: in_progress
+      to: closed
+      resolution: completed
+      reason: '[13bb86b](https://github.com/strefethen/arazzo-spec-library/commit/13bb86b741553cc2bc0f4b7f91aa686deb652bea) add independently reviewed bounded Apple release inspection'
+assignee: codex
 ---
 # Add apple.release-candidate-inspection with exact version and attached-build selection
 
@@ -112,3 +121,9 @@ New additive corpus workflow surface only; existing workflows stay unchanged. On
 - Run `arazzo-cli --json catalog specs/apple`, `arazzo-cli --json show release-candidate-inspection --dir specs/apple`, `arazzo-cli --json validate specs/apple/release-candidate-inspection.arazzo.yaml --strict`, and `arazzo-cli --json run specs/apple/release-candidate-inspection.arazzo.yaml release-candidate-inspection --dry-run --strict-inputs --max-redirects 0 --step resolve-app --input authorization='Bearer SYNTHETIC-APPLE-PREVIEW' --input bundle_id=com.example.corpus --input marketing_version=1.2.3`. Verify only the first capped GET is planned and no credential or provider access is required.
 - Audit the local subset against the cited 4.5.1 paths/operationIds/parameter serialization/schema anchors; record source URL/version/hash in provenance. Inspect that local subset only has the four GET operations and top-level server, no remote references, operation overrides, write operations, pagination traversal or retries. Inspect README commands and view handling of a handcrafted CLI error envelope; `jq -er -f` must fail without presenting a partial successful report. Run `git diff --check`.
 - Required implementation evidence is offline synthetic proof and fresh exact-candidate review of the workflow/schema/test change. No authenticated live verification is required or authorized by this ticket; explicitly retain live-unverified and non-atomic/readiness limitations at handoff.
+
+## Note (2026-10-29 00:01 UTC)
+[13bb86b](https://github.com/strefethen/arazzo-spec-library/commit/13bb86b741553cc2bc0f4b7f91aa686deb652bea) implements all AC and testing obligations. Contract baseline ticket-preflight.json b5166cced0f9fe588a82a43492057900c00c99215c8db20d3c2e9e9065bf8adb and start.json 5619ed197fb8cbb3856d1c69a4aa572cc860343d97cbfe5ad6a2f4c731479729 retained under /tmp/apple-inspection-evidence; requirements unchanged at close. Fresh independent gpt-6-astra review-round-2 PASS covers cumulative authoring-base through linked candidate; all round-1 findings resolved. Evidence: evidence-summary.md, remediation-round-1.md, review-round-2.md. 147 Apple scenarios, 543 full-corpus scenarios, 61 Python tests and 15 independent probes passed. Exact reviewed candidate pushed to main after confirming push only triggers offline CI. Live authenticated Apple behavior unverified; inspection non-atomic and not submission readiness. No additional live QA required by contract.
+
+## Note (2026-10-29 00:01 UTC) — Closed
+[13bb86b](https://github.com/strefethen/arazzo-spec-library/commit/13bb86b741553cc2bc0f4b7f91aa686deb652bea) add independently reviewed bounded Apple release inspection

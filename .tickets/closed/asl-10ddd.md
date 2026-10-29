@@ -2,12 +2,20 @@
 title: Add bounded read-only Apple release inspection
 type: epic
 priority: 2
-state: open
+resolution: completed
+close_reason: 'Auto-finalized after asl-5f73d completed the final outstanding direct member. Completed members (1): asl-5f73d'
 created_at: 2026-10-28T22:59:06Z
-last_changed: 2026-10-28T22:59:11Z
+last_changed: 2026-10-29T00:01:45Z
 plan: investigation
 tags:
     - apple
+changes:
+    - at: 2026-10-29T00:01:45.18608Z
+      action: close
+      from: open
+      to: closed
+      resolution: completed
+      reason: 'Auto-finalized after asl-5f73d completed the final outstanding direct member. Completed members (1): asl-5f73d'
 deps:
     - asl-5f73d
 ---
@@ -24,3 +32,6 @@ Decided by recommendation: one contained member implements apple.release-candida
 
 ## Testing Obligations
 Observe the member focused scenarios, full corpus verification and independent exact-candidate review. Retain live-unverified limitations; no authenticated Apple execution.
+
+## Note (2026-10-29 00:01 UTC) — Auto-finalized
+Auto-finalized after asl-5f73d completed the final outstanding direct member. Completed members (1): asl-5f73d
