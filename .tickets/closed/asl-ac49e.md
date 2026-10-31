@@ -34,6 +34,7 @@ deps:
     - asl-8ed61
     - asl-785d1
     - asl-d3ccf
+parent: asl-41557
 ---
 # Implement authenticated vSphere OVF deployment preparation
 

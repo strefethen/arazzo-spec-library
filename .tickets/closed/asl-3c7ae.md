@@ -45,6 +45,7 @@ changes:
       resolution: completed
       reason: 233d6be six new provider workflows, 27 unit tests, 59 offline scenarios and independent candidate review PASS; four bounded live smokes, zero Socket quota
 assignee: codex
+parent: asl-4e2e8
 ---
 # Deliver the first useful offline-verified API workflow corpus
 

@@ -6,8 +6,6 @@ state: open
 created_at: 2026-10-29T15:40:30Z
 last_changed: 2026-10-29T15:40:33Z
 plan: investigation
-deps:
-    - asl-085ef
 ---
 # Deliver bounded read-only TestFlight exact-build inspection
 

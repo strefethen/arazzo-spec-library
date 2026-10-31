@@ -6,9 +6,6 @@ state: open
 created_at: 2026-10-26T18:34:07Z
 last_changed: 2026-10-26T18:49:58Z
 plan: plans/current/useful-corpus.md
-deps:
-    - asl-3c7ae
-    - asl-2c490
 ---
 # Build a useful, verified first wave of real API workflows
 

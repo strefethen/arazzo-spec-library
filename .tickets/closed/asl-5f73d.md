@@ -41,6 +41,7 @@ changes:
       resolution: completed
       reason: '[13bb86b](https://github.com/strefethen/arazzo-spec-library/commit/13bb86b741553cc2bc0f4b7f91aa686deb652bea) add independently reviewed bounded Apple release inspection'
 assignee: codex
+parent: asl-10ddd
 ---
 # Add apple.release-candidate-inspection with exact version and attached-build selection
 

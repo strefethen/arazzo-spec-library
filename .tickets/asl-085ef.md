@@ -33,6 +33,7 @@ files:
     tests/test_apple_testflight_build_inspection.py: c
     views/apple.release-candidate-inspection.summary.jq: r
     views/apple.testflight-build-inspection.summary.jq: c
+parent: asl-4af8c
 ---
 # Add apple.testflight-build-inspection with exact iOS build selection
 

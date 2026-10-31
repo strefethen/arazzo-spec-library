@@ -24,6 +24,7 @@ changes:
 assignee: codex
 deps:
     - asl-785d1
+parent: asl-41557
 ---
 # Reject stringified containers in vSphere VM telemetry
 

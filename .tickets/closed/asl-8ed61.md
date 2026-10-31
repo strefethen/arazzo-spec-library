@@ -33,6 +33,7 @@ changes:
 assignee: codex
 deps:
     - asl-b4622
+parent: asl-41557
 ---
 # Implement authenticated vSphere VM and guest diagnosis
 

@@ -16,8 +16,6 @@ changes:
       to: closed
       resolution: completed
       reason: 'Auto-finalized after asl-5f73d completed the final outstanding direct member. Completed members (1): asl-5f73d'
-deps:
-    - asl-5f73d
 ---
 # Add bounded read-only Apple release inspection
 
