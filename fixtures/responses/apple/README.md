@@ -47,5 +47,7 @@ Defining resource anchors: `App`, `PrereleaseVersion`, `Build`, `BuildBetaDetail
 `BuildAudienceType`, `InternalBetaState`, `ExternalBetaState`, `BetaReviewState`.
 Filters retain form array encoding with `explode: false`. Required workflow
 identity/state gates are intentionally stronger than provider-required `id,type`.
-The groups route is `/v1/betaGroups` filtered by app and build, with no include
-or build-to-groups route. Existing release subset provenance is unchanged.
+The groups route is `/v1/betaGroups` filtered by app and build, with `include=app`
+and sparse app fields to request ownership linkage. There is no build-to-groups
+GET route. Other relationship-bearing reads likewise use explicit sparse includes.
+Existing release subset provenance is unchanged.
