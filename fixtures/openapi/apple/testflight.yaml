@@ -137,6 +137,31 @@ paths:
           type: integer
           maximum: 200
         style: form
+      - name: include
+        in: query
+        description: comma-separated list of relationships to include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - app
+        style: form
+        explode: false
+        required: false
+      - name: fields[apps]
+        in: query
+        description: the fields to include for returned resources of type apps
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - bundleId
+        style: form
+        explode: false
+        required: false
       responses:
         '400':
           description: Parameter error(s)
@@ -231,6 +256,45 @@ paths:
           type: integer
           maximum: 200
         style: form
+      - name: include
+        in: query
+        description: comma-separated list of relationships to include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - app
+            - preReleaseVersion
+        style: form
+        explode: false
+        required: false
+      - name: fields[apps]
+        in: query
+        description: the fields to include for returned resources of type apps
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - bundleId
+        style: form
+        explode: false
+        required: false
+      - name: fields[preReleaseVersions]
+        in: query
+        description: the fields to include for returned resources of type preReleaseVersions
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - version
+            - platform
+        style: form
+        explode: false
+        required: false
       responses:
         '400':
           description: Parameter error(s)
@@ -280,6 +344,28 @@ paths:
             - internalBuildState
             - externalBuildState
             - build
+        style: form
+        explode: false
+      - name: include
+        in: query
+        description: comma-separated list of relationships to include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - build
+        style: form
+        explode: false
+      - name: fields[builds]
+        in: query
+        description: the fields to include for returned resources of type builds
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - version
         style: form
         explode: false
       responses:
@@ -356,6 +442,30 @@ paths:
           type: integer
           maximum: 200
         style: form
+      - name: include
+        in: query
+        description: comma-separated list of relationships to include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - build
+        style: form
+        explode: false
+        required: false
+      - name: fields[builds]
+        in: query
+        description: the fields to include for returned resources of type builds
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - version
+        style: form
+        explode: false
+        required: false
       responses:
         '400':
           description: Parameter error(s)
@@ -458,6 +568,31 @@ paths:
           type: integer
           maximum: 200
         style: form
+      - name: include
+        in: query
+        description: comma-separated list of relationships to include
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - app
+        style: form
+        explode: false
+        required: false
+      - name: fields[apps]
+        in: query
+        description: the fields to include for returned resources of type apps
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - bundleId
+        style: form
+        explode: false
+        required: false
       responses:
         '400':
           description: Parameter error(s)

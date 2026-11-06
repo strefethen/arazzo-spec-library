@@ -4,7 +4,7 @@ type: task
 priority: 2
 state: paused
 created_at: 2026-10-29T15:40:33Z
-last_changed: 2026-11-06T23:05:43Z
+last_changed: 2026-11-06T23:29:41Z
 plan: investigation
 files:
     ../arazzo-cli/crates/arazzo-cli/src/handlers.rs: r
@@ -56,7 +56,7 @@ Compatibility: installed `/Users/stevetrefethen/bin/arazzo-cli --version` report
 
 Public-contract refresh on 2026-11-06 fetched https://developer.apple.com/sample-code/app-store-connect/app-store-connect-openapi-specification.zip without authentication: version 4.6, archive SHA-256 `f41ed4489c78bf1488cd2291f23394565364fe37b402130f48c3e3c3f5ea1acd`, extracted `openapi.oas.json` SHA-256 `74732362a91236dcb66eb1620f8be18c2b6060771269b483eab578473bb32763`. The six operation IDs, selected sparse fields and filter encodings below were rechecked against that archive. This refresh supersedes the old 4.5.1 provenance for the new TestFlight subset only; do not modify the existing release subset. Durable provenance must include the URL/hashes and schema/operation anchors, not depend on `/tmp/asl-design-apple.zip`.
 
-Use Arazzo 1.0.0, local source `apple`, qualified operation IDs, explicit JSON Pointers, fixed `https://api.appstoreconnect.apple.com`, and the existing sequential end-on-failure pattern. The OpenAPI `paths` anchors below define the exact operation/filter/sparse-field contract; filters are form arrays with `explode:false`, serialized as single scalar selections. No `include` or extra collection/relationship requests.
+Use Arazzo 1.0.0, local source `apple`, qualified operation IDs, explicit JSON Pointers, fixed `https://api.appstoreconnect.apple.com`, and the existing sequential end-on-failure pattern. The OpenAPI `paths` anchors below define the exact operation/filter/sparse-field contract; filters are form arrays with `explode:false`, serialized as single scalar selections. Only the explicit includes in the live-QA correction below are used; no extra collection/relationship requests.
 
 1. `resolve-app`: GET `/v1/apps`, `apps_getCollection`; `filter[bundleId]=bundle_id`, `limit=2`, `fields[apps]=name,bundleId`. Exactly one app, exact case-sensitive bundle ID.
 2. `resolve-prerelease-version`: GET `/v1/preReleaseVersions`, `preReleaseVersions_getCollection`; `filter[app]=resolved app ID`, `filter[platform]=IOS`, `filter[version]=marketing_version`, `limit=2`, `fields[preReleaseVersions]=version,platform,app`. Exactly one `preReleaseVersions` resource with exact version, IOS and `relationships.app.data` matching the app.
@@ -108,6 +108,10 @@ Explicit user approval, 2026-11-06: integer validation uses the installed CLI pa
 
 The bounded expression feasibility check is resolved under this approved contract. Apply the proven JSONPath numeric-type checks and array regex criteria from /tmp/testflight-integer-evidence/criteria.yaml against finite selected group shapes. Reassess ordinary execution readiness, file preflight and reservations before guarded resume; no further design or CLI prerequisite remains. Prior pause/readiness notes are historical and superseded.
 
+### Live-QA request correction
+
+Decided by recommendation after live FaceDeck QA: sparse fields alone return relationship links without linkage data. Request documented include values app for prerelease/groups, app,preReleaseVersion for builds, and build for beta detail/reviews, with sparse included-resource fields name,bundleId for apps, version,platform for preReleaseVersions, and version for builds. Preserve six GETs, required identity linkage checks, output shapes, and no traversal of returned URLs. Included envelopes are not success outputs. This corrects request construction without weakening acceptance. Synthetic fixtures must cover included envelopes and omission of required linkage still fails.
+
 ## Acceptance Criteria
 1. The registered workflow performs exactly the six GETs and sparse queries in Design, using response IDs and exact iOS marketing/build strings; reused build numbers across marketing versions/platforms cannot select the wrong identity.
 2. Typed identities, linkages, enum/optional fields and complete-page bounds are enforced. Zero reviews/groups succeed as limited observations; malformed, ambiguous, truncated and HTTP-error responses fail immediately and suppress all later requests without retry/fallback.
@@ -145,3 +149,15 @@ Implementation delivered under the explicitly adopted current contract: prefligh
 
 ## Note (2026-11-06 23:05 UTC) — Paused
 gate: independent exact-candidate source review of completed implementation — parent clears; publication and separate FaceDeck live QA remain parent-owned
+
+## Note (2026-11-06 23:11 UTC)
+Decided by recommendation after live FaceDeck QA: sparse fields alone return relationship links without linkage data. Request documented include values app for prerelease/groups, app,preReleaseVersion for builds, and build for beta detail/reviews, with sparse included-resource fields name,bundleId for apps, version,platform for preReleaseVersions, and version for builds. Preserve six GETs, required identity linkage checks, output shapes, and no traversal of returned URLs. Included envelopes are not success outputs. This corrects request construction without weakening acceptance. Synthetic fixtures must cover included envelopes and omission of required linkage still fails.
+
+## Note (2026-11-06 23:13 UTC)
+Live FaceDeck QA on 2026-11-06: explicit sparse includes corrected missing prerelease/build linkage. Selected build126 beta-detail GET returns internal IN_BETA_TESTING, external READY_FOR_BETA_SUBMISSION and autoNotifyEnabled=true, but relationships.build.data=null even with include=build; included=[] despite documented object schema. Current required backlink check correctly fails. No Apple settings changed. Any replacement of required backlink identity proof with selected-route/forward-link proof requires explicit contract approval; no fallback applied. Private raw results remain outside repository.
+
+## Note (2026-11-06 23:13 UTC) — Paused
+gate: live Apple beta-detail has null build backlink; approve alternative identity proof or provider correction — Steve clears contract decision
+
+## Note (2026-11-06 23:29 UTC)
+Include correction verification PASS: 816 focused scenarios, 1359 full-corpus scenarios, 67 Python tests, strict validation, Apple4.6 include-parameter audit and diff check. Artifacts /tmp/testflight-inspection-evidence/includes-{focused,full,unit}.log and includes-audit.json. No identity criteria weakened; required null beta-detail backlink remains a live FaceDeck QA gate. Fresh cumulative review pending.

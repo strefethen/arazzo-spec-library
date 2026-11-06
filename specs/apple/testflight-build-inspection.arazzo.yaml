@@ -151,6 +151,12 @@ workflows:
     - name: fields[preReleaseVersions]
       in: query
       value: version,platform,app
+    - name: include
+      in: query
+      value: app
+    - name: fields[apps]
+      in: query
+      value: name,bundleId
     successCriteria:
     - condition: $statusCode == 200
     - type: regex
@@ -251,6 +257,15 @@ workflows:
     - name: fields[builds]
       in: query
       value: version,processingState,expired,expirationDate,uploadedDate,buildAudienceType,usesNonExemptEncryption,app,preReleaseVersion
+    - name: include
+      in: query
+      value: app,preReleaseVersion
+    - name: fields[apps]
+      in: query
+      value: name,bundleId
+    - name: fields[preReleaseVersions]
+      in: query
+      value: version,platform
     successCriteria:
     - condition: $statusCode == 200
     - type: regex
@@ -384,6 +399,12 @@ workflows:
     - name: fields[buildBetaDetails]
       in: query
       value: autoNotifyEnabled,internalBuildState,externalBuildState,build
+    - name: include
+      in: query
+      value: build
+    - name: fields[builds]
+      in: query
+      value: version
     successCriteria:
     - condition: $statusCode == 200
     - condition: $response.body#/data/relationships/build/data/id == $steps.resolve-build.outputs.id
@@ -467,6 +488,12 @@ workflows:
     - name: fields[betaAppReviewSubmissions]
       in: query
       value: betaReviewState,submittedDate,build
+    - name: include
+      in: query
+      value: build
+    - name: fields[builds]
+      in: query
+      value: version
     successCriteria:
     - condition: $statusCode == 200
     - type: regex
@@ -566,6 +593,12 @@ workflows:
     - name: fields[betaGroups]
       in: query
       value: name,isInternalGroup,hasAccessToAllBuilds,publicLinkEnabled,publicLinkLimitEnabled,publicLinkLimit,feedbackEnabled,app
+    - name: include
+      in: query
+      value: app
+    - name: fields[apps]
+      in: query
+      value: name,bundleId
     successCriteria:
     - condition: $statusCode == 200
     - type: regex

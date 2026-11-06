@@ -131,3 +131,8 @@ fail. Default verification uses only synthetic loopback responses:
 python3 scripts/verify.py apple.testflight-build-inspection
 python3 -m unittest discover -s tests -p 'test_apple_testflight_build_inspection.py'
 ```
+
+The five relationship-bearing reads explicitly request `include` for the required
+app, prerelease-version or build linkage, with sparse fields for included
+resources. Sparse fields alone can return relationship URLs without IDs. Included
+resource envelopes are excluded from workflow outputs; missing linkage still fails.

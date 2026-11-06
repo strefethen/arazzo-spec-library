@@ -29,6 +29,8 @@ cases:
       filter[version]: '1.0'
       limit: '2'
       fields[preReleaseVersions]: version,platform,app
+      include: app
+      fields[apps]: name,bundleId
     headers: *id001
     response:
       status: 200
@@ -42,6 +44,9 @@ cases:
       filter[version]: '126'
       limit: '2'
       fields[builds]: version,processingState,expired,expirationDate,uploadedDate,buildAudienceType,usesNonExemptEncryption,app,preReleaseVersion
+      include: app,preReleaseVersion
+      fields[apps]: name,bundleId
+      fields[preReleaseVersions]: version,platform
     headers: *id001
     response:
       status: 200
@@ -51,6 +56,8 @@ cases:
     path: /v1/builds/build-301/buildBetaDetail
     query: &id021
       fields[buildBetaDetails]: autoNotifyEnabled,internalBuildState,externalBuildState,build
+      include: build
+      fields[builds]: version
     headers: *id001
     response:
       status: 200
@@ -62,6 +69,8 @@ cases:
       filter[build]: build-301
       limit: '2'
       fields[betaAppReviewSubmissions]: betaReviewState,submittedDate,build
+      include: build
+      fields[builds]: version
     headers: *id001
     response:
       status: 200
@@ -75,6 +84,8 @@ cases:
       limit: '25'
       sort: name
       fields[betaGroups]: name,isInternalGroup,hasAccessToAllBuilds,publicLinkEnabled,publicLinkLimitEnabled,publicLinkLimit,feedbackEnabled,app
+      include: app
+      fields[apps]: name,bundleId
     headers: *id001
     response:
       status: 200
@@ -5500,6 +5511,8 @@ cases:
       filter[version]: '1.0'
       limit: '2'
       fields[preReleaseVersions]: version,platform,app
+      include: app
+      fields[apps]: name,bundleId
     headers: *id074
     response:
       status: 200
@@ -5526,6 +5539,9 @@ cases:
       filter[version]: '126'
       limit: '2'
       fields[builds]: version,processingState,expired,expirationDate,uploadedDate,buildAudienceType,usesNonExemptEncryption,app,preReleaseVersion
+      include: app,preReleaseVersion
+      fields[apps]: name,bundleId
+      fields[preReleaseVersions]: version,platform
     headers: *id074
     response:
       status: 200
@@ -5551,6 +5567,8 @@ cases:
     path: /v1/builds/build-301/buildBetaDetail
     query:
       fields[buildBetaDetails]: autoNotifyEnabled,internalBuildState,externalBuildState,build
+      include: build
+      fields[builds]: version
     headers: *id074
     response:
       status: 200
@@ -5573,6 +5591,8 @@ cases:
       filter[build]: build-301
       limit: '2'
       fields[betaAppReviewSubmissions]: betaReviewState,submittedDate,build
+      include: build
+      fields[builds]: version
     headers: *id074
     response:
       status: 200
@@ -5588,6 +5608,8 @@ cases:
       limit: '25'
       sort: name
       fields[betaGroups]: name,isInternalGroup,hasAccessToAllBuilds,publicLinkEnabled,publicLinkLimitEnabled,publicLinkLimit,feedbackEnabled,app
+      include: app
+      fields[apps]: name,bundleId
     headers: *id074
     response:
       status: 200
@@ -7221,6 +7243,8 @@ cases:
       filter[version]: '1.0'
       limit: '2'
       fields[preReleaseVersions]: version,platform,app
+      include: app
+      fields[apps]: name,bundleId
     headers: *id089
     response:
       status: 200
@@ -7247,6 +7271,9 @@ cases:
       filter[version]: '126'
       limit: '2'
       fields[builds]: version,processingState,expired,expirationDate,uploadedDate,buildAudienceType,usesNonExemptEncryption,app,preReleaseVersion
+      include: app,preReleaseVersion
+      fields[apps]: name,bundleId
+      fields[preReleaseVersions]: version,platform
     headers: *id089
     response:
       status: 200
@@ -7272,6 +7299,8 @@ cases:
     path: /v1/builds/build-301/buildBetaDetail
     query:
       fields[buildBetaDetails]: autoNotifyEnabled,internalBuildState,externalBuildState,build
+      include: build
+      fields[builds]: version
     headers: *id089
     response:
       status: 200
@@ -7294,6 +7323,8 @@ cases:
       filter[build]: build-301
       limit: '2'
       fields[betaAppReviewSubmissions]: betaReviewState,submittedDate,build
+      include: build
+      fields[builds]: version
     headers: *id089
     response:
       status: 200
@@ -7314,6 +7345,8 @@ cases:
       limit: '25'
       sort: name
       fields[betaGroups]: name,isInternalGroup,hasAccessToAllBuilds,publicLinkEnabled,publicLinkLimitEnabled,publicLinkLimit,feedbackEnabled,app
+      include: app
+      fields[apps]: name,bundleId
     headers: *id089
     response:
       status: 200
@@ -17939,3 +17972,260 @@ cases:
         - *id224
         links: *id073
   expect: *id008
+- name: explicit-includes-with-uncopied-resource-envelopes
+  workflow: testflight-build-inspection
+  inputs:
+    authorization: Bearer SYNTHETIC-TESTFLIGHT-SENTINEL
+    bundle_id: com.example.corpus
+    marketing_version: '1.0'
+    build_number: '126'
+  requests:
+  - method: GET
+    path: /v1/apps
+    query:
+      filter[bundleId]: com.example.corpus
+      limit: '2'
+      fields[apps]: name,bundleId
+    headers: &id244
+      Accept: application/json
+      Authorization: Bearer SYNTHETIC-TESTFLIGHT-SENTINEL
+    response:
+      status: 200
+      fixture: fixtures/responses/apple/testflight-build-inspection/apps.json
+  - method: GET
+    path: /v1/preReleaseVersions
+    query:
+      filter[app]: app-101
+      filter[platform]: IOS
+      filter[version]: '1.0'
+      limit: '2'
+      fields[preReleaseVersions]: version,platform,app
+      include: app
+      fields[apps]: name,bundleId
+    headers: *id244
+    response:
+      status: 200
+      body:
+        data:
+        - type: preReleaseVersions
+          id: pre-201
+          attributes:
+            version: '1.0'
+            platform: IOS
+          relationships:
+            app:
+              data:
+                type: apps
+                id: app-101
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/preReleaseVersions
+        included:
+        - type: apps
+          id: included-extra
+          attributes:
+            name: Synthetic included resource
+  - method: GET
+    path: /v1/builds
+    query:
+      filter[app]: app-101
+      filter[preReleaseVersion]: pre-201
+      filter[version]: '126'
+      limit: '2'
+      fields[builds]: version,processingState,expired,expirationDate,uploadedDate,buildAudienceType,usesNonExemptEncryption,app,preReleaseVersion
+      include: app,preReleaseVersion
+      fields[apps]: name,bundleId
+      fields[preReleaseVersions]: version,platform
+    headers: *id244
+    response:
+      status: 200
+      body:
+        data:
+        - type: builds
+          id: build-301
+          attributes:
+            version: '126'
+            processingState: VALID
+            expired: false
+            buildAudienceType: APP_STORE_ELIGIBLE
+          relationships:
+            app:
+              data:
+                type: apps
+                id: app-101
+            preReleaseVersion:
+              data:
+                type: preReleaseVersions
+                id: pre-201
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/builds
+        included:
+        - type: apps
+          id: included-extra
+          attributes:
+            name: Synthetic included resource
+  - method: GET
+    path: /v1/builds/build-301/buildBetaDetail
+    query:
+      fields[buildBetaDetails]: autoNotifyEnabled,internalBuildState,externalBuildState,build
+      include: build
+      fields[builds]: version
+    headers: *id244
+    response:
+      status: 200
+      body:
+        data:
+          type: buildBetaDetails
+          id: detail-401
+          attributes:
+            internalBuildState: IN_BETA_TESTING
+            externalBuildState: WAITING_FOR_BETA_REVIEW
+            autoNotifyEnabled: false
+          relationships:
+            build:
+              data:
+                type: builds
+                id: build-301
+        included:
+        - type: apps
+          id: included-extra
+          attributes:
+            name: Synthetic included resource
+  - method: GET
+    path: /v1/betaAppReviewSubmissions
+    query:
+      filter[build]: build-301
+      limit: '2'
+      fields[betaAppReviewSubmissions]: betaReviewState,submittedDate,build
+      include: build
+      fields[builds]: version
+    headers: *id244
+    response:
+      status: 200
+      body:
+        data:
+        - type: betaAppReviewSubmissions
+          id: review-501
+          attributes:
+            betaReviewState: WAITING_FOR_REVIEW
+          relationships:
+            build:
+              data:
+                type: builds
+                id: build-301
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/betaAppReviewSubmissions
+        included:
+        - type: apps
+          id: included-extra
+          attributes:
+            name: Synthetic included resource
+  - method: GET
+    path: /v1/betaGroups
+    query:
+      filter[app]: app-101
+      filter[builds]: build-301
+      limit: '25'
+      sort: name
+      fields[betaGroups]: name,isInternalGroup,hasAccessToAllBuilds,publicLinkEnabled,publicLinkLimitEnabled,publicLinkLimit,feedbackEnabled,app
+      include: app
+      fields[apps]: name,bundleId
+    headers: *id244
+    response:
+      status: 200
+      body:
+        data:
+        - type: betaGroups
+          id: group-601
+          attributes:
+            name: Internal sample
+            isInternalGroup: true
+            publicLinkLimit: 100
+            publicLinkEnabled: false
+          relationships:
+            app:
+              data:
+                type: apps
+                id: app-101
+        links:
+          self: https://api.appstoreconnect.apple.com/v1/betaGroups
+        included:
+        - type: apps
+          id: included-extra
+          attributes:
+            name: Synthetic included resource
+  expect:
+    kind: success
+    outputs:
+      selected_app:
+        type: apps
+        id: app-101
+        attributes:
+          bundleId: com.example.corpus
+          name: Corpus Sample
+      selected_prerelease_version:
+        type: preReleaseVersions
+        id: pre-201
+        attributes:
+          version: '1.0'
+          platform: IOS
+        relationships: &id247
+          app: &id245
+            data:
+              type: apps
+              id: app-101
+      build:
+        type: builds
+        id: build-301
+        attributes:
+          version: '126'
+          processingState: VALID
+          expired: false
+          buildAudienceType: APP_STORE_ELIGIBLE
+        relationships:
+          app: *id245
+          preReleaseVersion:
+            data:
+              type: preReleaseVersions
+              id: pre-201
+      beta_detail:
+        type: buildBetaDetails
+        id: detail-401
+        attributes:
+          internalBuildState: IN_BETA_TESTING
+          externalBuildState: WAITING_FOR_BETA_REVIEW
+          autoNotifyEnabled: false
+        relationships: &id246
+          build:
+            data:
+              type: builds
+              id: build-301
+      review_submissions:
+      - type: betaAppReviewSubmissions
+        id: review-501
+        attributes:
+          betaReviewState: WAITING_FOR_REVIEW
+        relationships: *id246
+      beta_groups:
+      - type: betaGroups
+        id: group-601
+        attributes:
+          name: Internal sample
+          isInternalGroup: true
+          publicLinkLimit: 100
+          publicLinkEnabled: false
+        relationships: *id247
+    assert: '.outputs == {"selected_app": {"type": "apps", "id": "app-101", "attributes": {"bundleId": "com.example.corpus",
+      "name": "Corpus Sample"}}, "selected_prerelease_version": {"type": "preReleaseVersions", "id": "pre-201",
+      "attributes": {"version": "1.0", "platform": "IOS"}, "relationships": {"app": {"data": {"type": "apps", "id":
+      "app-101"}}}}, "build": {"type": "builds", "id": "build-301", "attributes": {"version": "126", "processingState":
+      "VALID", "expired": false, "buildAudienceType": "APP_STORE_ELIGIBLE"}, "relationships": {"app": {"data": {"type":
+      "apps", "id": "app-101"}}, "preReleaseVersion": {"data": {"type": "preReleaseVersions", "id": "pre-201"}}}},
+      "beta_detail": {"type": "buildBetaDetails", "id": "detail-401", "attributes": {"internalBuildState": "IN_BETA_TESTING",
+      "externalBuildState": "WAITING_FOR_BETA_REVIEW", "autoNotifyEnabled": false}, "relationships": {"build": {"data":
+      {"type": "builds", "id": "build-301"}}}}, "review_submissions": [{"type": "betaAppReviewSubmissions", "id":
+      "review-501", "attributes": {"betaReviewState": "WAITING_FOR_REVIEW"}, "relationships": {"build": {"data":
+      {"type": "builds", "id": "build-301"}}}}], "beta_groups": [{"type": "betaGroups", "id": "group-601", "attributes":
+      {"name": "Internal sample", "isInternalGroup": true, "publicLinkLimit": 100, "publicLinkEnabled": false},
+      "relationships": {"app": {"data": {"type": "apps", "id": "app-101"}}}}]}'
+    forbidden_output:
+    - Bearer SYNTHETIC-TESTFLIGHT-SENTINEL
