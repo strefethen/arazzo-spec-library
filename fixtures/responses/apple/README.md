@@ -26,3 +26,26 @@ registered scenario file so each failure is adjacent to the request it tests.
 Malformed and null linkage responses are defensive failure cases; Apple 4.5.1
 declares linkage `data` as a required object, and the malformed variants are
 not claims about documented live response encoding.
+# TestFlight synthetic fixtures (Apple 4.6)
+
+All six bodies under `testflight-build-inspection/` are synthetic examples, not
+live captures. IDs distinguish app, prerelease version, build and beta detail.
+They prove workflow behavior, not current Apple account state.
+
+Source: [official App Store Connect OpenAPI archive](https://developer.apple.com/sample-code/app-store-connect/app-store-connect-openapi-specification.zip),
+version 4.6, refreshed 2026-11-06. Archive SHA-256:
+`f41ed4489c78bf1488cd2291f23394565364fe37b402130f48c3e3c3f5ea1acd`.
+Extracted `openapi.oas.json` SHA-256:
+`74732362a91236dcb66eb1620f8be18c2b6060771269b483eab578473bb32763`.
+
+The local `fixtures/openapi/apple/testflight.yaml` retains only GET operations
+`apps_getCollection`, `preReleaseVersions_getCollection`, `builds_getCollection`,
+`builds_buildBetaDetail_getToOneRelated`, `betaAppReviewSubmissions_getCollection`
+and `betaGroups_getCollection`, their selected parameters and sparse schemas.
+Defining resource anchors: `App`, `PrereleaseVersion`, `Build`, `BuildBetaDetail`,
+`BetaAppReviewSubmission`, `BetaGroup`, their response schemas, `PagingInformation`,
+`BuildAudienceType`, `InternalBetaState`, `ExternalBetaState`, `BetaReviewState`.
+Filters retain form array encoding with `explode: false`. Required workflow
+identity/state gates are intentionally stronger than provider-required `id,type`.
+The groups route is `/v1/betaGroups` filtered by app and build, with no include
+or build-to-groups route. Existing release subset provenance is unchanged.

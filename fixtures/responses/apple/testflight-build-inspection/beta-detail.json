@@ -1,0 +1,19 @@
+{
+  "data": {
+    "type": "buildBetaDetails",
+    "id": "detail-401",
+    "attributes": {
+      "internalBuildState": "IN_BETA_TESTING",
+      "externalBuildState": "WAITING_FOR_BETA_REVIEW",
+      "autoNotifyEnabled": false
+    },
+    "relationships": {
+      "build": {
+        "data": {
+          "type": "builds",
+          "id": "build-301"
+        }
+      }
+    }
+  }
+}

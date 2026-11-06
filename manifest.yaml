@@ -333,3 +333,44 @@ specs:
           expected_library_id=library-101 --input folder_id=group-v30 --input datastore_id=datastore-44
           --input network_id=dvportgroup-55
         jq: views/vsphere.ovf-deployment-preparation.summary.jq
+  - id: apple.testflight-build-inspection
+    provider: apple
+    category: release-inspection
+    description: Inspect one exact iOS TestFlight build through six bounded read-only
+      observations.
+    path: specs/apple/testflight-build-inspection.arazzo.yaml
+    arazzo: 1.0.0
+    tier: dry-run
+    read_only: true
+    live_policy: manual-authenticated-read-only
+    compatibility: arazzo-cli 0.8.2+
+    openapi:
+    - fixtures/openapi/apple/testflight.yaml
+    workflows:
+    - testflight-build-inspection
+    env:
+    - APP_STORE_CONNECT_AUTHORIZATION
+    tests: tests/scenarios/apple.testflight-build-inspection.yaml
+    examples:
+      quickstart:
+        description: Preview only the first capped app lookup with synthetic inputs;
+          no Apple request is sent.
+        command: arazzo-cli --json run specs/apple/testflight-build-inspection.arazzo.yaml
+          testflight-build-inspection --dry-run --strict-inputs --max-redirects 0 --step
+          resolve-app --input authorization='Bearer SYNTHETIC-APPLE-PREVIEW' --input
+          bundle_id=com.example.corpus --input-json 'marketing_version="1.0"' --input-json
+          'build_number="126"'
+        jq: views/apple.testflight-build-inspection.summary.jq
+    verification:
+      default:
+      - arazzo-cli --json catalog specs/apple
+      - arazzo-cli --json show testflight-build-inspection --dir specs/apple
+      - arazzo-cli --json validate specs/apple/testflight-build-inspection.arazzo.yaml
+        --strict
+      - arazzo-cli --json run specs/apple/testflight-build-inspection.arazzo.yaml testflight-build-inspection
+        --dry-run --strict-inputs --max-redirects 0 --step resolve-app --input authorization='Bearer
+        SYNTHETIC-APPLE-PREVIEW' --input bundle_id=com.example.corpus --input-json 'marketing_version="1.0"'
+        --input-json 'build_number="126"'
+      - python3 scripts/verify.py apple.testflight-build-inspection
+      - python3 -m unittest discover -s tests -p 'test_*.py'
+      - python3 scripts/verify.py

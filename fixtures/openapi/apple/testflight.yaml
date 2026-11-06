@@ -1,0 +1,1029 @@
+openapi: 3.0.1
+info:
+  title: TestFlight inspection subset
+  version: '4.6'
+  description: Sparse subset of pinned Apple 4.6; workflow requirements are stronger than provider schemas.
+servers:
+- url: https://api.appstoreconnect.apple.com
+security:
+- itc-bearer-token: []
+paths:
+  /v1/apps:
+    get:
+      tags:
+      - Apps
+      operationId: apps_getCollection
+      parameters:
+      - name: filter[bundleId]
+        in: query
+        description: filter by attribute 'bundleId'
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        required: false
+      - name: fields[apps]
+        in: query
+        description: the fields to include for returned resources of type apps
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - bundleId
+        style: form
+        explode: false
+        required: false
+      - name: limit
+        in: query
+        description: maximum resources per page
+        schema:
+          type: integer
+          maximum: 200
+        style: form
+      responses:
+        '400':
+          description: Parameter error(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized error(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '200':
+          description: List of Apps
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AppsResponse'
+        '429':
+          description: Rate limit exceeded error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/preReleaseVersions:
+    get:
+      tags:
+      - PreReleaseVersions
+      operationId: preReleaseVersions_getCollection
+      parameters:
+      - name: filter[platform]
+        in: query
+        description: filter by attribute 'platform'
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - IOS
+            - MAC_OS
+            - TV_OS
+            - VISION_OS
+        style: form
+        explode: false
+        required: false
+      - name: filter[version]
+        in: query
+        description: filter by attribute 'version'
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        required: false
+      - name: filter[app]
+        in: query
+        description: filter by id(s) of related 'app'
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        required: false
+      - name: fields[preReleaseVersions]
+        in: query
+        description: the fields to include for returned resources of type preReleaseVersions
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - version
+            - platform
+            - app
+        style: form
+        explode: false
+        required: false
+      - name: limit
+        in: query
+        description: maximum resources per page
+        schema:
+          type: integer
+          maximum: 200
+        style: form
+      responses:
+        '400':
+          description: Parameter error(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized error(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '200':
+          description: List of PreReleaseVersions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PreReleaseVersionsResponse'
+        '429':
+          description: Rate limit exceeded error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/builds:
+    get:
+      tags:
+      - Builds
+      operationId: builds_getCollection
+      parameters:
+      - name: filter[version]
+        in: query
+        description: filter by attribute 'version'
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        required: false
+      - name: filter[preReleaseVersion]
+        in: query
+        description: filter by id(s) of related 'preReleaseVersion'
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        required: false
+      - name: filter[app]
+        in: query
+        description: filter by id(s) of related 'app'
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        required: false
+      - name: fields[builds]
+        in: query
+        description: the fields to include for returned resources of type builds
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - version
+            - processingState
+            - expired
+            - expirationDate
+            - uploadedDate
+            - buildAudienceType
+            - usesNonExemptEncryption
+            - app
+            - preReleaseVersion
+        style: form
+        explode: false
+        required: false
+      - name: limit
+        in: query
+        description: maximum resources per page
+        schema:
+          type: integer
+          maximum: 200
+        style: form
+      responses:
+        '400':
+          description: Parameter error(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized error(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '200':
+          description: List of Builds
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildsResponse'
+        '429':
+          description: Rate limit exceeded error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/builds/{id}/buildBetaDetail:
+    get:
+      tags:
+      - Builds
+      operationId: builds_buildBetaDetail_getToOneRelated
+      parameters:
+      - name: fields[buildBetaDetails]
+        in: query
+        description: the fields to include for returned resources of type buildBetaDetails
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - autoNotifyEnabled
+            - internalBuildState
+            - externalBuildState
+            - build
+        style: form
+        explode: false
+      responses:
+        '400':
+          description: Parameter error(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized error(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Not found error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '200':
+          description: Single BuildBetaDetail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BuildBetaDetailResponse'
+        '429':
+          description: Rate limit exceeded error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/betaAppReviewSubmissions:
+    get:
+      tags:
+      - BetaAppReviewSubmissions
+      operationId: betaAppReviewSubmissions_getCollection
+      parameters:
+      - name: filter[build]
+        in: query
+        description: filter by id(s) of related 'build'
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        required: true
+      - name: fields[betaAppReviewSubmissions]
+        in: query
+        description: the fields to include for returned resources of type betaAppReviewSubmissions
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - betaReviewState
+            - submittedDate
+            - build
+        style: form
+        explode: false
+        required: false
+      - name: limit
+        in: query
+        description: maximum resources per page
+        schema:
+          type: integer
+          maximum: 200
+        style: form
+      responses:
+        '400':
+          description: Parameter error(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized error(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '200':
+          description: List of BetaAppReviewSubmissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BetaAppReviewSubmissionsResponse'
+        '429':
+          description: Rate limit exceeded error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+  /v1/betaGroups:
+    get:
+      tags:
+      - BetaGroups
+      operationId: betaGroups_getCollection
+      parameters:
+      - name: filter[app]
+        in: query
+        description: filter by id(s) of related 'app'
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        required: false
+      - name: filter[builds]
+        in: query
+        description: filter by id(s) of related 'builds'
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+        explode: false
+        required: false
+      - name: sort
+        in: query
+        description: comma-separated list of sort expressions; resources will be sorted as specified
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - -name
+            - createdDate
+            - -createdDate
+            - publicLinkEnabled
+            - -publicLinkEnabled
+            - publicLinkLimit
+            - -publicLinkLimit
+        style: form
+        explode: false
+        required: false
+      - name: fields[betaGroups]
+        in: query
+        description: the fields to include for returned resources of type betaGroups
+        schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - name
+            - isInternalGroup
+            - hasAccessToAllBuilds
+            - publicLinkEnabled
+            - publicLinkLimitEnabled
+            - publicLinkLimit
+            - feedbackEnabled
+            - app
+        style: form
+        explode: false
+        required: false
+      - name: limit
+        in: query
+        description: maximum resources per page
+        schema:
+          type: integer
+          maximum: 200
+        style: form
+      responses:
+        '400':
+          description: Parameter error(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized error(s)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '200':
+          description: List of BetaGroups
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BetaGroupsResponse'
+        '429':
+          description: Rate limit exceeded error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  schemas:
+    App:
+      type: object
+      title: App
+      properties:
+        type:
+          type: string
+          enum:
+          - apps
+        id:
+          type: string
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+            bundleId:
+              type: string
+        links:
+          $ref: '#/components/schemas/ResourceLinks'
+      required:
+      - id
+      - type
+    AppsResponse:
+      type: object
+      title: AppsResponse
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/App'
+        links:
+          $ref: '#/components/schemas/PagedDocumentLinks'
+        meta:
+          $ref: '#/components/schemas/PagingInformation'
+      required:
+      - data
+      - links
+    PrereleaseVersion:
+      type: object
+      title: PrereleaseVersion
+      properties:
+        type:
+          type: string
+          enum:
+          - preReleaseVersions
+        id:
+          type: string
+        attributes:
+          type: object
+          properties:
+            version:
+              type: string
+            platform:
+              $ref: '#/components/schemas/Platform'
+        relationships:
+          type: object
+          properties:
+            app:
+              type: object
+              properties:
+                links:
+                  $ref: '#/components/schemas/RelationshipLinks'
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - apps
+                    id:
+                      type: string
+                  required:
+                  - id
+                  - type
+        links:
+          $ref: '#/components/schemas/ResourceLinks'
+      required:
+      - id
+      - type
+    PreReleaseVersionsResponse:
+      type: object
+      title: PreReleaseVersionsResponse
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/PrereleaseVersion'
+        links:
+          $ref: '#/components/schemas/PagedDocumentLinks'
+        meta:
+          $ref: '#/components/schemas/PagingInformation'
+      required:
+      - data
+      - links
+    Build:
+      type: object
+      title: Build
+      properties:
+        type:
+          type: string
+          enum:
+          - builds
+        id:
+          type: string
+        attributes:
+          type: object
+          properties:
+            version:
+              type: string
+            uploadedDate:
+              type: string
+              format: date-time
+            expirationDate:
+              type: string
+              format: date-time
+            expired:
+              type: boolean
+            processingState:
+              type: string
+              enum:
+              - PROCESSING
+              - FAILED
+              - INVALID
+              - VALID
+            buildAudienceType:
+              $ref: '#/components/schemas/BuildAudienceType'
+            usesNonExemptEncryption:
+              type: boolean
+        relationships:
+          type: object
+          properties:
+            preReleaseVersion:
+              type: object
+              properties:
+                links:
+                  $ref: '#/components/schemas/RelationshipLinks'
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - preReleaseVersions
+                    id:
+                      type: string
+                  required:
+                  - id
+                  - type
+            app:
+              type: object
+              properties:
+                links:
+                  $ref: '#/components/schemas/RelationshipLinks'
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - apps
+                    id:
+                      type: string
+                  required:
+                  - id
+                  - type
+        links:
+          $ref: '#/components/schemas/ResourceLinks'
+      required:
+      - id
+      - type
+    BuildsResponse:
+      type: object
+      title: BuildsResponse
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Build'
+        links:
+          $ref: '#/components/schemas/PagedDocumentLinks'
+        meta:
+          $ref: '#/components/schemas/PagingInformation'
+      required:
+      - data
+      - links
+    BuildBetaDetail:
+      type: object
+      title: BuildBetaDetail
+      properties:
+        type:
+          type: string
+          enum:
+          - buildBetaDetails
+        id:
+          type: string
+        attributes:
+          type: object
+          properties:
+            autoNotifyEnabled:
+              type: boolean
+            internalBuildState:
+              $ref: '#/components/schemas/InternalBetaState'
+            externalBuildState:
+              $ref: '#/components/schemas/ExternalBetaState'
+        relationships:
+          type: object
+          properties:
+            build:
+              type: object
+              properties:
+                links:
+                  $ref: '#/components/schemas/RelationshipLinks'
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - builds
+                    id:
+                      type: string
+                  required:
+                  - id
+                  - type
+        links:
+          $ref: '#/components/schemas/ResourceLinks'
+      required:
+      - id
+      - type
+    BuildBetaDetailResponse:
+      type: object
+      title: BuildBetaDetailResponse
+      properties:
+        data:
+          $ref: '#/components/schemas/BuildBetaDetail'
+        links:
+          $ref: '#/components/schemas/DocumentLinks'
+      required:
+      - data
+      - links
+    BetaAppReviewSubmission:
+      type: object
+      title: BetaAppReviewSubmission
+      properties:
+        type:
+          type: string
+          enum:
+          - betaAppReviewSubmissions
+        id:
+          type: string
+        attributes:
+          type: object
+          properties:
+            betaReviewState:
+              $ref: '#/components/schemas/BetaReviewState'
+            submittedDate:
+              type: string
+              format: date-time
+        relationships:
+          type: object
+          properties:
+            build:
+              type: object
+              properties:
+                links:
+                  $ref: '#/components/schemas/RelationshipLinks'
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - builds
+                    id:
+                      type: string
+                  required:
+                  - id
+                  - type
+        links:
+          $ref: '#/components/schemas/ResourceLinks'
+      required:
+      - id
+      - type
+    BetaAppReviewSubmissionsResponse:
+      type: object
+      title: BetaAppReviewSubmissionsResponse
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BetaAppReviewSubmission'
+        links:
+          $ref: '#/components/schemas/PagedDocumentLinks'
+        meta:
+          $ref: '#/components/schemas/PagingInformation'
+      required:
+      - data
+      - links
+    BetaGroup:
+      type: object
+      title: BetaGroup
+      properties:
+        type:
+          type: string
+          enum:
+          - betaGroups
+        id:
+          type: string
+        attributes:
+          type: object
+          properties:
+            name:
+              type: string
+            isInternalGroup:
+              type: boolean
+            hasAccessToAllBuilds:
+              type: boolean
+            publicLinkEnabled:
+              type: boolean
+            publicLinkLimitEnabled:
+              type: boolean
+            publicLinkLimit:
+              type: integer
+            feedbackEnabled:
+              type: boolean
+        relationships:
+          type: object
+          properties:
+            app:
+              type: object
+              properties:
+                links:
+                  $ref: '#/components/schemas/RelationshipLinks'
+                data:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                      enum:
+                      - apps
+                    id:
+                      type: string
+                  required:
+                  - id
+                  - type
+        links:
+          $ref: '#/components/schemas/ResourceLinks'
+      required:
+      - id
+      - type
+    BetaGroupsResponse:
+      type: object
+      title: BetaGroupsResponse
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BetaGroup'
+        links:
+          $ref: '#/components/schemas/PagedDocumentLinks'
+        meta:
+          $ref: '#/components/schemas/PagingInformation'
+      required:
+      - data
+      - links
+    PagingInformation:
+      type: object
+      properties:
+        paging:
+          type: object
+          properties:
+            total:
+              type: integer
+            limit:
+              type: integer
+            nextCursor:
+              type: string
+          required:
+          - limit
+      required:
+      - paging
+    PagedDocumentLinks:
+      type: object
+      properties:
+        self:
+          type: string
+          format: uri-reference
+        first:
+          type: string
+          format: uri-reference
+        next:
+          type: string
+          format: uri-reference
+      required:
+      - self
+    ResourceLinks:
+      type: object
+      properties:
+        self:
+          type: string
+          format: uri-reference
+    RelationshipLinks:
+      type: object
+      properties:
+        self:
+          type: string
+          format: uri-reference
+        related:
+          type: string
+          format: uri-reference
+    BetaReviewState:
+      type: string
+      enum:
+      - WAITING_FOR_REVIEW
+      - IN_REVIEW
+      - REJECTED
+      - APPROVED
+    DocumentLinks:
+      type: object
+      properties:
+        self:
+          type: string
+          format: uri-reference
+      required:
+      - self
+    ExternalBetaState:
+      type: string
+      enum:
+      - PROCESSING
+      - PROCESSING_EXCEPTION
+      - MISSING_EXPORT_COMPLIANCE
+      - READY_FOR_BETA_TESTING
+      - IN_BETA_TESTING
+      - EXPIRED
+      - READY_FOR_BETA_SUBMISSION
+      - IN_EXPORT_COMPLIANCE_REVIEW
+      - WAITING_FOR_BETA_REVIEW
+      - IN_BETA_REVIEW
+      - BETA_REJECTED
+      - BETA_APPROVED
+      - NOT_APPLICABLE
+    InternalBetaState:
+      type: string
+      enum:
+      - PROCESSING
+      - PROCESSING_EXCEPTION
+      - MISSING_EXPORT_COMPLIANCE
+      - READY_FOR_BETA_TESTING
+      - IN_BETA_TESTING
+      - EXPIRED
+      - IN_EXPORT_COMPLIANCE_REVIEW
+    BuildAudienceType:
+      type: string
+      enum:
+      - INTERNAL_ONLY
+      - APP_STORE_ELIGIBLE
+    Platform:
+      type: string
+      enum:
+      - IOS
+      - MAC_OS
+      - TV_OS
+      - VISION_OS
+    ErrorResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              status:
+                type: string
+              code:
+                type: string
+              title:
+                type: string
+              detail:
+                type: string
+              source:
+                oneOf:
+                - $ref: '#/components/schemas/ErrorSourcePointer'
+                - $ref: '#/components/schemas/ErrorSourceParameter'
+              links:
+                $ref: '#/components/schemas/ErrorLinks'
+              meta:
+                type: object
+                additionalProperties: {}
+            required:
+            - code
+            - detail
+            - status
+            - title
+    ErrorLinks:
+      type: object
+      properties:
+        about:
+          type: string
+          format: uri-reference
+        associated:
+          oneOf:
+          - type: string
+            format: uri-reference
+          - type: object
+            properties:
+              href:
+                type: string
+                format: uri-reference
+              meta:
+                type: object
+                properties:
+                  source:
+                    type: string
+    ErrorSourceParameter:
+      type: object
+      title: Parameter
+      properties:
+        parameter:
+          type: string
+      required:
+      - parameter
+    ErrorSourcePointer:
+      type: object
+      title: JsonPointer
+      properties:
+        pointer:
+          type: string
+      required:
+      - pointer
+  securitySchemes:
+    itc-bearer-token:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

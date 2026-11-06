@@ -1,0 +1,2415 @@
+arazzo: 1.0.0
+info:
+  title: TestFlight build inspection
+  version: 1.0.0
+  description: Six non-atomic read-only observations; no audience, installation, notification delivery or readiness
+    judgment.
+sourceDescriptions:
+- name: apple
+  url: ../../fixtures/openapi/apple/testflight.yaml
+  type: openapi
+components:
+  parameters:
+    acceptJson:
+      name: Accept
+      in: header
+      value: application/json
+    authorization:
+      name: Authorization
+      in: header
+      value: $inputs.authorization
+  failureActions:
+    stop:
+      name: stop-without-fallback
+      type: end
+workflows:
+- workflowId: testflight-build-inspection
+  inputs:
+    type: object
+    properties:
+      authorization:
+        type: string
+        format: password
+        writeOnly: true
+        description: Externally supplied complete Bearer JWT header value.
+      bundle_id:
+        type: string
+        minLength: 1
+        pattern: ^[^,]+$
+        description: One exact case-sensitive bundle identifier, without commas.
+      marketing_version:
+        type: string
+        minLength: 1
+        pattern: ^[^,]+$
+        description: One exact case-sensitive iOS marketing version, without commas.
+      build_number:
+        type: string
+        minLength: 1
+        pattern: ^[^,]+$
+        description: One exact string build number, without commas.
+    required:
+    - authorization
+    - bundle_id
+    - marketing_version
+    - build_number
+  steps:
+  - stepId: resolve-app
+    operationId: $sourceDescriptions.apple.apps_getCollection
+    parameters:
+    - reference: $components.parameters.acceptJson
+    - reference: $components.parameters.authorization
+    - name: filter[bundleId]
+      in: query
+      value: $inputs.bundle_id
+    - name: limit
+      in: query
+      value: 2
+    - name: fields[apps]
+      in: query
+      value: name,bundleId
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $inputs.bundle_id
+      condition: ^[^,\s](?:[^,]*[^,\s])?$
+    - type: regex
+      context: $inputs.marketing_version
+      condition: ^[^,\s](?:[^,]*[^,\s])?$
+    - type: regex
+      context: $inputs.build_number
+      condition: ^[^,\s](?:[^,]*[^,\s])?$
+    - type: regex
+      context: $response.body#/data
+      condition: ^\[
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[:]) == length($.data) && length($.data) == 1]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.links.*) > 0 && match($.links.self, ".+") && (count($.links.next) == 0 || $.links.next
+        == null)]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.meta) == 0 || $.meta.paging.limit <= 0 || $.meta.paging.limit > 2 || ($.meta.paging.limit
+        == 1 || $.meta.paging.limit == 2)]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.meta) == 0 || (count($.meta.*) > 0 && count($.meta.paging.*) > 0 && ($.meta.paging.limit
+        >= 1 && $.meta.paging.limit <= 2) && $.meta.paging.limit >= length($.data) && (count($.meta.paging.total)
+        == 0 || $.meta.paging.total == length($.data)) && (count($.meta.paging.nextCursor) == 0 || $.meta.paging.nextCursor
+        == null))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].*) == count($.data[0]["type","id","attributes","relationships","links"]) &&
+        count($.data[0].*) > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?$.data[0].type == "apps"]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match($.data[0].id, "[A-Za-z0-9_-]+")]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].attributes.*) == count($.data[0].attributes["name","bundleId"]) && count($.data[0].attributes.*)
+        > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0].links) == 0 || (count($.data[0].links.*) == count($.data[0].links["self"])
+        && count($.data[0].links.*) > 0 && (count($.data[0].links.self) == 0 || (match($.data[0].links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].relationships) == 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0].attributes.name) == 0 || (match($.data[0].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match($.data[0].attributes.bundleId, ".+")]
+    - condition: $response.body#/data/0/attributes/bundleId == $inputs.bundle_id
+    onFailure:
+    - reference: $components.failureActions.stop
+    outputs:
+      selected_app: $response.body#/data/0
+      id: $response.body#/data/0/id
+  - stepId: resolve-prerelease-version
+    operationId: $sourceDescriptions.apple.preReleaseVersions_getCollection
+    parameters:
+    - reference: $components.parameters.acceptJson
+    - reference: $components.parameters.authorization
+    - name: filter[app]
+      in: query
+      value: $steps.resolve-app.outputs.id
+    - name: filter[platform]
+      in: query
+      value: IOS
+    - name: filter[version]
+      in: query
+      value: $inputs.marketing_version
+    - name: limit
+      in: query
+      value: 2
+    - name: fields[preReleaseVersions]
+      in: query
+      value: version,platform,app
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body#/data
+      condition: ^\[
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[:]) == length($.data) && length($.data) == 1]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.links.*) > 0 && match($.links.self, ".+") && (count($.links.next) == 0 || $.links.next
+        == null)]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.meta) == 0 || $.meta.paging.limit <= 0 || $.meta.paging.limit > 2 || ($.meta.paging.limit
+        == 1 || $.meta.paging.limit == 2)]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.meta) == 0 || (count($.meta.*) > 0 && count($.meta.paging.*) > 0 && ($.meta.paging.limit
+        >= 1 && $.meta.paging.limit <= 2) && $.meta.paging.limit >= length($.data) && (count($.meta.paging.total)
+        == 0 || $.meta.paging.total == length($.data)) && (count($.meta.paging.nextCursor) == 0 || $.meta.paging.nextCursor
+        == null))]
+    - condition: $response.body#/data/0/relationships/app/data/id == $steps.resolve-app.outputs.id
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].*) == count($.data[0]["type","id","attributes","relationships","links"]) &&
+        count($.data[0].*) > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?$.data[0].type == "preReleaseVersions"]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match($.data[0].id, "[A-Za-z0-9_-]+")]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].attributes.*) == count($.data[0].attributes["version","platform"]) && count($.data[0].attributes.*)
+        > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0].links) == 0 || (count($.data[0].links.*) == count($.data[0].links["self"])
+        && count($.data[0].links.*) > 0 && (count($.data[0].links.self) == 0 || (match($.data[0].links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].relationships.*) == count($.data[0].relationships["app"]) && count($.data[0].relationships.*)
+        > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].relationships.app.*) == count($.data[0].relationships.app["data","links"]) &&
+        count($.data[0].relationships.app.*) > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].relationships.app.data.*) == count($.data[0].relationships.app.data["type","id"])
+        && count($.data[0].relationships.app.data.*) > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?$.data[0].relationships.app.data.type == "apps"]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match($.data[0].relationships.app.data.id, "[A-Za-z0-9_-]+")]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0].relationships.app.links) == 0 || (count($.data[0].relationships.app.links.*)
+        == count($.data[0].relationships.app.links["self","related"]) && count($.data[0].relationships.app.links.*)
+        > 0 && (count($.data[0].relationships.app.links.self) == 0 || (match($.data[0].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[0].relationships.app.links.related)
+        == 0 || (match($.data[0].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match($.data[0].attributes.version, ".+")]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?($.data[0].attributes.platform == "IOS" || $.data[0].attributes.platform == "MAC_OS" || $.data[0].attributes.platform
+        == "TV_OS" || $.data[0].attributes.platform == "VISION_OS")]
+    - condition: $response.body#/data/0/attributes/version == $inputs.marketing_version
+    - condition: $response.body#/data/0/attributes/platform == 'IOS'
+    onFailure:
+    - reference: $components.failureActions.stop
+    outputs:
+      selected_prerelease_version: $response.body#/data/0
+      id: $response.body#/data/0/id
+  - stepId: resolve-build
+    operationId: $sourceDescriptions.apple.builds_getCollection
+    parameters:
+    - reference: $components.parameters.acceptJson
+    - reference: $components.parameters.authorization
+    - name: filter[app]
+      in: query
+      value: $steps.resolve-app.outputs.id
+    - name: filter[preReleaseVersion]
+      in: query
+      value: $steps.resolve-prerelease-version.outputs.id
+    - name: filter[version]
+      in: query
+      value: $inputs.build_number
+    - name: limit
+      in: query
+      value: 2
+    - name: fields[builds]
+      in: query
+      value: version,processingState,expired,expirationDate,uploadedDate,buildAudienceType,usesNonExemptEncryption,app,preReleaseVersion
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body#/data
+      condition: ^\[
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[:]) == length($.data) && length($.data) == 1]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.links.*) > 0 && match($.links.self, ".+") && (count($.links.next) == 0 || $.links.next
+        == null)]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.meta) == 0 || $.meta.paging.limit <= 0 || $.meta.paging.limit > 2 || ($.meta.paging.limit
+        == 1 || $.meta.paging.limit == 2)]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.meta) == 0 || (count($.meta.*) > 0 && count($.meta.paging.*) > 0 && ($.meta.paging.limit
+        >= 1 && $.meta.paging.limit <= 2) && $.meta.paging.limit >= length($.data) && (count($.meta.paging.total)
+        == 0 || $.meta.paging.total == length($.data)) && (count($.meta.paging.nextCursor) == 0 || $.meta.paging.nextCursor
+        == null))]
+    - condition: $response.body#/data/0/relationships/app/data/id == $steps.resolve-app.outputs.id
+    - condition: $response.body#/data/0/relationships/preReleaseVersion/data/id == $steps.resolve-prerelease-version.outputs.id
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].*) == count($.data[0]["type","id","attributes","relationships","links"]) &&
+        count($.data[0].*) > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?$.data[0].type == "builds"]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match($.data[0].id, "[A-Za-z0-9_-]+")]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].attributes.*) == count($.data[0].attributes["version","uploadedDate","expirationDate","expired","processingState","buildAudienceType","usesNonExemptEncryption"])
+        && count($.data[0].attributes.*) > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0].links) == 0 || (count($.data[0].links.*) == count($.data[0].links["self"])
+        && count($.data[0].links.*) > 0 && (count($.data[0].links.self) == 0 || (match($.data[0].links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].relationships.*) == count($.data[0].relationships["app","preReleaseVersion"])
+        && count($.data[0].relationships.*) > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].relationships.app.*) == count($.data[0].relationships.app["data","links"]) &&
+        count($.data[0].relationships.app.*) > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].relationships.app.data.*) == count($.data[0].relationships.app.data["type","id"])
+        && count($.data[0].relationships.app.data.*) > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?$.data[0].relationships.app.data.type == "apps"]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match($.data[0].relationships.app.data.id, "[A-Za-z0-9_-]+")]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0].relationships.app.links) == 0 || (count($.data[0].relationships.app.links.*)
+        == count($.data[0].relationships.app.links["self","related"]) && count($.data[0].relationships.app.links.*)
+        > 0 && (count($.data[0].relationships.app.links.self) == 0 || (match($.data[0].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[0].relationships.app.links.related)
+        == 0 || (match($.data[0].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].relationships.preReleaseVersion.*) == count($.data[0].relationships.preReleaseVersion["data","links"])
+        && count($.data[0].relationships.preReleaseVersion.*) > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[0].relationships.preReleaseVersion.data.*) == count($.data[0].relationships.preReleaseVersion.data["type","id"])
+        && count($.data[0].relationships.preReleaseVersion.data.*) > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?$.data[0].relationships.preReleaseVersion.data.type == "preReleaseVersions"]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match($.data[0].relationships.preReleaseVersion.data.id, "[A-Za-z0-9_-]+")]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0].relationships.preReleaseVersion.links) == 0 || (count($.data[0].relationships.preReleaseVersion.links.*)
+        == count($.data[0].relationships.preReleaseVersion.links["self","related"]) && count($.data[0].relationships.preReleaseVersion.links.*)
+        > 0 && (count($.data[0].relationships.preReleaseVersion.links.self) == 0 || (match($.data[0].relationships.preReleaseVersion.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[0].relationships.preReleaseVersion.links.related)
+        == 0 || (match($.data[0].relationships.preReleaseVersion.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match($.data[0].attributes.version, ".+")]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0].attributes.uploadedDate) == 0 || (match($.data[0].attributes.uploadedDate,
+        ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0].attributes.expirationDate) == 0 || (match($.data[0].attributes.expirationDate,
+        ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0].attributes.expired) == 0 || (($.data[0].attributes.expired == true || $.data[0].attributes.expired
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?($.data[0].attributes.processingState == "PROCESSING" || $.data[0].attributes.processingState
+        == "FAILED" || $.data[0].attributes.processingState == "INVALID" || $.data[0].attributes.processingState
+        == "VALID")]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0].attributes.buildAudienceType) == 0 || (($.data[0].attributes.buildAudienceType
+        == "INTERNAL_ONLY" || $.data[0].attributes.buildAudienceType == "APP_STORE_ELIGIBLE")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0].attributes.usesNonExemptEncryption) == 0 || (($.data[0].attributes.usesNonExemptEncryption
+        == true || $.data[0].attributes.usesNonExemptEncryption == false)))]
+    - condition: $response.body#/data/0/attributes/version == $inputs.build_number
+    onFailure:
+    - reference: $components.failureActions.stop
+    outputs:
+      build: $response.body#/data/0
+      id: $response.body#/data/0/id
+  - stepId: inspect-beta-detail
+    operationId: $sourceDescriptions.apple.builds_buildBetaDetail_getToOneRelated
+    parameters:
+    - reference: $components.parameters.acceptJson
+    - reference: $components.parameters.authorization
+    - name: id
+      in: path
+      value: $steps.resolve-build.outputs.id
+    - name: fields[buildBetaDetails]
+      in: query
+      value: autoNotifyEnabled,internalBuildState,externalBuildState,build
+    successCriteria:
+    - condition: $statusCode == 200
+    - condition: $response.body#/data/relationships/build/data/id == $steps.resolve-build.outputs.id
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data.*) == count($.data["type","id","attributes","relationships","links"]) && count($.data.*)
+        > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?$.data.type == "buildBetaDetails"]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match($.data.id, "[A-Za-z0-9_-]+")]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data.attributes.*) == count($.data.attributes["autoNotifyEnabled","internalBuildState","externalBuildState"])
+        && count($.data.attributes.*) > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data.links) == 0 || (count($.data.links.*) == count($.data.links["self"]) && count($.data.links.*)
+        > 0 && (count($.data.links.self) == 0 || (match($.data.links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data.relationships.*) == count($.data.relationships["build"]) && count($.data.relationships.*)
+        > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data.relationships.build.*) == count($.data.relationships.build["data","links"]) &&
+        count($.data.relationships.build.*) > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data.relationships.build.data.*) == count($.data.relationships.build.data["type","id"])
+        && count($.data.relationships.build.data.*) > 0]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?$.data.relationships.build.data.type == "builds"]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?match($.data.relationships.build.data.id, "[A-Za-z0-9_-]+")]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data.relationships.build.links) == 0 || (count($.data.relationships.build.links.*)
+        == count($.data.relationships.build.links["self","related"]) && count($.data.relationships.build.links.*)
+        > 0 && (count($.data.relationships.build.links.self) == 0 || (match($.data.relationships.build.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data.relationships.build.links.related)
+        == 0 || (match($.data.relationships.build.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data.attributes.autoNotifyEnabled) == 0 || (($.data.attributes.autoNotifyEnabled ==
+        true || $.data.attributes.autoNotifyEnabled == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?($.data.attributes.internalBuildState == "PROCESSING" || $.data.attributes.internalBuildState
+        == "PROCESSING_EXCEPTION" || $.data.attributes.internalBuildState == "MISSING_EXPORT_COMPLIANCE" || $.data.attributes.internalBuildState
+        == "READY_FOR_BETA_TESTING" || $.data.attributes.internalBuildState == "IN_BETA_TESTING" || $.data.attributes.internalBuildState
+        == "EXPIRED" || $.data.attributes.internalBuildState == "IN_EXPORT_COMPLIANCE_REVIEW")]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?($.data.attributes.externalBuildState == "PROCESSING" || $.data.attributes.externalBuildState
+        == "PROCESSING_EXCEPTION" || $.data.attributes.externalBuildState == "MISSING_EXPORT_COMPLIANCE" || $.data.attributes.externalBuildState
+        == "READY_FOR_BETA_TESTING" || $.data.attributes.externalBuildState == "IN_BETA_TESTING" || $.data.attributes.externalBuildState
+        == "EXPIRED" || $.data.attributes.externalBuildState == "READY_FOR_BETA_SUBMISSION" || $.data.attributes.externalBuildState
+        == "IN_EXPORT_COMPLIANCE_REVIEW" || $.data.attributes.externalBuildState == "WAITING_FOR_BETA_REVIEW" ||
+        $.data.attributes.externalBuildState == "IN_BETA_REVIEW" || $.data.attributes.externalBuildState == "BETA_REJECTED"
+        || $.data.attributes.externalBuildState == "BETA_APPROVED" || $.data.attributes.externalBuildState == "NOT_APPLICABLE")]
+    onFailure:
+    - reference: $components.failureActions.stop
+    outputs:
+      beta_detail: $response.body#/data
+  - stepId: inspect-beta-review
+    operationId: $sourceDescriptions.apple.betaAppReviewSubmissions_getCollection
+    parameters:
+    - reference: $components.parameters.acceptJson
+    - reference: $components.parameters.authorization
+    - name: filter[build]
+      in: query
+      value: $steps.resolve-build.outputs.id
+    - name: limit
+      in: query
+      value: 2
+    - name: fields[betaAppReviewSubmissions]
+      in: query
+      value: betaReviewState,submittedDate,build
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body#/data
+      condition: ^\[
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[:]) == length($.data) && length($.data) <= 1]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.links.*) > 0 && match($.links.self, ".+") && (count($.links.next) == 0 || $.links.next
+        == null)]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.meta) == 0 || $.meta.paging.limit <= 0 || $.meta.paging.limit > 2 || ($.meta.paging.limit
+        == 1 || $.meta.paging.limit == 2)]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.meta) == 0 || (count($.meta.*) > 0 && count($.meta.paging.*) > 0 && ($.meta.paging.limit
+        >= 1 && $.meta.paging.limit <= 2) && $.meta.paging.limit >= length($.data) && (count($.meta.paging.total)
+        == 0 || $.meta.paging.total == length($.data)) && (count($.meta.paging.nextCursor) == 0 || $.meta.paging.nextCursor
+        == null))]
+    - condition: ($response.body#/data/0 == null) || ($response.body#/data/0/relationships/build/data/id == $steps.resolve-build.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (count($.data[0].*) == count($.data[0]["type","id","attributes","relationships","links"])
+        && count($.data[0].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || ($.data[0].type == "betaAppReviewSubmissions"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (match($.data[0].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (count($.data[0].attributes.*) == count($.data[0].attributes["betaReviewState","submittedDate"])
+        && count($.data[0].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || ((count($.data[0].links) == 0 || (count($.data[0].links.*) == count($.data[0].links["self"])
+        && count($.data[0].links.*) > 0 && (count($.data[0].links.self) == 0 || (match($.data[0].links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (count($.data[0].relationships.*) == count($.data[0].relationships["build"])
+        && count($.data[0].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (count($.data[0].relationships.build.*) == count($.data[0].relationships.build["data","links"])
+        && count($.data[0].relationships.build.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (count($.data[0].relationships.build.data.*) == count($.data[0].relationships.build.data["type","id"])
+        && count($.data[0].relationships.build.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || ($.data[0].relationships.build.data.type == "builds"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (match($.data[0].relationships.build.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || ((count($.data[0].relationships.build.links) == 0 || (count($.data[0].relationships.build.links.*)
+        == count($.data[0].relationships.build.links["self","related"]) && count($.data[0].relationships.build.links.*)
+        > 0 && (count($.data[0].relationships.build.links.self) == 0 || (match($.data[0].relationships.build.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[0].relationships.build.links.related)
+        == 0 || (match($.data[0].relationships.build.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (($.data[0].attributes.betaReviewState == "WAITING_FOR_REVIEW" ||
+        $.data[0].attributes.betaReviewState == "IN_REVIEW" || $.data[0].attributes.betaReviewState == "REJECTED"
+        || $.data[0].attributes.betaReviewState == "APPROVED")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || ((count($.data[0].attributes.submittedDate) == 0 || (match($.data[0].attributes.submittedDate,
+        ".+")))))]
+    onFailure:
+    - reference: $components.failureActions.stop
+    outputs:
+      review_submissions: $response.body#/data
+  - stepId: inspect-beta-groups
+    operationId: $sourceDescriptions.apple.betaGroups_getCollection
+    parameters:
+    - reference: $components.parameters.acceptJson
+    - reference: $components.parameters.authorization
+    - name: filter[app]
+      in: query
+      value: $steps.resolve-app.outputs.id
+    - name: filter[builds]
+      in: query
+      value: $steps.resolve-build.outputs.id
+    - name: limit
+      in: query
+      value: 25
+    - name: sort
+      in: query
+      value: name
+    - name: fields[betaGroups]
+      in: query
+      value: name,isInternalGroup,hasAccessToAllBuilds,publicLinkEnabled,publicLinkLimitEnabled,publicLinkLimit,feedbackEnabled,app
+    successCriteria:
+    - condition: $statusCode == 200
+    - type: regex
+      context: $response.body#/data
+      condition: ^\[
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.data[:]) == length($.data) && length($.data) <= 25]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.links.*) > 0 && match($.links.self, ".+") && (count($.links.next) == 0 || $.links.next
+        == null)]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.meta) == 0 || $.meta.paging.limit <= 0 || $.meta.paging.limit > 5 || ($.meta.paging.limit
+        == 1 || $.meta.paging.limit == 2 || $.meta.paging.limit == 3 || $.meta.paging.limit == 4 || $.meta.paging.limit
+        == 5)]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.meta) == 0 || $.meta.paging.limit <= 5 || $.meta.paging.limit > 10 || ($.meta.paging.limit
+        == 6 || $.meta.paging.limit == 7 || $.meta.paging.limit == 8 || $.meta.paging.limit == 9 || $.meta.paging.limit
+        == 10)]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.meta) == 0 || $.meta.paging.limit <= 10 || $.meta.paging.limit > 15 || ($.meta.paging.limit
+        == 11 || $.meta.paging.limit == 12 || $.meta.paging.limit == 13 || $.meta.paging.limit == 14 || $.meta.paging.limit
+        == 15)]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.meta) == 0 || $.meta.paging.limit <= 15 || $.meta.paging.limit > 20 || ($.meta.paging.limit
+        == 16 || $.meta.paging.limit == 17 || $.meta.paging.limit == 18 || $.meta.paging.limit == 19 || $.meta.paging.limit
+        == 20)]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.meta) == 0 || $.meta.paging.limit <= 20 || $.meta.paging.limit > 25 || ($.meta.paging.limit
+        == 21 || $.meta.paging.limit == 22 || $.meta.paging.limit == 23 || $.meta.paging.limit == 24 || $.meta.paging.limit
+        == 25)]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?count($.meta) == 0 || (count($.meta.*) > 0 && count($.meta.paging.*) > 0 && ($.meta.paging.limit
+        >= 1 && $.meta.paging.limit <= 25) && $.meta.paging.limit >= length($.data) && (count($.meta.paging.total)
+        == 0 || $.meta.paging.total == length($.data)) && (count($.meta.paging.nextCursor) == 0 || $.meta.paging.nextCursor
+        == null))]
+    - condition: ($response.body#/data/0 == null) || ($response.body#/data/0/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (count($.data[0].*) == count($.data[0]["type","id","attributes","relationships","links"])
+        && count($.data[0].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || ($.data[0].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (match($.data[0].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (count($.data[0].attributes.*) == count($.data[0].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[0].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || ((count($.data[0].links) == 0 || (count($.data[0].links.*) == count($.data[0].links["self"])
+        && count($.data[0].links.*) > 0 && (count($.data[0].links.self) == 0 || (match($.data[0].links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (count($.data[0].relationships.*) == count($.data[0].relationships["app"])
+        && count($.data[0].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (count($.data[0].relationships.app.*) == count($.data[0].relationships.app["data","links"])
+        && count($.data[0].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (count($.data[0].relationships.app.data.*) == count($.data[0].relationships.app.data["type","id"])
+        && count($.data[0].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || ($.data[0].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (match($.data[0].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || ((count($.data[0].relationships.app.links) == 0 || (count($.data[0].relationships.app.links.*)
+        == count($.data[0].relationships.app.links["self","related"]) && count($.data[0].relationships.app.links.*)
+        > 0 && (count($.data[0].relationships.app.links.self) == 0 || (match($.data[0].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[0].relationships.app.links.related)
+        == 0 || (match($.data[0].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (match($.data[0].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || (($.data[0].attributes.isInternalGroup == true || $.data[0].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || ((count($.data[0].attributes.hasAccessToAllBuilds) == 0 || (($.data[0].attributes.hasAccessToAllBuilds
+        == true || $.data[0].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || ((count($.data[0].attributes.publicLinkEnabled) == 0 || (($.data[0].attributes.publicLinkEnabled
+        == true || $.data[0].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || ((count($.data[0].attributes.publicLinkLimitEnabled) == 0 || (($.data[0].attributes.publicLinkLimitEnabled
+        == true || $.data[0].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || ((count($.data[0].attributes.publicLinkLimit) == 0 || (($.data[0].attributes.publicLinkLimit
+        >= 0 || $.data[0].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[0]) == 0 || ((count($.data[0].attributes.feedbackEnabled) == 0 || (($.data[0].attributes.feedbackEnabled
+        == true || $.data[0].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/1 == null) || ($response.body#/data/1/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || (count($.data[1].*) == count($.data[1]["type","id","attributes","relationships","links"])
+        && count($.data[1].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || ($.data[1].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || (match($.data[1].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || (count($.data[1].attributes.*) == count($.data[1].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[1].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || ((count($.data[1].links) == 0 || (count($.data[1].links.*) == count($.data[1].links["self"])
+        && count($.data[1].links.*) > 0 && (count($.data[1].links.self) == 0 || (match($.data[1].links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || (count($.data[1].relationships.*) == count($.data[1].relationships["app"])
+        && count($.data[1].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || (count($.data[1].relationships.app.*) == count($.data[1].relationships.app["data","links"])
+        && count($.data[1].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || (count($.data[1].relationships.app.data.*) == count($.data[1].relationships.app.data["type","id"])
+        && count($.data[1].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || ($.data[1].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || (match($.data[1].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || ((count($.data[1].relationships.app.links) == 0 || (count($.data[1].relationships.app.links.*)
+        == count($.data[1].relationships.app.links["self","related"]) && count($.data[1].relationships.app.links.*)
+        > 0 && (count($.data[1].relationships.app.links.self) == 0 || (match($.data[1].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[1].relationships.app.links.related)
+        == 0 || (match($.data[1].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || (match($.data[1].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || (($.data[1].attributes.isInternalGroup == true || $.data[1].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || ((count($.data[1].attributes.hasAccessToAllBuilds) == 0 || (($.data[1].attributes.hasAccessToAllBuilds
+        == true || $.data[1].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || ((count($.data[1].attributes.publicLinkEnabled) == 0 || (($.data[1].attributes.publicLinkEnabled
+        == true || $.data[1].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || ((count($.data[1].attributes.publicLinkLimitEnabled) == 0 || (($.data[1].attributes.publicLinkLimitEnabled
+        == true || $.data[1].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || ((count($.data[1].attributes.publicLinkLimit) == 0 || (($.data[1].attributes.publicLinkLimit
+        >= 0 || $.data[1].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[1]) == 0 || ((count($.data[1].attributes.feedbackEnabled) == 0 || (($.data[1].attributes.feedbackEnabled
+        == true || $.data[1].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/2 == null) || ($response.body#/data/2/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || (count($.data[2].*) == count($.data[2]["type","id","attributes","relationships","links"])
+        && count($.data[2].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || ($.data[2].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || (match($.data[2].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || (count($.data[2].attributes.*) == count($.data[2].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[2].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || ((count($.data[2].links) == 0 || (count($.data[2].links.*) == count($.data[2].links["self"])
+        && count($.data[2].links.*) > 0 && (count($.data[2].links.self) == 0 || (match($.data[2].links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || (count($.data[2].relationships.*) == count($.data[2].relationships["app"])
+        && count($.data[2].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || (count($.data[2].relationships.app.*) == count($.data[2].relationships.app["data","links"])
+        && count($.data[2].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || (count($.data[2].relationships.app.data.*) == count($.data[2].relationships.app.data["type","id"])
+        && count($.data[2].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || ($.data[2].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || (match($.data[2].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || ((count($.data[2].relationships.app.links) == 0 || (count($.data[2].relationships.app.links.*)
+        == count($.data[2].relationships.app.links["self","related"]) && count($.data[2].relationships.app.links.*)
+        > 0 && (count($.data[2].relationships.app.links.self) == 0 || (match($.data[2].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[2].relationships.app.links.related)
+        == 0 || (match($.data[2].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || (match($.data[2].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || (($.data[2].attributes.isInternalGroup == true || $.data[2].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || ((count($.data[2].attributes.hasAccessToAllBuilds) == 0 || (($.data[2].attributes.hasAccessToAllBuilds
+        == true || $.data[2].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || ((count($.data[2].attributes.publicLinkEnabled) == 0 || (($.data[2].attributes.publicLinkEnabled
+        == true || $.data[2].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || ((count($.data[2].attributes.publicLinkLimitEnabled) == 0 || (($.data[2].attributes.publicLinkLimitEnabled
+        == true || $.data[2].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || ((count($.data[2].attributes.publicLinkLimit) == 0 || (($.data[2].attributes.publicLinkLimit
+        >= 0 || $.data[2].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[2]) == 0 || ((count($.data[2].attributes.feedbackEnabled) == 0 || (($.data[2].attributes.feedbackEnabled
+        == true || $.data[2].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/3 == null) || ($response.body#/data/3/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || (count($.data[3].*) == count($.data[3]["type","id","attributes","relationships","links"])
+        && count($.data[3].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || ($.data[3].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || (match($.data[3].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || (count($.data[3].attributes.*) == count($.data[3].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[3].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || ((count($.data[3].links) == 0 || (count($.data[3].links.*) == count($.data[3].links["self"])
+        && count($.data[3].links.*) > 0 && (count($.data[3].links.self) == 0 || (match($.data[3].links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || (count($.data[3].relationships.*) == count($.data[3].relationships["app"])
+        && count($.data[3].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || (count($.data[3].relationships.app.*) == count($.data[3].relationships.app["data","links"])
+        && count($.data[3].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || (count($.data[3].relationships.app.data.*) == count($.data[3].relationships.app.data["type","id"])
+        && count($.data[3].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || ($.data[3].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || (match($.data[3].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || ((count($.data[3].relationships.app.links) == 0 || (count($.data[3].relationships.app.links.*)
+        == count($.data[3].relationships.app.links["self","related"]) && count($.data[3].relationships.app.links.*)
+        > 0 && (count($.data[3].relationships.app.links.self) == 0 || (match($.data[3].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[3].relationships.app.links.related)
+        == 0 || (match($.data[3].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || (match($.data[3].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || (($.data[3].attributes.isInternalGroup == true || $.data[3].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || ((count($.data[3].attributes.hasAccessToAllBuilds) == 0 || (($.data[3].attributes.hasAccessToAllBuilds
+        == true || $.data[3].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || ((count($.data[3].attributes.publicLinkEnabled) == 0 || (($.data[3].attributes.publicLinkEnabled
+        == true || $.data[3].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || ((count($.data[3].attributes.publicLinkLimitEnabled) == 0 || (($.data[3].attributes.publicLinkLimitEnabled
+        == true || $.data[3].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || ((count($.data[3].attributes.publicLinkLimit) == 0 || (($.data[3].attributes.publicLinkLimit
+        >= 0 || $.data[3].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[3]) == 0 || ((count($.data[3].attributes.feedbackEnabled) == 0 || (($.data[3].attributes.feedbackEnabled
+        == true || $.data[3].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/4 == null) || ($response.body#/data/4/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || (count($.data[4].*) == count($.data[4]["type","id","attributes","relationships","links"])
+        && count($.data[4].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || ($.data[4].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || (match($.data[4].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || (count($.data[4].attributes.*) == count($.data[4].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[4].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || ((count($.data[4].links) == 0 || (count($.data[4].links.*) == count($.data[4].links["self"])
+        && count($.data[4].links.*) > 0 && (count($.data[4].links.self) == 0 || (match($.data[4].links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || (count($.data[4].relationships.*) == count($.data[4].relationships["app"])
+        && count($.data[4].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || (count($.data[4].relationships.app.*) == count($.data[4].relationships.app["data","links"])
+        && count($.data[4].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || (count($.data[4].relationships.app.data.*) == count($.data[4].relationships.app.data["type","id"])
+        && count($.data[4].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || ($.data[4].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || (match($.data[4].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || ((count($.data[4].relationships.app.links) == 0 || (count($.data[4].relationships.app.links.*)
+        == count($.data[4].relationships.app.links["self","related"]) && count($.data[4].relationships.app.links.*)
+        > 0 && (count($.data[4].relationships.app.links.self) == 0 || (match($.data[4].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[4].relationships.app.links.related)
+        == 0 || (match($.data[4].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || (match($.data[4].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || (($.data[4].attributes.isInternalGroup == true || $.data[4].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || ((count($.data[4].attributes.hasAccessToAllBuilds) == 0 || (($.data[4].attributes.hasAccessToAllBuilds
+        == true || $.data[4].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || ((count($.data[4].attributes.publicLinkEnabled) == 0 || (($.data[4].attributes.publicLinkEnabled
+        == true || $.data[4].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || ((count($.data[4].attributes.publicLinkLimitEnabled) == 0 || (($.data[4].attributes.publicLinkLimitEnabled
+        == true || $.data[4].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || ((count($.data[4].attributes.publicLinkLimit) == 0 || (($.data[4].attributes.publicLinkLimit
+        >= 0 || $.data[4].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[4]) == 0 || ((count($.data[4].attributes.feedbackEnabled) == 0 || (($.data[4].attributes.feedbackEnabled
+        == true || $.data[4].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/5 == null) || ($response.body#/data/5/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || (count($.data[5].*) == count($.data[5]["type","id","attributes","relationships","links"])
+        && count($.data[5].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || ($.data[5].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || (match($.data[5].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || (count($.data[5].attributes.*) == count($.data[5].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[5].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || ((count($.data[5].links) == 0 || (count($.data[5].links.*) == count($.data[5].links["self"])
+        && count($.data[5].links.*) > 0 && (count($.data[5].links.self) == 0 || (match($.data[5].links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || (count($.data[5].relationships.*) == count($.data[5].relationships["app"])
+        && count($.data[5].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || (count($.data[5].relationships.app.*) == count($.data[5].relationships.app["data","links"])
+        && count($.data[5].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || (count($.data[5].relationships.app.data.*) == count($.data[5].relationships.app.data["type","id"])
+        && count($.data[5].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || ($.data[5].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || (match($.data[5].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || ((count($.data[5].relationships.app.links) == 0 || (count($.data[5].relationships.app.links.*)
+        == count($.data[5].relationships.app.links["self","related"]) && count($.data[5].relationships.app.links.*)
+        > 0 && (count($.data[5].relationships.app.links.self) == 0 || (match($.data[5].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[5].relationships.app.links.related)
+        == 0 || (match($.data[5].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || (match($.data[5].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || (($.data[5].attributes.isInternalGroup == true || $.data[5].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || ((count($.data[5].attributes.hasAccessToAllBuilds) == 0 || (($.data[5].attributes.hasAccessToAllBuilds
+        == true || $.data[5].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || ((count($.data[5].attributes.publicLinkEnabled) == 0 || (($.data[5].attributes.publicLinkEnabled
+        == true || $.data[5].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || ((count($.data[5].attributes.publicLinkLimitEnabled) == 0 || (($.data[5].attributes.publicLinkLimitEnabled
+        == true || $.data[5].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || ((count($.data[5].attributes.publicLinkLimit) == 0 || (($.data[5].attributes.publicLinkLimit
+        >= 0 || $.data[5].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[5]) == 0 || ((count($.data[5].attributes.feedbackEnabled) == 0 || (($.data[5].attributes.feedbackEnabled
+        == true || $.data[5].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/6 == null) || ($response.body#/data/6/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || (count($.data[6].*) == count($.data[6]["type","id","attributes","relationships","links"])
+        && count($.data[6].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || ($.data[6].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || (match($.data[6].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || (count($.data[6].attributes.*) == count($.data[6].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[6].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || ((count($.data[6].links) == 0 || (count($.data[6].links.*) == count($.data[6].links["self"])
+        && count($.data[6].links.*) > 0 && (count($.data[6].links.self) == 0 || (match($.data[6].links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || (count($.data[6].relationships.*) == count($.data[6].relationships["app"])
+        && count($.data[6].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || (count($.data[6].relationships.app.*) == count($.data[6].relationships.app["data","links"])
+        && count($.data[6].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || (count($.data[6].relationships.app.data.*) == count($.data[6].relationships.app.data["type","id"])
+        && count($.data[6].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || ($.data[6].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || (match($.data[6].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || ((count($.data[6].relationships.app.links) == 0 || (count($.data[6].relationships.app.links.*)
+        == count($.data[6].relationships.app.links["self","related"]) && count($.data[6].relationships.app.links.*)
+        > 0 && (count($.data[6].relationships.app.links.self) == 0 || (match($.data[6].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[6].relationships.app.links.related)
+        == 0 || (match($.data[6].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || (match($.data[6].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || (($.data[6].attributes.isInternalGroup == true || $.data[6].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || ((count($.data[6].attributes.hasAccessToAllBuilds) == 0 || (($.data[6].attributes.hasAccessToAllBuilds
+        == true || $.data[6].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || ((count($.data[6].attributes.publicLinkEnabled) == 0 || (($.data[6].attributes.publicLinkEnabled
+        == true || $.data[6].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || ((count($.data[6].attributes.publicLinkLimitEnabled) == 0 || (($.data[6].attributes.publicLinkLimitEnabled
+        == true || $.data[6].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || ((count($.data[6].attributes.publicLinkLimit) == 0 || (($.data[6].attributes.publicLinkLimit
+        >= 0 || $.data[6].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[6]) == 0 || ((count($.data[6].attributes.feedbackEnabled) == 0 || (($.data[6].attributes.feedbackEnabled
+        == true || $.data[6].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/7 == null) || ($response.body#/data/7/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || (count($.data[7].*) == count($.data[7]["type","id","attributes","relationships","links"])
+        && count($.data[7].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || ($.data[7].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || (match($.data[7].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || (count($.data[7].attributes.*) == count($.data[7].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[7].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || ((count($.data[7].links) == 0 || (count($.data[7].links.*) == count($.data[7].links["self"])
+        && count($.data[7].links.*) > 0 && (count($.data[7].links.self) == 0 || (match($.data[7].links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || (count($.data[7].relationships.*) == count($.data[7].relationships["app"])
+        && count($.data[7].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || (count($.data[7].relationships.app.*) == count($.data[7].relationships.app["data","links"])
+        && count($.data[7].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || (count($.data[7].relationships.app.data.*) == count($.data[7].relationships.app.data["type","id"])
+        && count($.data[7].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || ($.data[7].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || (match($.data[7].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || ((count($.data[7].relationships.app.links) == 0 || (count($.data[7].relationships.app.links.*)
+        == count($.data[7].relationships.app.links["self","related"]) && count($.data[7].relationships.app.links.*)
+        > 0 && (count($.data[7].relationships.app.links.self) == 0 || (match($.data[7].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[7].relationships.app.links.related)
+        == 0 || (match($.data[7].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || (match($.data[7].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || (($.data[7].attributes.isInternalGroup == true || $.data[7].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || ((count($.data[7].attributes.hasAccessToAllBuilds) == 0 || (($.data[7].attributes.hasAccessToAllBuilds
+        == true || $.data[7].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || ((count($.data[7].attributes.publicLinkEnabled) == 0 || (($.data[7].attributes.publicLinkEnabled
+        == true || $.data[7].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || ((count($.data[7].attributes.publicLinkLimitEnabled) == 0 || (($.data[7].attributes.publicLinkLimitEnabled
+        == true || $.data[7].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || ((count($.data[7].attributes.publicLinkLimit) == 0 || (($.data[7].attributes.publicLinkLimit
+        >= 0 || $.data[7].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[7]) == 0 || ((count($.data[7].attributes.feedbackEnabled) == 0 || (($.data[7].attributes.feedbackEnabled
+        == true || $.data[7].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/8 == null) || ($response.body#/data/8/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || (count($.data[8].*) == count($.data[8]["type","id","attributes","relationships","links"])
+        && count($.data[8].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || ($.data[8].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || (match($.data[8].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || (count($.data[8].attributes.*) == count($.data[8].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[8].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || ((count($.data[8].links) == 0 || (count($.data[8].links.*) == count($.data[8].links["self"])
+        && count($.data[8].links.*) > 0 && (count($.data[8].links.self) == 0 || (match($.data[8].links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || (count($.data[8].relationships.*) == count($.data[8].relationships["app"])
+        && count($.data[8].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || (count($.data[8].relationships.app.*) == count($.data[8].relationships.app["data","links"])
+        && count($.data[8].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || (count($.data[8].relationships.app.data.*) == count($.data[8].relationships.app.data["type","id"])
+        && count($.data[8].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || ($.data[8].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || (match($.data[8].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || ((count($.data[8].relationships.app.links) == 0 || (count($.data[8].relationships.app.links.*)
+        == count($.data[8].relationships.app.links["self","related"]) && count($.data[8].relationships.app.links.*)
+        > 0 && (count($.data[8].relationships.app.links.self) == 0 || (match($.data[8].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[8].relationships.app.links.related)
+        == 0 || (match($.data[8].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || (match($.data[8].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || (($.data[8].attributes.isInternalGroup == true || $.data[8].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || ((count($.data[8].attributes.hasAccessToAllBuilds) == 0 || (($.data[8].attributes.hasAccessToAllBuilds
+        == true || $.data[8].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || ((count($.data[8].attributes.publicLinkEnabled) == 0 || (($.data[8].attributes.publicLinkEnabled
+        == true || $.data[8].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || ((count($.data[8].attributes.publicLinkLimitEnabled) == 0 || (($.data[8].attributes.publicLinkLimitEnabled
+        == true || $.data[8].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || ((count($.data[8].attributes.publicLinkLimit) == 0 || (($.data[8].attributes.publicLinkLimit
+        >= 0 || $.data[8].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[8]) == 0 || ((count($.data[8].attributes.feedbackEnabled) == 0 || (($.data[8].attributes.feedbackEnabled
+        == true || $.data[8].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/9 == null) || ($response.body#/data/9/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || (count($.data[9].*) == count($.data[9]["type","id","attributes","relationships","links"])
+        && count($.data[9].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || ($.data[9].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || (match($.data[9].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || (count($.data[9].attributes.*) == count($.data[9].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[9].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || ((count($.data[9].links) == 0 || (count($.data[9].links.*) == count($.data[9].links["self"])
+        && count($.data[9].links.*) > 0 && (count($.data[9].links.self) == 0 || (match($.data[9].links.self, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || (count($.data[9].relationships.*) == count($.data[9].relationships["app"])
+        && count($.data[9].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || (count($.data[9].relationships.app.*) == count($.data[9].relationships.app["data","links"])
+        && count($.data[9].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || (count($.data[9].relationships.app.data.*) == count($.data[9].relationships.app.data["type","id"])
+        && count($.data[9].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || ($.data[9].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || (match($.data[9].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || ((count($.data[9].relationships.app.links) == 0 || (count($.data[9].relationships.app.links.*)
+        == count($.data[9].relationships.app.links["self","related"]) && count($.data[9].relationships.app.links.*)
+        > 0 && (count($.data[9].relationships.app.links.self) == 0 || (match($.data[9].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[9].relationships.app.links.related)
+        == 0 || (match($.data[9].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || (match($.data[9].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || (($.data[9].attributes.isInternalGroup == true || $.data[9].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || ((count($.data[9].attributes.hasAccessToAllBuilds) == 0 || (($.data[9].attributes.hasAccessToAllBuilds
+        == true || $.data[9].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || ((count($.data[9].attributes.publicLinkEnabled) == 0 || (($.data[9].attributes.publicLinkEnabled
+        == true || $.data[9].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || ((count($.data[9].attributes.publicLinkLimitEnabled) == 0 || (($.data[9].attributes.publicLinkLimitEnabled
+        == true || $.data[9].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || ((count($.data[9].attributes.publicLinkLimit) == 0 || (($.data[9].attributes.publicLinkLimit
+        >= 0 || $.data[9].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[9]) == 0 || ((count($.data[9].attributes.feedbackEnabled) == 0 || (($.data[9].attributes.feedbackEnabled
+        == true || $.data[9].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/10 == null) || ($response.body#/data/10/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || (count($.data[10].*) == count($.data[10]["type","id","attributes","relationships","links"])
+        && count($.data[10].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || ($.data[10].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || (match($.data[10].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || (count($.data[10].attributes.*) == count($.data[10].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[10].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || ((count($.data[10].links) == 0 || (count($.data[10].links.*) == count($.data[10].links["self"])
+        && count($.data[10].links.*) > 0 && (count($.data[10].links.self) == 0 || (match($.data[10].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || (count($.data[10].relationships.*) == count($.data[10].relationships["app"])
+        && count($.data[10].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || (count($.data[10].relationships.app.*) == count($.data[10].relationships.app["data","links"])
+        && count($.data[10].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || (count($.data[10].relationships.app.data.*) == count($.data[10].relationships.app.data["type","id"])
+        && count($.data[10].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || ($.data[10].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || (match($.data[10].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || ((count($.data[10].relationships.app.links) == 0 || (count($.data[10].relationships.app.links.*)
+        == count($.data[10].relationships.app.links["self","related"]) && count($.data[10].relationships.app.links.*)
+        > 0 && (count($.data[10].relationships.app.links.self) == 0 || (match($.data[10].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[10].relationships.app.links.related)
+        == 0 || (match($.data[10].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || (match($.data[10].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || (($.data[10].attributes.isInternalGroup == true || $.data[10].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || ((count($.data[10].attributes.hasAccessToAllBuilds) == 0 || (($.data[10].attributes.hasAccessToAllBuilds
+        == true || $.data[10].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || ((count($.data[10].attributes.publicLinkEnabled) == 0 || (($.data[10].attributes.publicLinkEnabled
+        == true || $.data[10].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || ((count($.data[10].attributes.publicLinkLimitEnabled) == 0 || (($.data[10].attributes.publicLinkLimitEnabled
+        == true || $.data[10].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || ((count($.data[10].attributes.publicLinkLimit) == 0 || (($.data[10].attributes.publicLinkLimit
+        >= 0 || $.data[10].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[10]) == 0 || ((count($.data[10].attributes.feedbackEnabled) == 0 || (($.data[10].attributes.feedbackEnabled
+        == true || $.data[10].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/11 == null) || ($response.body#/data/11/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || (count($.data[11].*) == count($.data[11]["type","id","attributes","relationships","links"])
+        && count($.data[11].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || ($.data[11].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || (match($.data[11].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || (count($.data[11].attributes.*) == count($.data[11].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[11].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || ((count($.data[11].links) == 0 || (count($.data[11].links.*) == count($.data[11].links["self"])
+        && count($.data[11].links.*) > 0 && (count($.data[11].links.self) == 0 || (match($.data[11].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || (count($.data[11].relationships.*) == count($.data[11].relationships["app"])
+        && count($.data[11].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || (count($.data[11].relationships.app.*) == count($.data[11].relationships.app["data","links"])
+        && count($.data[11].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || (count($.data[11].relationships.app.data.*) == count($.data[11].relationships.app.data["type","id"])
+        && count($.data[11].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || ($.data[11].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || (match($.data[11].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || ((count($.data[11].relationships.app.links) == 0 || (count($.data[11].relationships.app.links.*)
+        == count($.data[11].relationships.app.links["self","related"]) && count($.data[11].relationships.app.links.*)
+        > 0 && (count($.data[11].relationships.app.links.self) == 0 || (match($.data[11].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[11].relationships.app.links.related)
+        == 0 || (match($.data[11].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || (match($.data[11].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || (($.data[11].attributes.isInternalGroup == true || $.data[11].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || ((count($.data[11].attributes.hasAccessToAllBuilds) == 0 || (($.data[11].attributes.hasAccessToAllBuilds
+        == true || $.data[11].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || ((count($.data[11].attributes.publicLinkEnabled) == 0 || (($.data[11].attributes.publicLinkEnabled
+        == true || $.data[11].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || ((count($.data[11].attributes.publicLinkLimitEnabled) == 0 || (($.data[11].attributes.publicLinkLimitEnabled
+        == true || $.data[11].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || ((count($.data[11].attributes.publicLinkLimit) == 0 || (($.data[11].attributes.publicLinkLimit
+        >= 0 || $.data[11].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[11]) == 0 || ((count($.data[11].attributes.feedbackEnabled) == 0 || (($.data[11].attributes.feedbackEnabled
+        == true || $.data[11].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/12 == null) || ($response.body#/data/12/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || (count($.data[12].*) == count($.data[12]["type","id","attributes","relationships","links"])
+        && count($.data[12].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || ($.data[12].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || (match($.data[12].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || (count($.data[12].attributes.*) == count($.data[12].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[12].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || ((count($.data[12].links) == 0 || (count($.data[12].links.*) == count($.data[12].links["self"])
+        && count($.data[12].links.*) > 0 && (count($.data[12].links.self) == 0 || (match($.data[12].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || (count($.data[12].relationships.*) == count($.data[12].relationships["app"])
+        && count($.data[12].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || (count($.data[12].relationships.app.*) == count($.data[12].relationships.app["data","links"])
+        && count($.data[12].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || (count($.data[12].relationships.app.data.*) == count($.data[12].relationships.app.data["type","id"])
+        && count($.data[12].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || ($.data[12].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || (match($.data[12].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || ((count($.data[12].relationships.app.links) == 0 || (count($.data[12].relationships.app.links.*)
+        == count($.data[12].relationships.app.links["self","related"]) && count($.data[12].relationships.app.links.*)
+        > 0 && (count($.data[12].relationships.app.links.self) == 0 || (match($.data[12].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[12].relationships.app.links.related)
+        == 0 || (match($.data[12].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || (match($.data[12].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || (($.data[12].attributes.isInternalGroup == true || $.data[12].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || ((count($.data[12].attributes.hasAccessToAllBuilds) == 0 || (($.data[12].attributes.hasAccessToAllBuilds
+        == true || $.data[12].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || ((count($.data[12].attributes.publicLinkEnabled) == 0 || (($.data[12].attributes.publicLinkEnabled
+        == true || $.data[12].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || ((count($.data[12].attributes.publicLinkLimitEnabled) == 0 || (($.data[12].attributes.publicLinkLimitEnabled
+        == true || $.data[12].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || ((count($.data[12].attributes.publicLinkLimit) == 0 || (($.data[12].attributes.publicLinkLimit
+        >= 0 || $.data[12].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[12]) == 0 || ((count($.data[12].attributes.feedbackEnabled) == 0 || (($.data[12].attributes.feedbackEnabled
+        == true || $.data[12].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/13 == null) || ($response.body#/data/13/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || (count($.data[13].*) == count($.data[13]["type","id","attributes","relationships","links"])
+        && count($.data[13].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || ($.data[13].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || (match($.data[13].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || (count($.data[13].attributes.*) == count($.data[13].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[13].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || ((count($.data[13].links) == 0 || (count($.data[13].links.*) == count($.data[13].links["self"])
+        && count($.data[13].links.*) > 0 && (count($.data[13].links.self) == 0 || (match($.data[13].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || (count($.data[13].relationships.*) == count($.data[13].relationships["app"])
+        && count($.data[13].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || (count($.data[13].relationships.app.*) == count($.data[13].relationships.app["data","links"])
+        && count($.data[13].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || (count($.data[13].relationships.app.data.*) == count($.data[13].relationships.app.data["type","id"])
+        && count($.data[13].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || ($.data[13].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || (match($.data[13].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || ((count($.data[13].relationships.app.links) == 0 || (count($.data[13].relationships.app.links.*)
+        == count($.data[13].relationships.app.links["self","related"]) && count($.data[13].relationships.app.links.*)
+        > 0 && (count($.data[13].relationships.app.links.self) == 0 || (match($.data[13].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[13].relationships.app.links.related)
+        == 0 || (match($.data[13].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || (match($.data[13].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || (($.data[13].attributes.isInternalGroup == true || $.data[13].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || ((count($.data[13].attributes.hasAccessToAllBuilds) == 0 || (($.data[13].attributes.hasAccessToAllBuilds
+        == true || $.data[13].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || ((count($.data[13].attributes.publicLinkEnabled) == 0 || (($.data[13].attributes.publicLinkEnabled
+        == true || $.data[13].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || ((count($.data[13].attributes.publicLinkLimitEnabled) == 0 || (($.data[13].attributes.publicLinkLimitEnabled
+        == true || $.data[13].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || ((count($.data[13].attributes.publicLinkLimit) == 0 || (($.data[13].attributes.publicLinkLimit
+        >= 0 || $.data[13].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[13]) == 0 || ((count($.data[13].attributes.feedbackEnabled) == 0 || (($.data[13].attributes.feedbackEnabled
+        == true || $.data[13].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/14 == null) || ($response.body#/data/14/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || (count($.data[14].*) == count($.data[14]["type","id","attributes","relationships","links"])
+        && count($.data[14].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || ($.data[14].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || (match($.data[14].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || (count($.data[14].attributes.*) == count($.data[14].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[14].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || ((count($.data[14].links) == 0 || (count($.data[14].links.*) == count($.data[14].links["self"])
+        && count($.data[14].links.*) > 0 && (count($.data[14].links.self) == 0 || (match($.data[14].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || (count($.data[14].relationships.*) == count($.data[14].relationships["app"])
+        && count($.data[14].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || (count($.data[14].relationships.app.*) == count($.data[14].relationships.app["data","links"])
+        && count($.data[14].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || (count($.data[14].relationships.app.data.*) == count($.data[14].relationships.app.data["type","id"])
+        && count($.data[14].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || ($.data[14].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || (match($.data[14].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || ((count($.data[14].relationships.app.links) == 0 || (count($.data[14].relationships.app.links.*)
+        == count($.data[14].relationships.app.links["self","related"]) && count($.data[14].relationships.app.links.*)
+        > 0 && (count($.data[14].relationships.app.links.self) == 0 || (match($.data[14].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[14].relationships.app.links.related)
+        == 0 || (match($.data[14].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || (match($.data[14].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || (($.data[14].attributes.isInternalGroup == true || $.data[14].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || ((count($.data[14].attributes.hasAccessToAllBuilds) == 0 || (($.data[14].attributes.hasAccessToAllBuilds
+        == true || $.data[14].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || ((count($.data[14].attributes.publicLinkEnabled) == 0 || (($.data[14].attributes.publicLinkEnabled
+        == true || $.data[14].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || ((count($.data[14].attributes.publicLinkLimitEnabled) == 0 || (($.data[14].attributes.publicLinkLimitEnabled
+        == true || $.data[14].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || ((count($.data[14].attributes.publicLinkLimit) == 0 || (($.data[14].attributes.publicLinkLimit
+        >= 0 || $.data[14].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[14]) == 0 || ((count($.data[14].attributes.feedbackEnabled) == 0 || (($.data[14].attributes.feedbackEnabled
+        == true || $.data[14].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/15 == null) || ($response.body#/data/15/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || (count($.data[15].*) == count($.data[15]["type","id","attributes","relationships","links"])
+        && count($.data[15].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || ($.data[15].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || (match($.data[15].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || (count($.data[15].attributes.*) == count($.data[15].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[15].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || ((count($.data[15].links) == 0 || (count($.data[15].links.*) == count($.data[15].links["self"])
+        && count($.data[15].links.*) > 0 && (count($.data[15].links.self) == 0 || (match($.data[15].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || (count($.data[15].relationships.*) == count($.data[15].relationships["app"])
+        && count($.data[15].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || (count($.data[15].relationships.app.*) == count($.data[15].relationships.app["data","links"])
+        && count($.data[15].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || (count($.data[15].relationships.app.data.*) == count($.data[15].relationships.app.data["type","id"])
+        && count($.data[15].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || ($.data[15].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || (match($.data[15].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || ((count($.data[15].relationships.app.links) == 0 || (count($.data[15].relationships.app.links.*)
+        == count($.data[15].relationships.app.links["self","related"]) && count($.data[15].relationships.app.links.*)
+        > 0 && (count($.data[15].relationships.app.links.self) == 0 || (match($.data[15].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[15].relationships.app.links.related)
+        == 0 || (match($.data[15].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || (match($.data[15].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || (($.data[15].attributes.isInternalGroup == true || $.data[15].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || ((count($.data[15].attributes.hasAccessToAllBuilds) == 0 || (($.data[15].attributes.hasAccessToAllBuilds
+        == true || $.data[15].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || ((count($.data[15].attributes.publicLinkEnabled) == 0 || (($.data[15].attributes.publicLinkEnabled
+        == true || $.data[15].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || ((count($.data[15].attributes.publicLinkLimitEnabled) == 0 || (($.data[15].attributes.publicLinkLimitEnabled
+        == true || $.data[15].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || ((count($.data[15].attributes.publicLinkLimit) == 0 || (($.data[15].attributes.publicLinkLimit
+        >= 0 || $.data[15].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[15]) == 0 || ((count($.data[15].attributes.feedbackEnabled) == 0 || (($.data[15].attributes.feedbackEnabled
+        == true || $.data[15].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/16 == null) || ($response.body#/data/16/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || (count($.data[16].*) == count($.data[16]["type","id","attributes","relationships","links"])
+        && count($.data[16].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || ($.data[16].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || (match($.data[16].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || (count($.data[16].attributes.*) == count($.data[16].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[16].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || ((count($.data[16].links) == 0 || (count($.data[16].links.*) == count($.data[16].links["self"])
+        && count($.data[16].links.*) > 0 && (count($.data[16].links.self) == 0 || (match($.data[16].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || (count($.data[16].relationships.*) == count($.data[16].relationships["app"])
+        && count($.data[16].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || (count($.data[16].relationships.app.*) == count($.data[16].relationships.app["data","links"])
+        && count($.data[16].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || (count($.data[16].relationships.app.data.*) == count($.data[16].relationships.app.data["type","id"])
+        && count($.data[16].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || ($.data[16].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || (match($.data[16].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || ((count($.data[16].relationships.app.links) == 0 || (count($.data[16].relationships.app.links.*)
+        == count($.data[16].relationships.app.links["self","related"]) && count($.data[16].relationships.app.links.*)
+        > 0 && (count($.data[16].relationships.app.links.self) == 0 || (match($.data[16].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[16].relationships.app.links.related)
+        == 0 || (match($.data[16].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || (match($.data[16].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || (($.data[16].attributes.isInternalGroup == true || $.data[16].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || ((count($.data[16].attributes.hasAccessToAllBuilds) == 0 || (($.data[16].attributes.hasAccessToAllBuilds
+        == true || $.data[16].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || ((count($.data[16].attributes.publicLinkEnabled) == 0 || (($.data[16].attributes.publicLinkEnabled
+        == true || $.data[16].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || ((count($.data[16].attributes.publicLinkLimitEnabled) == 0 || (($.data[16].attributes.publicLinkLimitEnabled
+        == true || $.data[16].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || ((count($.data[16].attributes.publicLinkLimit) == 0 || (($.data[16].attributes.publicLinkLimit
+        >= 0 || $.data[16].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[16]) == 0 || ((count($.data[16].attributes.feedbackEnabled) == 0 || (($.data[16].attributes.feedbackEnabled
+        == true || $.data[16].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/17 == null) || ($response.body#/data/17/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || (count($.data[17].*) == count($.data[17]["type","id","attributes","relationships","links"])
+        && count($.data[17].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || ($.data[17].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || (match($.data[17].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || (count($.data[17].attributes.*) == count($.data[17].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[17].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || ((count($.data[17].links) == 0 || (count($.data[17].links.*) == count($.data[17].links["self"])
+        && count($.data[17].links.*) > 0 && (count($.data[17].links.self) == 0 || (match($.data[17].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || (count($.data[17].relationships.*) == count($.data[17].relationships["app"])
+        && count($.data[17].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || (count($.data[17].relationships.app.*) == count($.data[17].relationships.app["data","links"])
+        && count($.data[17].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || (count($.data[17].relationships.app.data.*) == count($.data[17].relationships.app.data["type","id"])
+        && count($.data[17].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || ($.data[17].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || (match($.data[17].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || ((count($.data[17].relationships.app.links) == 0 || (count($.data[17].relationships.app.links.*)
+        == count($.data[17].relationships.app.links["self","related"]) && count($.data[17].relationships.app.links.*)
+        > 0 && (count($.data[17].relationships.app.links.self) == 0 || (match($.data[17].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[17].relationships.app.links.related)
+        == 0 || (match($.data[17].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || (match($.data[17].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || (($.data[17].attributes.isInternalGroup == true || $.data[17].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || ((count($.data[17].attributes.hasAccessToAllBuilds) == 0 || (($.data[17].attributes.hasAccessToAllBuilds
+        == true || $.data[17].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || ((count($.data[17].attributes.publicLinkEnabled) == 0 || (($.data[17].attributes.publicLinkEnabled
+        == true || $.data[17].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || ((count($.data[17].attributes.publicLinkLimitEnabled) == 0 || (($.data[17].attributes.publicLinkLimitEnabled
+        == true || $.data[17].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || ((count($.data[17].attributes.publicLinkLimit) == 0 || (($.data[17].attributes.publicLinkLimit
+        >= 0 || $.data[17].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[17]) == 0 || ((count($.data[17].attributes.feedbackEnabled) == 0 || (($.data[17].attributes.feedbackEnabled
+        == true || $.data[17].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/18 == null) || ($response.body#/data/18/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || (count($.data[18].*) == count($.data[18]["type","id","attributes","relationships","links"])
+        && count($.data[18].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || ($.data[18].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || (match($.data[18].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || (count($.data[18].attributes.*) == count($.data[18].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[18].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || ((count($.data[18].links) == 0 || (count($.data[18].links.*) == count($.data[18].links["self"])
+        && count($.data[18].links.*) > 0 && (count($.data[18].links.self) == 0 || (match($.data[18].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || (count($.data[18].relationships.*) == count($.data[18].relationships["app"])
+        && count($.data[18].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || (count($.data[18].relationships.app.*) == count($.data[18].relationships.app["data","links"])
+        && count($.data[18].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || (count($.data[18].relationships.app.data.*) == count($.data[18].relationships.app.data["type","id"])
+        && count($.data[18].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || ($.data[18].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || (match($.data[18].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || ((count($.data[18].relationships.app.links) == 0 || (count($.data[18].relationships.app.links.*)
+        == count($.data[18].relationships.app.links["self","related"]) && count($.data[18].relationships.app.links.*)
+        > 0 && (count($.data[18].relationships.app.links.self) == 0 || (match($.data[18].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[18].relationships.app.links.related)
+        == 0 || (match($.data[18].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || (match($.data[18].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || (($.data[18].attributes.isInternalGroup == true || $.data[18].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || ((count($.data[18].attributes.hasAccessToAllBuilds) == 0 || (($.data[18].attributes.hasAccessToAllBuilds
+        == true || $.data[18].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || ((count($.data[18].attributes.publicLinkEnabled) == 0 || (($.data[18].attributes.publicLinkEnabled
+        == true || $.data[18].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || ((count($.data[18].attributes.publicLinkLimitEnabled) == 0 || (($.data[18].attributes.publicLinkLimitEnabled
+        == true || $.data[18].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || ((count($.data[18].attributes.publicLinkLimit) == 0 || (($.data[18].attributes.publicLinkLimit
+        >= 0 || $.data[18].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[18]) == 0 || ((count($.data[18].attributes.feedbackEnabled) == 0 || (($.data[18].attributes.feedbackEnabled
+        == true || $.data[18].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/19 == null) || ($response.body#/data/19/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || (count($.data[19].*) == count($.data[19]["type","id","attributes","relationships","links"])
+        && count($.data[19].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || ($.data[19].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || (match($.data[19].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || (count($.data[19].attributes.*) == count($.data[19].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[19].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || ((count($.data[19].links) == 0 || (count($.data[19].links.*) == count($.data[19].links["self"])
+        && count($.data[19].links.*) > 0 && (count($.data[19].links.self) == 0 || (match($.data[19].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || (count($.data[19].relationships.*) == count($.data[19].relationships["app"])
+        && count($.data[19].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || (count($.data[19].relationships.app.*) == count($.data[19].relationships.app["data","links"])
+        && count($.data[19].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || (count($.data[19].relationships.app.data.*) == count($.data[19].relationships.app.data["type","id"])
+        && count($.data[19].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || ($.data[19].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || (match($.data[19].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || ((count($.data[19].relationships.app.links) == 0 || (count($.data[19].relationships.app.links.*)
+        == count($.data[19].relationships.app.links["self","related"]) && count($.data[19].relationships.app.links.*)
+        > 0 && (count($.data[19].relationships.app.links.self) == 0 || (match($.data[19].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[19].relationships.app.links.related)
+        == 0 || (match($.data[19].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || (match($.data[19].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || (($.data[19].attributes.isInternalGroup == true || $.data[19].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || ((count($.data[19].attributes.hasAccessToAllBuilds) == 0 || (($.data[19].attributes.hasAccessToAllBuilds
+        == true || $.data[19].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || ((count($.data[19].attributes.publicLinkEnabled) == 0 || (($.data[19].attributes.publicLinkEnabled
+        == true || $.data[19].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || ((count($.data[19].attributes.publicLinkLimitEnabled) == 0 || (($.data[19].attributes.publicLinkLimitEnabled
+        == true || $.data[19].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || ((count($.data[19].attributes.publicLinkLimit) == 0 || (($.data[19].attributes.publicLinkLimit
+        >= 0 || $.data[19].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[19]) == 0 || ((count($.data[19].attributes.feedbackEnabled) == 0 || (($.data[19].attributes.feedbackEnabled
+        == true || $.data[19].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/20 == null) || ($response.body#/data/20/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || (count($.data[20].*) == count($.data[20]["type","id","attributes","relationships","links"])
+        && count($.data[20].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || ($.data[20].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || (match($.data[20].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || (count($.data[20].attributes.*) == count($.data[20].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[20].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || ((count($.data[20].links) == 0 || (count($.data[20].links.*) == count($.data[20].links["self"])
+        && count($.data[20].links.*) > 0 && (count($.data[20].links.self) == 0 || (match($.data[20].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || (count($.data[20].relationships.*) == count($.data[20].relationships["app"])
+        && count($.data[20].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || (count($.data[20].relationships.app.*) == count($.data[20].relationships.app["data","links"])
+        && count($.data[20].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || (count($.data[20].relationships.app.data.*) == count($.data[20].relationships.app.data["type","id"])
+        && count($.data[20].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || ($.data[20].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || (match($.data[20].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || ((count($.data[20].relationships.app.links) == 0 || (count($.data[20].relationships.app.links.*)
+        == count($.data[20].relationships.app.links["self","related"]) && count($.data[20].relationships.app.links.*)
+        > 0 && (count($.data[20].relationships.app.links.self) == 0 || (match($.data[20].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[20].relationships.app.links.related)
+        == 0 || (match($.data[20].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || (match($.data[20].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || (($.data[20].attributes.isInternalGroup == true || $.data[20].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || ((count($.data[20].attributes.hasAccessToAllBuilds) == 0 || (($.data[20].attributes.hasAccessToAllBuilds
+        == true || $.data[20].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || ((count($.data[20].attributes.publicLinkEnabled) == 0 || (($.data[20].attributes.publicLinkEnabled
+        == true || $.data[20].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || ((count($.data[20].attributes.publicLinkLimitEnabled) == 0 || (($.data[20].attributes.publicLinkLimitEnabled
+        == true || $.data[20].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || ((count($.data[20].attributes.publicLinkLimit) == 0 || (($.data[20].attributes.publicLinkLimit
+        >= 0 || $.data[20].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[20]) == 0 || ((count($.data[20].attributes.feedbackEnabled) == 0 || (($.data[20].attributes.feedbackEnabled
+        == true || $.data[20].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/21 == null) || ($response.body#/data/21/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || (count($.data[21].*) == count($.data[21]["type","id","attributes","relationships","links"])
+        && count($.data[21].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || ($.data[21].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || (match($.data[21].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || (count($.data[21].attributes.*) == count($.data[21].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[21].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || ((count($.data[21].links) == 0 || (count($.data[21].links.*) == count($.data[21].links["self"])
+        && count($.data[21].links.*) > 0 && (count($.data[21].links.self) == 0 || (match($.data[21].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || (count($.data[21].relationships.*) == count($.data[21].relationships["app"])
+        && count($.data[21].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || (count($.data[21].relationships.app.*) == count($.data[21].relationships.app["data","links"])
+        && count($.data[21].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || (count($.data[21].relationships.app.data.*) == count($.data[21].relationships.app.data["type","id"])
+        && count($.data[21].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || ($.data[21].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || (match($.data[21].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || ((count($.data[21].relationships.app.links) == 0 || (count($.data[21].relationships.app.links.*)
+        == count($.data[21].relationships.app.links["self","related"]) && count($.data[21].relationships.app.links.*)
+        > 0 && (count($.data[21].relationships.app.links.self) == 0 || (match($.data[21].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[21].relationships.app.links.related)
+        == 0 || (match($.data[21].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || (match($.data[21].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || (($.data[21].attributes.isInternalGroup == true || $.data[21].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || ((count($.data[21].attributes.hasAccessToAllBuilds) == 0 || (($.data[21].attributes.hasAccessToAllBuilds
+        == true || $.data[21].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || ((count($.data[21].attributes.publicLinkEnabled) == 0 || (($.data[21].attributes.publicLinkEnabled
+        == true || $.data[21].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || ((count($.data[21].attributes.publicLinkLimitEnabled) == 0 || (($.data[21].attributes.publicLinkLimitEnabled
+        == true || $.data[21].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || ((count($.data[21].attributes.publicLinkLimit) == 0 || (($.data[21].attributes.publicLinkLimit
+        >= 0 || $.data[21].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[21]) == 0 || ((count($.data[21].attributes.feedbackEnabled) == 0 || (($.data[21].attributes.feedbackEnabled
+        == true || $.data[21].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/22 == null) || ($response.body#/data/22/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || (count($.data[22].*) == count($.data[22]["type","id","attributes","relationships","links"])
+        && count($.data[22].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || ($.data[22].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || (match($.data[22].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || (count($.data[22].attributes.*) == count($.data[22].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[22].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || ((count($.data[22].links) == 0 || (count($.data[22].links.*) == count($.data[22].links["self"])
+        && count($.data[22].links.*) > 0 && (count($.data[22].links.self) == 0 || (match($.data[22].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || (count($.data[22].relationships.*) == count($.data[22].relationships["app"])
+        && count($.data[22].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || (count($.data[22].relationships.app.*) == count($.data[22].relationships.app["data","links"])
+        && count($.data[22].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || (count($.data[22].relationships.app.data.*) == count($.data[22].relationships.app.data["type","id"])
+        && count($.data[22].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || ($.data[22].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || (match($.data[22].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || ((count($.data[22].relationships.app.links) == 0 || (count($.data[22].relationships.app.links.*)
+        == count($.data[22].relationships.app.links["self","related"]) && count($.data[22].relationships.app.links.*)
+        > 0 && (count($.data[22].relationships.app.links.self) == 0 || (match($.data[22].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[22].relationships.app.links.related)
+        == 0 || (match($.data[22].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || (match($.data[22].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || (($.data[22].attributes.isInternalGroup == true || $.data[22].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || ((count($.data[22].attributes.hasAccessToAllBuilds) == 0 || (($.data[22].attributes.hasAccessToAllBuilds
+        == true || $.data[22].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || ((count($.data[22].attributes.publicLinkEnabled) == 0 || (($.data[22].attributes.publicLinkEnabled
+        == true || $.data[22].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || ((count($.data[22].attributes.publicLinkLimitEnabled) == 0 || (($.data[22].attributes.publicLinkLimitEnabled
+        == true || $.data[22].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || ((count($.data[22].attributes.publicLinkLimit) == 0 || (($.data[22].attributes.publicLinkLimit
+        >= 0 || $.data[22].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[22]) == 0 || ((count($.data[22].attributes.feedbackEnabled) == 0 || (($.data[22].attributes.feedbackEnabled
+        == true || $.data[22].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/23 == null) || ($response.body#/data/23/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || (count($.data[23].*) == count($.data[23]["type","id","attributes","relationships","links"])
+        && count($.data[23].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || ($.data[23].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || (match($.data[23].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || (count($.data[23].attributes.*) == count($.data[23].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[23].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || ((count($.data[23].links) == 0 || (count($.data[23].links.*) == count($.data[23].links["self"])
+        && count($.data[23].links.*) > 0 && (count($.data[23].links.self) == 0 || (match($.data[23].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || (count($.data[23].relationships.*) == count($.data[23].relationships["app"])
+        && count($.data[23].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || (count($.data[23].relationships.app.*) == count($.data[23].relationships.app["data","links"])
+        && count($.data[23].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || (count($.data[23].relationships.app.data.*) == count($.data[23].relationships.app.data["type","id"])
+        && count($.data[23].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || ($.data[23].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || (match($.data[23].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || ((count($.data[23].relationships.app.links) == 0 || (count($.data[23].relationships.app.links.*)
+        == count($.data[23].relationships.app.links["self","related"]) && count($.data[23].relationships.app.links.*)
+        > 0 && (count($.data[23].relationships.app.links.self) == 0 || (match($.data[23].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[23].relationships.app.links.related)
+        == 0 || (match($.data[23].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || (match($.data[23].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || (($.data[23].attributes.isInternalGroup == true || $.data[23].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || ((count($.data[23].attributes.hasAccessToAllBuilds) == 0 || (($.data[23].attributes.hasAccessToAllBuilds
+        == true || $.data[23].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || ((count($.data[23].attributes.publicLinkEnabled) == 0 || (($.data[23].attributes.publicLinkEnabled
+        == true || $.data[23].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || ((count($.data[23].attributes.publicLinkLimitEnabled) == 0 || (($.data[23].attributes.publicLinkLimitEnabled
+        == true || $.data[23].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || ((count($.data[23].attributes.publicLinkLimit) == 0 || (($.data[23].attributes.publicLinkLimit
+        >= 0 || $.data[23].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[23]) == 0 || ((count($.data[23].attributes.feedbackEnabled) == 0 || (($.data[23].attributes.feedbackEnabled
+        == true || $.data[23].attributes.feedbackEnabled == false)))))]
+    - condition: ($response.body#/data/24 == null) || ($response.body#/data/24/relationships/app/data/id == $steps.resolve-app.outputs.id)
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || (count($.data[24].*) == count($.data[24]["type","id","attributes","relationships","links"])
+        && count($.data[24].*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || ($.data[24].type == "betaGroups"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || (match($.data[24].id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || (count($.data[24].attributes.*) == count($.data[24].attributes["name","isInternalGroup","hasAccessToAllBuilds","publicLinkEnabled","publicLinkLimitEnabled","publicLinkLimit","feedbackEnabled"])
+        && count($.data[24].attributes.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || ((count($.data[24].links) == 0 || (count($.data[24].links.*) == count($.data[24].links["self"])
+        && count($.data[24].links.*) > 0 && (count($.data[24].links.self) == 0 || (match($.data[24].links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || (count($.data[24].relationships.*) == count($.data[24].relationships["app"])
+        && count($.data[24].relationships.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || (count($.data[24].relationships.app.*) == count($.data[24].relationships.app["data","links"])
+        && count($.data[24].relationships.app.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || (count($.data[24].relationships.app.data.*) == count($.data[24].relationships.app.data["type","id"])
+        && count($.data[24].relationships.app.data.*) > 0))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || ($.data[24].relationships.app.data.type == "apps"))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || (match($.data[24].relationships.app.data.id, "[A-Za-z0-9_-]+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || ((count($.data[24].relationships.app.links) == 0 || (count($.data[24].relationships.app.links.*)
+        == count($.data[24].relationships.app.links["self","related"]) && count($.data[24].relationships.app.links.*)
+        > 0 && (count($.data[24].relationships.app.links.self) == 0 || (match($.data[24].relationships.app.links.self,
+        "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*"))) && (count($.data[24].relationships.app.links.related)
+        == 0 || (match($.data[24].relationships.app.links.related, "https://api[.]appstoreconnect[.]apple[.]com/[!-~]*")))))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || (match($.data[24].attributes.name, ".+")))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || (($.data[24].attributes.isInternalGroup == true || $.data[24].attributes.isInternalGroup
+        == false)))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || ((count($.data[24].attributes.hasAccessToAllBuilds) == 0 || (($.data[24].attributes.hasAccessToAllBuilds
+        == true || $.data[24].attributes.hasAccessToAllBuilds == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || ((count($.data[24].attributes.publicLinkEnabled) == 0 || (($.data[24].attributes.publicLinkEnabled
+        == true || $.data[24].attributes.publicLinkEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || ((count($.data[24].attributes.publicLinkLimitEnabled) == 0 || (($.data[24].attributes.publicLinkLimitEnabled
+        == true || $.data[24].attributes.publicLinkLimitEnabled == false)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || ((count($.data[24].attributes.publicLinkLimit) == 0 || (($.data[24].attributes.publicLinkLimit
+        >= 0 || $.data[24].attributes.publicLinkLimit < 0)))))]
+    - type: jsonpath
+      context: $response.body
+      condition: $[?(count($.data[24]) == 0 || ((count($.data[24].attributes.feedbackEnabled) == 0 || (($.data[24].attributes.feedbackEnabled
+        == true || $.data[24].attributes.feedbackEnabled == false)))))]
+    - type: regex
+      context: $response.body#/data
+      condition: \A(?:[\s\[\]{},:]|"(?:[^"\\]|\\.)*"|true|false|null|-?(?:[0-9]+(?:\.0+)?|[0-9]+(?:\.[0-9]+)?e\+?[0-9]+))*\z
+    onFailure:
+    - reference: $components.failureActions.stop
+    outputs:
+      beta_groups: $response.body#/data
+  outputs:
+    selected_app: $steps.resolve-app.outputs.selected_app
+    selected_prerelease_version: $steps.resolve-prerelease-version.outputs.selected_prerelease_version
+    build: $steps.resolve-build.outputs.build
+    beta_detail: $steps.inspect-beta-detail.outputs.beta_detail
+    review_submissions: $steps.inspect-beta-review.outputs.review_submissions
+    beta_groups: $steps.inspect-beta-groups.outputs.beta_groups

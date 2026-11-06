@@ -1,0 +1,31 @@
+{
+  "data": [
+    {
+      "type": "builds",
+      "id": "build-301",
+      "attributes": {
+        "version": "126",
+        "processingState": "VALID",
+        "expired": false,
+        "buildAudienceType": "APP_STORE_ELIGIBLE"
+      },
+      "relationships": {
+        "app": {
+          "data": {
+            "type": "apps",
+            "id": "app-101"
+          }
+        },
+        "preReleaseVersion": {
+          "data": {
+            "type": "preReleaseVersions",
+            "id": "pre-201"
+          }
+        }
+      }
+    }
+  ],
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/builds"
+  }
+}

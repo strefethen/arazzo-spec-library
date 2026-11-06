@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "type": "betaAppReviewSubmissions",
+      "id": "review-501",
+      "attributes": {
+        "betaReviewState": "WAITING_FOR_REVIEW"
+      },
+      "relationships": {
+        "build": {
+          "data": {
+            "type": "builds",
+            "id": "build-301"
+          }
+        }
+      }
+    }
+  ],
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/betaAppReviewSubmissions"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "data": [
+    {
+      "type": "preReleaseVersions",
+      "id": "pre-201",
+      "attributes": {
+        "version": "1.0",
+        "platform": "IOS"
+      },
+      "relationships": {
+        "app": {
+          "data": {
+            "type": "apps",
+            "id": "app-101"
+          }
+        }
+      }
+    }
+  ],
+  "links": {
+    "self": "https://api.appstoreconnect.apple.com/v1/preReleaseVersions"
+  }
+}
